@@ -1,11 +1,17 @@
 {
   "name": "ember-maplibre-gl",
-  "version": "0.0.0",
-  "description": "The default blueprint for Embroider v2 addons.",
+  "version": "0.1.1",
+  "packageManager": "pnpm@10.32.1",
+  "description": "Declarative MapLibre GL JS components for Ember.js",
   "keywords": [
-    "ember-addon"
+    "ember-addon",
+    "maplibre",
+    "maplibre-gl",
+    "maps",
+    "glimmer",
+    "ember"
   ],
-  "repository": "",
+  "repository": "https://github.com/johanrd/ember-maplibre-gl",
   "license": "MIT",
   "author": "",
   "imports": {
@@ -47,15 +53,18 @@
   },
   "dependencies": {
     "@embroider/addon-shim": "^1.8.9",
-    "decorator-transforms": "^2.2.2"
+    "decorator-transforms": "^2.2.2",
+    "ember-modifier": "^4.2.0",
+    "ember-resources": "^7.0.0",
+    "maplibre-gl": "^5.21.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@babel/eslint-parser": "^7.25.1",
     "@babel/plugin-transform-typescript": "^7.25.2",
     "@babel/runtime": "^7.25.6",
-    "@ember/app-tsconfig": "^1.0.0",
-    "@ember/library-tsconfig": "^1.0.0",
+    "@ember/app-tsconfig": "^2.0.0",
+    "@ember/library-tsconfig": "^2.0.0",
     "@ember/test-helpers": "^5.2.1",
     "@ember/test-waiters": "^4.1.1",
     "@embroider/addon-dev": "^8.1.0",
@@ -68,8 +77,11 @@
     "@glint/ember-tsc": "^1.0.3",
     "@glint/template": "^1.6.1",
     "@glint/tsserver-plugin": "^2.0.0",
-    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-babel": "^7.0.0",
+    "@types/geojson": "^7946.0.16",
+    "@types/mapbox-gl": "^1.12.0",
     "@types/qunit": "^2.19.12",
+    "@types/sinon": "^21.0.0",
     "babel-plugin-ember-template-compilation": "^4.0.0",
     "concurrently": "^9.0.1",
     "ember-page-title": "^9.0.3",
@@ -82,17 +94,19 @@
     "eslint-plugin-ember": "^12.3.3",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-n": "^17.15.1",
-    "globals": "^16.1.0",
+    "globals": "^17.4.0",
+    "mapbox-gl": "^1.13.3",
     "prettier": "^3.4.2",
     "prettier-plugin-ember-template-tag": "^2.0.4",
     "publint": "^0.3.16",
     "qunit": "^2.24.1",
     "qunit-dom": "^3.4.0",
     "rollup": "^4.22.5",
+    "sinon": "^21.0.3",
     "testem": "^3.15.1",
-    "typescript": "~5.8.3",
+    "typescript": "~5.9.3",
     "typescript-eslint": "^8.19.1",
-    "vite": "^7.1.9"
+    "vite": "^8.0.1"
   },
   "ember": {
     "edition": "octane"
@@ -100,6 +114,17 @@
   "ember-addon": {
     "version": 2,
     "type": "addon",
-    "main": "addon-main.cjs"
+    "main": "addon-main.cjs",
+    "app-js": {
+      "./components/maplibre-gl-call.js": "./dist/_app_/components/maplibre-gl-call.js",
+      "./components/maplibre-gl-control.js": "./dist/_app_/components/maplibre-gl-control.js",
+      "./components/maplibre-gl-image.js": "./dist/_app_/components/maplibre-gl-image.js",
+      "./components/maplibre-gl-layer.js": "./dist/_app_/components/maplibre-gl-layer.js",
+      "./components/maplibre-gl-marker.js": "./dist/_app_/components/maplibre-gl-marker.js",
+      "./components/maplibre-gl-on.js": "./dist/_app_/components/maplibre-gl-on.js",
+      "./components/maplibre-gl-popup.js": "./dist/_app_/components/maplibre-gl-popup.js",
+      "./components/maplibre-gl-source.js": "./dist/_app_/components/maplibre-gl-source.js",
+      "./components/maplibre-gl.js": "./dist/_app_/components/maplibre-gl.js"
+    }
   }
 }

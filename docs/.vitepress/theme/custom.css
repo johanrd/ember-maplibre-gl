@@ -1,0 +1,57 @@
+/* Ember brand colors — https://ember-styleguide.netlify.app/concepts/colors/ */
+
+:root {
+  --ember-brand: #E04E39;
+  --ember-brand-light: #e8705f;
+  --ember-brand-dark: #c43d2a;
+
+  /* VitePress brand / accent overrides */
+  --vp-c-brand-1: var(--ember-brand);
+  --vp-c-brand-2: var(--ember-brand-light);
+  --vp-c-brand-3: var(--ember-brand);
+  --vp-c-brand-soft: rgba(224, 78, 57, 0.14);
+
+  /* Home hero gradient */
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(135deg, var(--ember-brand) 0%, #7650F1 100%);
+  --vp-home-hero-image-background-image: linear-gradient(135deg, rgba(224, 78, 57, 0.3) 0%, rgba(118, 80, 241, 0.3) 100%);
+  --vp-home-hero-image-filter: blur(56px);
+
+  /* Button colors */
+  --vp-button-brand-border: transparent;
+  --vp-button-brand-text: #fff;
+  --vp-button-brand-bg: var(--ember-brand);
+  --vp-button-brand-hover-border: transparent;
+  --vp-button-brand-hover-text: #fff;
+  --vp-button-brand-hover-bg: var(--ember-brand-light);
+  --vp-button-brand-active-border: transparent;
+  --vp-button-brand-active-text: #fff;
+  --vp-button-brand-active-bg: var(--ember-brand-dark);
+}
+
+.dark {
+  --vp-c-brand-soft: rgba(224, 78, 57, 0.2);
+}
+
+/* Feature cards — centered text, no icon background */
+.VPFeatures .VPFeature {
+  text-align: center;
+}
+
+.VPFeatures .VPFeature .icon {
+  justify-content: center;
+  background: none;
+  align-self: center;
+  font-size: 40px;
+}
+
+.VPFeatures .VPFeature .VPImage,
+.VPFeatures .VPFeature .icon .icon-img {
+  background: none;
+  align-self: center;
+}
+
+/* Reset VitePress doc styles on MapLibre attribution elements */
+.ember-playground .maplibregl-ctrl-attrib summary {
+  margin: 0;
+}

@@ -1,0 +1,10 @@
+{
+  "entryPoints": ["../declarations/index.d.ts"],
+  "out": "./api",
+  "plugin": ["typedoc-plugin-markdown", "typedoc-vitepress-theme"],
+  "readme": "none",
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "githubPages": false,
+  "outputFileStrategy": "modules"
+}

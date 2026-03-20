@@ -1,0 +1,30 @@
+{
+  "name": "ember-maplibre-gl-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "docs:dev": "vitepress dev",
+    "docs:build": "vitepress build",
+    "docs:preview": "vitepress preview",
+    "docs:api": "cd .. && pnpm build && cd docs && typedoc"
+  },
+  "dependencies": {
+    "3d-tiles-renderer": "^0.4.0",
+    "@mapbox/mapbox-gl-draw": "^1.4.0",
+    "@turf/turf": "^7.0.0",
+    "ember-maplibre-gl": "workspace:*",
+    "@watergis/maplibre-gl-terradraw": "^1.12.0",
+    "terra-draw": "^1.0.0",
+    "three": "^0.183.0"
+  },
+  "devDependencies": {
+    "@glimmer/component": "^2.0.0",
+    "ember-source": "^6.11.0",
+    "typedoc": "^0.28.17",
+    "typedoc-plugin-markdown": "^4.11.0",
+    "typedoc-vitepress-theme": "^1.1.2",
+    "vite": "^5.4.14",
+    "vite-plugin-ember": "^0.3.1",
+    "vitepress": "^1.6.4"
+  }
+}

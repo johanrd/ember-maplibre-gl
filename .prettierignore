@@ -6,6 +6,9 @@
 /dist-*/
 /declarations/
 
+# docs (separate workspace)
+/docs/
+
 # misc
 /coverage/
 pnpm-lock.yaml
