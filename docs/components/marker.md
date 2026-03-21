@@ -56,13 +56,13 @@ import { array, hash } from '@ember/helper';
 
 const options = {
   style: 'https://tiles.openfreemap.org/styles/bright',
-  center: [-74.00, 40.712],
+  center: [-74.006, 40.7128],
   zoom: 11,
 };
 
 <template>
   <MapLibreGL @initOptions={{options}} style="height: 300px; width: 100%; border-radius: 8px;" as |map|>
-    <map.marker @lngLat={{array -74.00 40.712}} as |marker|>
+    <map.marker @lngLat={{array -74.006 40.7128}} as |marker|>
       <div style="font-size: 28px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">📍</div>
       <marker.popup @initOptions={{hash offset=20 closeButton=false}}>
         <div style="padding: 8px 12px; font-family: system-ui;">
