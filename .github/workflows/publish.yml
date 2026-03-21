@@ -1,0 +1,85 @@
+name: Release Plan Review
+on:
+  push:
+    branches:
+      - main
+  pull_request_target: # This is intentional
+    types:
+      - labeled
+
+concurrency:
+  group: plan-release # Serialize pushes to main as they need to be released in order
+  cancel-in-progress: false
+
+jobs:
+  check-plan:
+    name: "Check Release Plan"
+    runs-on: ubuntu-latest
+    outputs:
+      command: ${{ steps.check-release.outputs.command }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: "main"
+      # This will only cause the job to run on push events when the latest
+      # commit has added a changeset. On a PR event, it will check for the
+      # "release" label.
+      - id: check-release
+        run: |
+          if git diff HEAD~1 --diff-filter=A --name-only | grep -v 'README\.md' | grep -q '^\.changeset/[^/]*\.md$'; then
+            echo 'command=release' >> $GITHUB_OUTPUT
+          fi
+
+  prepare:
+    name: "Prepare Release"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: check-plan
+    if: needs.check-plan.outputs.command == 'release'
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Create Release Plan
+        run: pnpm release-plan prepare
+        env:
+          GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    name: "Publish Release"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: check-plan
+    # Only publish on push to main when the release PR was just merged
+    # (no new changesets, and the commit message matches the release PR pattern)
+    if: github.ref == 'refs/heads/main' && needs.check-plan.outputs.command != 'release'
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: "https://registry.npmjs.org"
+      - run: pnpm install --frozen-lockfile
+      - name: Publish to npm
+        run: pnpm release-plan publish
+        env:
+          GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true

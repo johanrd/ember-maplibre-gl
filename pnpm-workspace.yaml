@@ -2,6 +2,7 @@
 # https://github.com/emberjs/rfcs/pull/907
 
 packages:
+  - .
   - docs
 
 # we don't want addons to be bad citizens of the ecosystem
