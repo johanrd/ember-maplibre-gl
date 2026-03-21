@@ -54,31 +54,30 @@ jobs:
       # For the Try Scenarios
       - id: set-matrix
         run: |
-           echo "matrix=$(pnpm -s dlx @embroider/try list)" >> $GITHUB_OUTPUT
+          MATRIX=$(pnpm -s dlx @embroider/try list)
+          # Inject ember-lts-3.28 into the auto-generated matrix
+          MATRIX=$(echo "$MATRIX" | node -e "
+            const d = JSON.parse(require('fs').readFileSync(0,'utf8'));
+            d.name.push('ember-lts-3.28');
+            d.include.push({
+              env: { ENABLE_COMPAT_BUILD: 'true' },
+              name: 'ember-lts-3.28',
+              npm: { devDependencies: {
+                'ember-source': '~3.28.0',
+                '@embroider/compat': '^4.0.3',
+                'ember-cli': '~4.12.0',
+                'ember-auto-import': '^2.10.0',
+                '@ember/optional-features': '^2.2.0'
+              }},
+              files: {
+                'ember-cli-build.cjs': 'const EmberApp = require(\"ember-cli/lib/broccoli/ember-app\");\\nconst { compatBuild } = require(\"@embroider/compat\");\\nmodule.exports = async function (defaults) {\\n  const { buildOnce } = await import(\"@embroider/vite\");\\n  let app = new EmberApp(defaults);\\n  return compatBuild(app, buildOnce);\\n};',
+                'config/optional-features.json': '{\"application-template-wrapper\":false,\"default-async-observers\":true,\"jquery-integration\":false,\"template-only-glimmer-components\":true}'
+              }
+            });
+            console.log(JSON.stringify(d));
+          ")
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
           
-
-  test-ember-3-28:
-    name: "Tests (Ember 3.28)"
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    env:
-      ENABLE_COMPAT_BUILD: true
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - name: Install Dependencies
-        run: pnpm install --no-lockfile
-      - name: Override ember-source to 3.28
-        run: pnpm add -w -D ember-source@~3.28.0 @embroider/compat@^4.0.3 ember-cli@~4.12.0 ember-auto-import@^2.10.0 @ember/optional-features@^2.2.0
-      - name: Build
-        run: pnpm build
-      - name: Run Tests
-        run: pnpm test
 
   floating:
     name: "Floating Dependencies"
@@ -115,11 +114,15 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      - name: Install Dependencies
+        run: pnpm install --no-lockfile
+      - name: Build (before scenario downgrade)
+        run: pnpm build
       - name: Apply Scenario
         run: |
            pnpm dlx @embroider/try apply ${{ matrix.name }}
-          
-      - name: Install Dependencies
+
+      - name: Reinstall with scenario deps
         run: pnpm install --no-lockfile
       - name: Build
         run: pnpm build
