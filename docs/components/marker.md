@@ -78,8 +78,8 @@ interface MapLibreGLMarkerSignature {
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `popup` | `MapLibreGLPopup` | Attach a popup to this marker. Pre-bound with map and marker reference. |
-| `on` | `MapLibreGLOn` | Listen to marker events (drag, dragstart, dragend). Pre-bound with eventSource. |
+| `popup` | [MapLibreGLPopup](./popup) | Attach a popup to this marker. Pre-bound with map and marker reference. |
+| `on` | [MapLibreGLOn](./on) | Listen to marker events (drag, dragstart, dragend). Pre-bound with eventSource. |
 
 <!-- /YIELDS -->
 

@@ -86,7 +86,7 @@ interface MapLibreGLPopupSignature {
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `on` | `MapLibreGLOn` | Listen to popup events (open, close). Pre-bound with eventSource. |
+| `on` | [MapLibreGLOn](./on) | Listen to popup events (open, close). Pre-bound with eventSource. |
 
 <!-- /YIELDS -->
 

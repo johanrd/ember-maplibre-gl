@@ -132,6 +132,37 @@ module('Integration | Component | maplibre-gl', function (hooks) {
     assert.dom('[data-test-instance]').hasText('yes');
   });
 
+  test('it yields the error block when map construction fails', async function (assert) {
+    const BrokenMap = class {
+      constructor() {
+        throw new Error('WebGL not supported');
+      }
+    } as unknown as new (...args: unknown[]) => Map;
+
+    await render(
+      <template>
+        <MapLibreGL
+          @initOptions={{hash style=STYLE}}
+          @mapLib={{BrokenMap}}
+          style="height:200px;"
+        >
+          <:default as |map|>
+            <span data-test-should-not-render>loaded</span>
+          </:default>
+          <:error as |error|>
+            <span data-test-error>{{error}}</span>
+          </:error>
+        </MapLibreGL>
+      </template>,
+    );
+
+    await waitUntil(() => find('[data-test-error]'), { timeout: 5000 });
+    assert.dom('[data-test-error]').exists('error block is rendered');
+    assert
+      .dom('[data-test-should-not-render]')
+      .doesNotExist('default block is not rendered');
+  });
+
   test('it reuses the map instance when @reuseMaps is true', async function (assert) {
     class ShowState {
       @tracked show = true;

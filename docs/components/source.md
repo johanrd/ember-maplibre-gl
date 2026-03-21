@@ -82,7 +82,7 @@ interface MapLibreGLSourceSignature {
 | Property | Type | Description |
 |----------|------|-------------|
 | `id` | `string` | The ID of this source on the map. |
-| `layer` | `MapLibreGLLayer` | Add a layer that renders data from this source. Pre-bound with map, sourceId, and parent. |
+| `layer` | [MapLibreGLLayer](./layer) | Add a layer that renders data from this source. Pre-bound with map, sourceId, and parent. |
 
 <!-- /YIELDS -->
 

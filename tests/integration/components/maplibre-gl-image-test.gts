@@ -44,9 +44,12 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
   });
 
   test('it loads and adds the image to the map', async function (assert) {
-    let map: Map | undefined;
+    let loadImageSpy: sinon.SinonSpy | undefined;
+
+    const imageUrl = '/assets/test-image.png';
+
     const setMap = (m: Map) => {
-      map = m;
+      loadImageSpy = sinon.spy(m, 'loadImage');
     };
 
     await render(
@@ -57,36 +60,42 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
           style="height:100px;"
           as |m|
         >
-          <m.image
-            @name="logo"
-            @url="https://demotiles.maplibre.org/style.json"
-          />
+          <m.image @name="logo" @url={{imageUrl}} />
           <span data-test-loaded />
         </MapLibreGL>
       </template>,
     );
 
     await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
+    await waitUntil(() => loadImageSpy?.called, { timeout: 5000 });
 
-    // The component calls loadImage from both constructor and template.
-    // Just verify the map is functional and no errors were thrown.
-    assert.ok(map, 'map is loaded and image component did not throw');
+    assert.true(loadImageSpy!.called, 'loadImage was called');
+    assert.strictEqual(
+      loadImageSpy!.firstCall.args[0],
+      imageUrl,
+      'loadImage called with correct URL',
+    );
   });
 
   test('it removes the image on destroy', async function (assert) {
+    let map: Map | undefined;
+    const setMap = (m: Map) => {
+      map = m;
+    };
     const state = new State();
 
     await render(
       <template>
         <MapLibreGL
           @initOptions={{hash style=STYLE}}
+          @mapLoaded={{setMap}}
           style="height:100px;"
           as |m|
         >
           {{#if state.show}}
             <m.image
               @name="cleanup-test"
-              @url="https://demotiles.maplibre.org/style.json"
+              @url="/fake-image.png"
             />
           {{/if}}
           <span data-test-loaded />
@@ -96,12 +105,27 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
 
     await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
 
+    // Manually register the image so the destructor has something to clean up
+    // (loadImage fails in test env since URL is fake)
+    if (!map!.hasImage('cleanup-test')) {
+      map!.addImage('cleanup-test', {
+        width: 1,
+        height: 1,
+        data: new Uint8Array(4),
+      });
+    }
+
+    const removeImageSpy = sinon.spy(map!, 'removeImage');
+
     state.show = false;
     await settled();
 
-    // removeImage should be called during cleanup (if image was successfully loaded)
-    // Either way, the component should not throw on destroy
-    assert.ok(true, 'image component destroyed without error');
+    assert.true(removeImageSpy.called, 'removeImage was called on destroy');
+    assert.strictEqual(
+      removeImageSpy.firstCall.args[0],
+      'cleanup-test',
+      'removes correct image name',
+    );
   });
 
   test('it discards stale loads when url changes mid-flight', async function (assert) {

@@ -31,6 +31,18 @@ const COMPONENT_MAP = {
 // Args that are pre-bound by the parent and not user-facing
 const PREBOUND_ARGS = new Set(['map', 'parent', 'eventSource', 'obj']);
 
+// Component class name → relative doc page (for linking yielded components)
+const COMPONENT_DOC_URLS = {
+  MapLibreGLCall: './call',
+  MapLibreGLControl: './control',
+  MapLibreGLImage: './image',
+  MapLibreGLLayer: './layer',
+  MapLibreGLMarker: './marker',
+  MapLibreGLOn: './on',
+  MapLibreGLPopup: './popup',
+  MapLibreGLSource: './source',
+};
+
 // MapLibre type → documentation URL mapping
 const MAPLIBRE_TYPE_URLS = {
   MapOptions: 'https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/MapOptions/',
@@ -210,13 +222,23 @@ function buildArgsTable(args) {
   return table;
 }
 
+function linkComponentTypes(typeStr) {
+  let result = typeStr;
+  for (const [name, url] of Object.entries(COMPONENT_DOC_URLS)) {
+    const regex = new RegExp(`\\b${name}\\b`, 'g');
+    result = result.replace(regex, `[${name}](${url})`);
+  }
+  return result;
+}
+
 function buildYieldsTable(yields) {
   if (yields.length === 0) return '';
   let table = '## Yields\n\n';
   table += '| Property | Type | Description |\n';
   table += '|----------|------|-------------|\n';
   for (const y of yields) {
-    const linkedType = linkMapLibreTypes(y.type);
+    let linkedType = linkMapLibreTypes(y.type);
+    linkedType = linkComponentTypes(linkedType);
     const typeCell = linkedType.includes('[') ? linkedType : `\`${linkedType}\``;
     table += `| \`${y.name}\` | ${typeCell} | ${y.description} |\n`;
   }

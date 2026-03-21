@@ -124,14 +124,14 @@ interface MapLibreGLSignature {
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `call` | `MapLibreGLCall` | Invoke a method on the map instance declaratively. |
-| `control` | `MapLibreGLControl` | Add a UI control (navigation, scale, etc.) to the map. |
-| `image` | `MapLibreGLImage` | Load and register a custom image for use in symbol layers. |
-| `layer` | `MapLibreGLLayer` | Add a rendering layer directly (without an explicit source component). |
-| `marker` | `MapLibreGLMarker` | Place a draggable marker on the map. |
-| `on` | `MapLibreGLOn` | Bind an event listener to the map. |
-| `popup` | `MapLibreGLPopup` | Show a popup overlay on the map. |
-| `source` | `MapLibreGLSource` | Add a data source (GeoJSON, vector tiles, etc.) to the map. |
+| `call` | [MapLibreGLCall](./call) | Invoke a method on the map instance declaratively. |
+| `control` | [MapLibreGLControl](./control) | Add a UI control (navigation, scale, etc.) to the map. |
+| `image` | [MapLibreGLImage](./image) | Load and register a custom image for use in symbol layers. |
+| `layer` | [MapLibreGLLayer](./layer) | Add a rendering layer directly (without an explicit source component). |
+| `marker` | [MapLibreGLMarker](./marker) | Place a draggable marker on the map. |
+| `on` | [MapLibreGLOn](./on) | Bind an event listener to the map. |
+| `popup` | [MapLibreGLPopup](./popup) | Show a popup overlay on the map. |
+| `source` | [MapLibreGLSource](./source) | Add a data source (GeoJSON, vector tiles, etc.) to the map. |
 | `instance` | `MaplibreMap | undefined` | The underlying MapLibre map instance (always defined inside the default block). |
 | `component` | `MapLibreGL` | The Ember component instance (useful for associateDestroyableChild). |
 
