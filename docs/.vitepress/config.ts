@@ -158,6 +158,9 @@ export default defineConfig({
   themeConfig: {
     logo: { light: '/logo.svg', dark: '/logo.svg' },
     siteTitle: false,
+    search: {
+      provider: 'local',
+    },
     nav: [
       { text: 'Examples', link: '/examples/introduction' },
       { text: 'API', link: '/components/map' },

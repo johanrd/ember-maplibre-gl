@@ -43,16 +43,21 @@
   background: none;
   align-self: center;
   font-size: 40px;
+  height: 40px;
 }
 
 .VPFeatures .VPFeature .VPImage,
 .VPFeatures .VPFeature .icon .icon-img {
   background: none;
   align-self: center;
-  max-height: 48px;
+  max-height: 40px;
 }
 
 /* Reset VitePress doc styles on MapLibre attribution elements */
 .ember-playground .maplibregl-ctrl-attrib summary {
   margin: 0;
+}
+
+.maplibregl-popup-close-button {
+  padding-inline: 10px;
 }

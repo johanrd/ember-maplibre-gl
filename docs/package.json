@@ -12,8 +12,9 @@
     "3d-tiles-renderer": "^0.4.0",
     "@mapbox/mapbox-gl-draw": "^1.4.0",
     "@turf/turf": "^7.0.0",
-    "ember-maplibre-gl": "workspace:*",
     "@watergis/maplibre-gl-terradraw": "^1.12.0",
+    "ember-maplibre-gl": "workspace:*",
+    "maplibregl-mapbox-request-transformer": "^0.0.3",
     "terra-draw": "^1.0.0",
     "three": "^0.183.0"
   },
