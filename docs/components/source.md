@@ -57,8 +57,8 @@ interface MapLibreGLSourceSignature {
             {
                 /** The ID of this source on the map. */
                 id: string;
-                /** Add a layer that renders data from this source. Pre-bound with map, sourceId, and before. */
-                layer: WithBoundArgs<typeof MapLibreGLLayer, 'map' | 'before' | 'sourceId'>;
+                /** Add a layer that renders data from this source. Pre-bound with map, sourceId, and parent. */
+                layer: WithBoundArgs<typeof MapLibreGLLayer, 'map' | 'sourceId' | 'parent'>;
             }
         ];
     };
@@ -82,7 +82,7 @@ interface MapLibreGLSourceSignature {
 | Property | Type | Description |
 |----------|------|-------------|
 | `id` | `string` | The ID of this source on the map. |
-| `layer` | `MapLibreGLLayer` | Add a layer that renders data from this source. Pre-bound with map, sourceId, and before. |
+| `layer` | `MapLibreGLLayer` | Add a layer that renders data from this source. Pre-bound with map, sourceId, and parent. |
 
 <!-- /YIELDS -->
 

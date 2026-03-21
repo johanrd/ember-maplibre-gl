@@ -6,7 +6,7 @@
     "docs:dev": "vitepress dev",
     "docs:build": "vitepress build",
     "docs:preview": "vitepress preview",
-    "docs:api": "cd .. && pnpm build && cd docs && typedoc"
+    "docs:api": "cd .. && pnpm build && cd docs && typedoc && node scripts/extract-signatures.mjs"
   },
   "dependencies": {
     "3d-tiles-renderer": "^0.4.0",
