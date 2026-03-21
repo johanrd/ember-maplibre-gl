@@ -9,13 +9,15 @@ import type MapLibreGLLayer from './components/maplibre-gl-layer.gts';
 import type MapLibreGLImage from './components/maplibre-gl-image.gts';
 
 export default interface EmberMapLibreGLRegistry {
-  MapLibreGL: typeof MapLibreGL;
-  MapLibreGLCall: typeof MapLibreGLCall;
-  MapLibreGLOn: typeof MapLibreGLOn;
-  MapLibreGLMarker: typeof MapLibreGLMarker;
-  MapLibreGLPopup: typeof MapLibreGLPopup;
-  MapLibreGLControl: typeof MapLibreGLControl;
-  MapLibreGLSource: typeof MapLibreGLSource;
-  MapLibreGLLayer: typeof MapLibreGLLayer;
-  MapLibreGLImage: typeof MapLibreGLImage;
+  // Loose-mode (.hbs) resolution uses dasherized file names.
+  // <MaplibreGl> resolves to maplibre-gl, <MaplibreGlMarker> to maplibre-gl-marker, etc.
+  MaplibreGl: typeof MapLibreGL;
+  MaplibreGlCall: typeof MapLibreGLCall;
+  MaplibreGlOn: typeof MapLibreGLOn;
+  MaplibreGlMarker: typeof MapLibreGLMarker;
+  MaplibreGlPopup: typeof MapLibreGLPopup;
+  MaplibreGlControl: typeof MapLibreGLControl;
+  MaplibreGlSource: typeof MapLibreGLSource;
+  MaplibreGlLayer: typeof MapLibreGLLayer;
+  MaplibreGlImage: typeof MapLibreGLImage;
 }

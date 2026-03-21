@@ -52,8 +52,7 @@ import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
 
 
 ## Compatibility
-
-- Ember.js v5.8 or above
+- Ember.js v3.28 or above
 - Embroider v2 addon
 - MapLibre GL JS v5
 
