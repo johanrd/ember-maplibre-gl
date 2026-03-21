@@ -49,6 +49,7 @@
 .VPFeatures .VPFeature .icon .icon-img {
   background: none;
   align-self: center;
+  max-height: 48px;
 }
 
 /* Reset VitePress doc styles on MapLibre attribution elements */
