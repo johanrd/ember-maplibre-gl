@@ -10,20 +10,29 @@ import type {
 } from 'maplibre-gl';
 import type { TOC } from '@ember/component/template-only';
 
-/** Minimal interface for any object that supports on/off event binding */
+/** Minimal interface for any object that supports on/off event binding. */
 interface EventTarget {
   on(...args: unknown[]): unknown;
   off(...args: unknown[]): unknown;
 }
 
+/** Args for the `MapLibreGLOn` template-only component. */
 interface Args {
+  /** The event name to listen for (e.g. "click", "moveend", "dragend"). */
   event: string;
+  /** Callback invoked when the event fires. Receives the MapLibre event object. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- event handlers receive library-specific event types
   action: (...args: any[]) => void;
+  /** The object to listen on — map, marker, or popup (pre-bound by parent). */
   eventSource?: EventTarget;
+  /** Optional layer ID to scope map events to features in a specific layer. */
   layerId?: string;
 }
 
+/**
+ * Resource-based event binding helper. Registers an event listener and automatically
+ * removes it on cleanup. Used internally by the `MapLibreGLOn` template component.
+ */
 export function mapOn(
   event: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -73,6 +82,21 @@ export function mapOn(
 
 resourceFactory(mapOn);
 
+/**
+ * Declaratively binds an event listener to a map, marker, or popup. Automatically
+ * cleans up the listener when the component is destroyed.
+ *
+ * Yielded by `<MapLibreGL>` as `map.on`, by `<marker>` as `marker.on`, and by
+ * `<popup>` as `popup.on`. The `eventSource` is pre-bound by the parent.
+ *
+ * When used with `@layerId`, the event only fires for features in that layer.
+ *
+ * @example
+ * ```gts
+ * <map.on @event="click" @action={{this.handleClick}} />
+ * <map.on @event="click" @layerId="my-layer" @action={{this.handleLayerClick}} />
+ * ```
+ */
 const MapLibreGLOn =
   // this should be a resource, and used as
   // {{map.on @event @action @layerId}} with prebound eventSource

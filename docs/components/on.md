@@ -22,15 +22,6 @@ import MapLibreGLOn from 'ember-maplibre-gl/components/maplibre-gl-on';
 ```
 :::
 
-## Args
-
-| Arg | Type | Required | Description |
-|-----|------|----------|-------------|
-| `event` | `string` | Yes | Event name (`'click'`, `'mousemove'`, `'zoom'`, etc.). |
-| `action` | `Function` | Yes | Event handler callback. |
-| `eventSource` | `Map \| Evented` | Yes | Object to listen on (auto-bound). |
-| `layerId` | `string` | No | Target a specific layer's events. |
-
 ## Map Events
 
 ```hbs

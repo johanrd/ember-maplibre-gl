@@ -8,29 +8,51 @@ import { registerDestructor } from '@ember/destroyable';
 import type Owner from '@ember/owner';
 import type maplibregl from 'maplibre-gl';
 
-// todo: add support for maplibre-gl popups
-export interface MapLibreGLPopupArgs {
-  map: maplibregl.Map;
-  marker?: Marker;
-  lngLat?: LngLatLike;
-  initOptions?: PopupOptions;
-}
+/** Signature for {@link MapLibreGLPopup}. */
 export interface MapLibreGLPopupSignature {
-  Args: MapLibreGLPopupArgs;
+  Args: {
+    /** The MapLibre map instance (pre-bound by parent). */
+    map: maplibregl.Map;
+    /** Marker to attach this popup to. When set, the popup opens on marker interaction. */
+    marker?: Marker;
+    /** Geographic position for standalone popups (not attached to a marker). Reactively updates. */
+    lngLat?: LngLatLike;
+    /** Popup configuration passed once at construction (closeButton, closeOnClick, anchor, offset, etc.). */
+    initOptions?: PopupOptions;
+  };
   Blocks: {
+    /** Yields an `on` component for listening to popup events (open, close). Block content becomes the popup DOM. */
     default: [
       {
+        /** Listen to popup events (open, close). Pre-bound with eventSource. */
         on: WithBoundArgs<typeof MapLibreGLOn, 'eventSource'>;
       },
     ];
   };
 }
 
+/**
+ * Displays a popup overlay on the map. Can be attached to a marker or positioned
+ * standalone at a coordinate. The block content becomes the popup's DOM.
+ *
+ * Yielded by `<MapLibreGL>` as `map.popup` or by `<marker.popup>`.
+ *
+ * @example
+ * ```gts
+ * <map.popup @lngLat={{array -96.79 32.77}} @initOptions={{hash closeButton=false}} as |popup|>
+ *   <p>Standalone popup content</p>
+ *   <popup.on @event="close" @action={{this.onPopupClose}} />
+ * </map.popup>
+ * ```
+ */
 export default class MapLibreGLPopup extends Component<MapLibreGLPopupSignature> {
+  /** @internal */
   @tracked popup?: Popup;
+  /** @internal */
   @tracked domContent = document.createElement('div');
 
-  constructor(owner: Owner, args: MapLibreGLPopupArgs) {
+  /** @internal */
+  constructor(owner: Owner, args: MapLibreGLPopupSignature['Args']) {
     super(owner, args);
 
     const { initOptions, marker, map, lngLat } = args;
@@ -58,7 +80,8 @@ export default class MapLibreGLPopup extends Component<MapLibreGLPopupSignature>
     });
   }
 
-  updatePopupLngLat = (lngLat: MapLibreGLPopupArgs['lngLat']) => {
+  /** @internal */
+  updatePopupLngLat = (lngLat: MapLibreGLPopupSignature['Args']['lngLat']) => {
     if (lngLat) {
       if (this.popup?.isOpen()) {
         this.popup?.setLngLat(lngLat);

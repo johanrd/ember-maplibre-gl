@@ -15,29 +15,55 @@ import {
 import type Owner from '@ember/owner';
 import type maplibregl from 'maplibre-gl';
 
-export interface MapLibreGLMarkerArgs {
-  map: maplibregl.Map;
-  lngLat: LngLatLike;
-  initOptions?: MarkerOptions;
-  parent?: MapLibreGL;
-}
+/** Signature for {@link MapLibreGLMarker}. */
 export interface MapLibreGLMarkerSignature {
-  Args: MapLibreGLMarkerArgs;
+  Args: {
+    /** The MapLibre map instance (pre-bound by parent). */
+    map: maplibregl.Map;
+    /** Geographic position of the marker. Reactively updates when changed. */
+    lngLat: LngLatLike;
+    /** Marker configuration passed once at construction (draggable, color, anchor, etc.). */
+    initOptions?: MarkerOptions;
+    /** Parent component for destroyable association (pre-bound by parent). */
+    parent?: MapLibreGL;
+  };
   Blocks: {
+    /** Yields a pre-bound `popup` (attached to this marker) and `on` for marker events (e.g. dragend). */
     default: [
       {
+        /** Attach a popup to this marker. Pre-bound with map and marker reference. */
         popup: WithBoundArgs<typeof MapLibreGLPopup, 'map' | 'marker'>;
+        /** Listen to marker events (drag, dragstart, dragend). Pre-bound with eventSource. */
         on: WithBoundArgs<typeof MapLibreGLOn, 'eventSource'>;
       },
     ];
   };
 }
 
+/**
+ * Places a marker on the map at a given position. The block content becomes the
+ * marker's DOM element, so you can render any Ember template inside it.
+ *
+ * Yielded by `<MapLibreGL>` as `map.marker`. Yields a pre-bound `popup` and `on` component.
+ *
+ * @example
+ * ```gts
+ * <map.marker @lngLat={{array -96.79 32.77}} @initOptions={{hash draggable=true}} as |marker|>
+ *   <marker.popup>
+ *     <p>Hello from Dallas!</p>
+ *   </marker.popup>
+ *   <marker.on @event="dragend" @action={{this.onDragEnd}} />
+ * </map.marker>
+ * ```
+ */
 export default class MapLibreGLMarker extends Component<MapLibreGLMarkerSignature> {
+  /** @internal */
   marker: Marker | undefined;
+  /** @internal */
   domContent = document.createElement('div');
 
-  constructor(owner: Owner, args: MapLibreGLMarkerArgs) {
+  /** @internal */
+  constructor(owner: Owner, args: MapLibreGLMarkerSignature['Args']) {
     super(owner, args);
 
     assert(
@@ -63,6 +89,7 @@ export default class MapLibreGLMarker extends Component<MapLibreGLMarkerSignatur
     });
   }
 
+  /** @internal */
   get markerOptions(): MarkerOptions {
     return {
       ...this.args.initOptions,
@@ -70,6 +97,7 @@ export default class MapLibreGLMarker extends Component<MapLibreGLMarkerSignatur
     };
   }
 
+  /** @internal */
   updateMarker = (lngLat: LngLatLike) => {
     assert(
       '`lngLat` argument is required for `MapLibreGLMarker` component',

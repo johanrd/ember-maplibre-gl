@@ -1,10 +1,39 @@
 {
   "entryPoints": ["../declarations/index.d.ts"],
+  "tsconfig": "./tsconfig.typedoc.json",
   "out": "./api",
   "plugin": ["typedoc-plugin-markdown", "typedoc-vitepress-theme"],
   "readme": "none",
   "excludePrivate": true,
   "excludeInternal": true,
+  "excludeProtected": true,
+  "excludeReferences": true,
+  "excludeExternals": true,
   "githubPages": false,
-  "outputFileStrategy": "modules"
+  "outputFileStrategy": "members",
+  "entryFileName": "index",
+  "hidePageHeader": true,
+  "hideGroupHeadings": false,
+  "useCodeBlocks": true,
+  "expandParameters": true,
+  "parametersFormat": "table",
+  "propertiesFormat": "table",
+  "enumMembersFormat": "table",
+  "typeDeclarationFormat": "table",
+  "indexFormat": "table",
+  "tableColumnSettings": {
+    "hideDefaults": true,
+    "hideInherited": true,
+    "hideOverrides": true,
+    "hideSources": true
+  },
+  "kindSortOrder": [
+    "Class",
+    "Interface",
+    "Function",
+    "Variable"
+  ],
+  "sidebar": {
+    "collapsed": false
+  }
 }

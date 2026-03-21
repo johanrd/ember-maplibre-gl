@@ -18,15 +18,6 @@ import MapLibreGLCall from 'ember-maplibre-gl/components/maplibre-gl-call';
 ```
 :::
 
-## Args
-
-| Arg | Type | Required | Description |
-|-----|------|----------|-------------|
-| `obj` | `Map` | Yes | Object to call the method on (auto-bound). |
-| `func` | `string` | Yes | Method name to call. |
-| `positionalArguments` | `unknown[]` | Yes | Arguments to pass to the method. |
-| `onResp` | `(result) => void` | No | Callback with the method's return value. |
-
 ## Example
 
 ```hbs
@@ -35,6 +26,35 @@ import MapLibreGLCall from 'ember-maplibre-gl/components/maplibre-gl-call';
   @positionalArguments={{array (hash center=(array -74.5 40) zoom=12)}}
 />
 ```
+
+<!-- SIGNATURE -->
+## Signature
+
+```ts
+interface MapLibreGLCallSignature {
+    Args: {
+        /** The object to call the method on — typically the map instance (pre-bound by parent). */
+        obj: MapInstance;
+        /** Name of the method to invoke (e.g. "flyTo", "setStyle", "resize"). */
+        func: keyof MapInstance;
+        /** Arguments to pass to the method. */
+        positionalArguments: unknown[];
+        /** Optional callback that receives the method's return value. */
+        onResp?: (result: unknown) => void;
+    };
+}
+```
+<!-- /SIGNATURE -->
+
+<!-- ARGS -->
+## Args
+
+| Arg | Type | Required | Description |
+|-----|------|----------|-------------|
+| `func` | `keyof MapInstance` | Yes | Name of the method to invoke (e.g. "flyTo", "setStyle", "resize"). |
+| `positionalArguments` | unknown[] | Yes | Arguments to pass to the method. |
+
+<!-- /ARGS -->
 
 ## Demo
 

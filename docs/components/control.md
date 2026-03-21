@@ -18,14 +18,6 @@ import MapLibreGLControl from 'ember-maplibre-gl/components/maplibre-gl-control'
 ```
 :::
 
-## Args
-
-| Arg | Type | Required | Description |
-|-----|------|----------|-------------|
-| `map` | `Map` | Yes | Map instance (auto-bound). |
-| `control` | `IControl` | Yes | A MapLibre control instance. |
-| `position` | `string` | No | Position: `'top-left'`, `'top-right'`, `'bottom-left'`, `'bottom-right'`. |
-
 ## Example
 
 ```gts
@@ -37,6 +29,35 @@ const nav = new NavigationControl();
   <map.control @control={{nav}} @position="top-right" />
 </template>
 ```
+
+<!-- SIGNATURE -->
+## Signature
+
+```ts
+interface MapLibreGLControlSignature {
+    Args: {
+        /** The MapLibre map instance (pre-bound by parent). */
+        map: maplibregl.Map;
+        /** A MapLibre IControl instance (e.g. `new NavigationControl()`, `new ScaleControl()`). */
+        control: maplibregl.IControl;
+        /** Corner placement: "top-left", "top-right", "bottom-left", or "bottom-right". */
+        position: Parameters<maplibregl.Map['addControl']>['1'];
+        /** Parent component for destroyable association (pre-bound by parent). */
+        parent?: MapLibreGL;
+    };
+}
+```
+<!-- /SIGNATURE -->
+
+<!-- ARGS -->
+## Args
+
+| Arg | Type | Required | Description |
+|-----|------|----------|-------------|
+| `control` | [IControl](https://maplibre.org/maplibre-gl-js/docs/API/interfaces/IControl/) | Yes | A MapLibre IControl instance (e.g. `new NavigationControl()`, `new ScaleControl()`). |
+| `position` | `ControlPosition` | Yes | Corner placement: "top-left", "top-right", "bottom-left", or "bottom-right". |
+
+<!-- /ARGS -->
 
 ## Demo
 

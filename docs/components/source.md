@@ -18,21 +18,6 @@ import MapLibreGLSource from 'ember-maplibre-gl/components/maplibre-gl-source';
 ```
 :::
 
-## Args
-
-| Arg | Type | Required | Description |
-|-----|------|----------|-------------|
-| `map` | `Map` | Yes | Map instance (auto-bound when used as `<map.source>`). |
-| `options` | `SourceSpecification` | Yes | Source configuration (`type`, `data`, etc.). |
-| `sourceId` | `string` | No | Custom source ID. Auto-generated if omitted. |
-
-## Yields
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `id` | `string` | The source ID. |
-| `layer` | `MapLibreGLLayer` | Add layers for this source (pre-bound with `sourceId`). |
-
 ## Reactive Updates
 
 When `@options` changes, the source is automatically updated:
@@ -50,6 +35,56 @@ When `@options` changes, the source is automatically updated:
   }} />
 </map.source>
 ```
+
+<!-- SIGNATURE -->
+## Signature
+
+```ts
+interface MapLibreGLSourceSignature {
+    Args: {
+        /** The MapLibre map instance (pre-bound by parent). */
+        map: Map;
+        /** Custom source ID. Auto-generated if omitted. */
+        sourceId?: string;
+        /** Source specification matching MapLibre's `addSource` API (type, data, tiles, url, etc.). */
+        options: Parameters<Map['addSource']>['1'];
+        /** Parent component for destroyable association (pre-bound by parent). */
+        parent?: MapLibreGL;
+    };
+    Blocks: {
+        /** Yields the source ID and a pre-bound `layer` component scoped to this source. */
+        default: [
+            {
+                /** The ID of this source on the map. */
+                id: string;
+                /** Add a layer that renders data from this source. Pre-bound with map, sourceId, and before. */
+                layer: WithBoundArgs<typeof MapLibreGLLayer, 'map' | 'before' | 'sourceId'>;
+            }
+        ];
+    };
+}
+```
+<!-- /SIGNATURE -->
+
+<!-- ARGS -->
+## Args
+
+| Arg | Type | Required | Description |
+|-----|------|----------|-------------|
+| `sourceId` | `string` | No | Custom source ID. Auto-generated if omitted. |
+| `options` | [SourceSpecification](https://maplibre.org/maplibre-style-spec/sources/) | Yes | Source specification matching MapLibre's `addSource` API (type, data, tiles, url, etc.). |
+
+<!-- /ARGS -->
+
+<!-- YIELDS -->
+## Yields
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | `string` | The ID of this source on the map. |
+| `layer` | `MapLibreGLLayer` | Add a layer that renders data from this source. Pre-bound with map, sourceId, and before. |
+
+<!-- /YIELDS -->
 
 ## Demo
 

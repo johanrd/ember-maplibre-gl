@@ -54,26 +54,46 @@ export interface MapInstance extends Evented {
   setTerrain?: maplibregl.Map['setTerrain'];
 }
 
-export interface MapLibreGLCallArgs {
-  obj: MapInstance;
-  func: keyof MapInstance;
-  positionalArguments: unknown[];
-  onResp?: (result: unknown) => void;
-}
+/** Signature for {@link MapLibreGLCall}. */
 export interface MapLibreGLCallSignature {
-  Args: MapLibreGLCallArgs;
+  Args: {
+    /** The object to call the method on — typically the map instance (pre-bound by parent). */
+    obj: MapInstance;
+    /** Name of the method to invoke (e.g. "flyTo", "setStyle", "resize"). */
+    func: keyof MapInstance;
+    /** Arguments to pass to the method. */
+    positionalArguments: unknown[];
+    /** Optional callback that receives the method's return value. */
+    onResp?: (result: unknown) => void;
+  };
 }
 
+/**
+ * Declaratively invokes a method on the map instance (or any object). Re-invokes
+ * reactively when arguments change, making it useful for imperative map APIs
+ * like `flyTo`, `setStyle`, or `resize` in a template-driven way.
+ *
+ * Yielded by `<MapLibreGL>` as `map.call`. Does not yield any block content.
+ *
+ * @example
+ * ```gts
+ * <map.call @func="flyTo" @positionalArguments={{array (hash center=this.target zoom=14)}} />
+ * <map.call @func="resize" @positionalArguments={{array}} />
+ * ```
+ */
 export default class MapLibreGLCall extends Component<MapLibreGLCallSignature> {
+  /** @internal */
   get onResp() {
     return this.args.onResp || (() => {});
   }
 
-  constructor(owner: Owner, args: MapLibreGLCallArgs) {
+  /** @internal */
+  constructor(owner: Owner, args: MapLibreGLCallSignature['Args']) {
     super(owner, args);
     this.call(args.obj, args.func, args.positionalArguments);
   }
 
+  /** @internal */
   call = (
     obj: MapInstance,
     func: keyof MapInstance,

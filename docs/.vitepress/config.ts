@@ -1,5 +1,11 @@
 import { defineConfig, type Plugin } from 'vitepress'
 import vitePluginEmber, { emberFence } from 'vite-plugin-ember'
+import typedocSidebarRaw from '../api/typedoc-sidebar.json'
+
+const typedocSidebar = typedocSidebarRaw.map((group: any) => ({
+  ...group,
+  text: group.text === 'Classes' ? 'Components' : group.text,
+}))
 
 /**
  * Vite plugin that rewrites `importSync("specifier")` calls (from
@@ -98,6 +104,9 @@ const examplesSidebar = [
       { text: 'Video on Map', link: '/examples/video-on-map' },
       { text: 'Locate the User', link: '/examples/locate-user' },
       { text: 'Imperative API', link: '/examples/imperative-api' },
+      { text: 'Reuse Maps', link: '/examples/reuse-maps' },
+      { text: 'Mapbox Styles', link: '/examples/mapbox-styles' },
+      { text: 'Authorized Tile Sources', link: '/examples/transform-request' },
     ],
   },
   {
@@ -151,8 +160,7 @@ export default defineConfig({
     logo: { light: '/logo.svg', dark: '/logo.svg' },
     siteTitle: false,
     nav: [
-      { text: 'Guide', link: '/examples/introduction' },
-      { text: 'Examples', link: '/examples/basic-map' },
+      { text: 'Examples', link: '/examples/introduction' },
       { text: 'API', link: '/components/map' },
     ],
     sidebar: {
@@ -173,6 +181,7 @@ export default defineConfig({
           ],
         },
       ],
+      '/api/': typedocSidebar,
     },
 
     socialLinks: [

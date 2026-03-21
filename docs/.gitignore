@@ -1,4 +1,5 @@
 .vitepress/cache
 .vitepress/dist
+api/
 .claude
 node_modules
