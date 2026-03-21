@@ -4,12 +4,6 @@ Declarative [MapLibre GL JS](https://maplibre.org/maplibre-gl-js/docs/) componen
 
 [Demo and docs](https://johanrd.github.io/ember-maplibre-gl)
 
-## Compatibility
-
-- Ember.js v5.8 or above
-- Embroider v2 addon
-- MapLibre GL JS v5
-
 ## Installation
 
 ```bash
@@ -55,6 +49,14 @@ import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
 | `<map.control>` | Add map controls |
 | `<map.image>` | Load images for symbol layers |
 | `<map.call>` | Call map methods imperatively |
+
+
+## Compatibility
+
+- Ember.js v5.8 or above
+- Embroider v2 addon
+- MapLibre GL JS v5
+
 
 ## Acknowledgements
 
