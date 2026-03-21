@@ -122,7 +122,7 @@ jobs:
       - name: Install and build
         run: pnpm install --no-lockfile && pnpm build
       - name: Downgrade to Ember 3.28
-        run: pnpm add -w -D ember-source@~3.28.0
+        run: pnpm add -w -D ember-source@~3.28.0 @glimmer/component@^1.1.2 @glimmer/tracking@^1.1.2
       - name: Run Tests
         run: pnpm test
 
