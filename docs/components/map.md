@@ -13,10 +13,13 @@ import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
 The component supports an `error` named block:
 
 ```hbs
-<MapLibreGL @initOptions={{this.options}} as |map|>
-  <!-- map content -->
-{{else error as |error|}}
-  <p>Map failed to load: {{error}}</p>
+<MapLibreGL @initOptions={{this.options}}>
+  <:default as |map|>
+    <!-- map content -->
+  </:default>
+  <:error as |error|>
+    <p>Map failed to load: {{error}}</p>
+  </:error>
 </MapLibreGL>
 ```
 
@@ -91,7 +94,7 @@ interface MapLibreGLSignature {
                 popup: WithBoundArgs<typeof MapLibreGLPopup, 'map'>;
                 /** Add a data source (GeoJSON, vector tiles, etc.) to the map. */
                 source: WithBoundArgs<typeof MapLibreGLSource, 'map' | 'parent'>;
-                /** The underlying MapLibre map instance, or undefined before load. */
+                /** The underlying MapLibre map instance (always defined inside the default block). */
                 instance: MaplibreMap | undefined;
                 /** The Ember component instance (useful for associateDestroyableChild). */
                 component: MapLibreGL;
@@ -112,6 +115,7 @@ interface MapLibreGLSignature {
 | `initOptions` | Omit<[MapOptions](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/MapOptions/), 'container'> | Yes | MapLibre map options (style, center, zoom, etc.). Passed once at construction; later changes are ignored. The `container` property is managed internally and should be omitted. |
 | `mapLoaded` | `Function` | No | Called once the map's style and tiles have loaded. Receives the map instance. |
 | `reuseMaps` | `boolean` | No | Cache the WebGL map instance on teardown and reuse it on remount. Avoids expensive context creation on repeated route transitions. Only works when `initOptions.style` is a URL string. |
+| `mapLib` | `MapConstructor` | No | Override the map constructor (e.g. for testing or mapbox-gl compatibility). |
 
 <!-- /ARGS -->
 
@@ -128,7 +132,7 @@ interface MapLibreGLSignature {
 | `on` | `MapLibreGLOn` | Bind an event listener to the map. |
 | `popup` | `MapLibreGLPopup` | Show a popup overlay on the map. |
 | `source` | `MapLibreGLSource` | Add a data source (GeoJSON, vector tiles, etc.) to the map. |
-| `instance` | `MaplibreMap | undefined` | The underlying MapLibre map instance, or undefined before load. |
+| `instance` | `MaplibreMap | undefined` | The underlying MapLibre map instance (always defined inside the default block). |
 | `component` | `MapLibreGL` | The Ember component instance (useful for associateDestroyableChild). |
 
 <!-- /YIELDS -->

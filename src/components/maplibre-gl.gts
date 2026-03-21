@@ -80,7 +80,7 @@ export interface MapLibreGLSignature {
         popup: WithBoundArgs<typeof MapLibreGLPopup, 'map'>;
         /** Add a data source (GeoJSON, vector tiles, etc.) to the map. */
         source: WithBoundArgs<typeof MapLibreGLSource, 'map' | 'parent'>;
-        /** The underlying MapLibre map instance, or undefined before load. */
+        /** The underlying MapLibre map instance (always defined inside the default block). */
         instance: MaplibreMap | undefined;
         /** The Ember component instance (useful for associateDestroyableChild). */
         component: MapLibreGL;

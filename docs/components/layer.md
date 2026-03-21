@@ -63,7 +63,7 @@ interface MapLibreGLLayerSignature {
 | Arg | Type | Required | Description |
 |-----|------|----------|-------------|
 | `sourceId` | `string` | Yes | Source ID to render data from (pre-bound when used via `source.layer`). |
-| `options` | [LayerSpecification](https://maplibre.org/maplibre-style-spec/layers/) | Yes | Layer specification (type, paint, layout, filter, etc.). The `id` and `source` are optional and auto-filled. |
+| `options` | Omit<[LayerSpecification](https://maplibre.org/maplibre-style-spec/layers/), 'id'> & { id?: LayerSp... | Yes | Layer specification (type, paint, layout, filter, etc.). The `id` and `source` are optional and auto-filled. |
 | `before` | `string` | No | Layer ID or position to insert this layer before in the stack. |
 
 <!-- /ARGS -->

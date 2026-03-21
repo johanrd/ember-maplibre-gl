@@ -96,7 +96,7 @@ function parseArgs(declContent, componentName) {
   // Parse each property: /** description */ name?: Type;
   // Handle multiline types by matching up to the next JSDoc or end of block
   const propRegex =
-    /\/\*\*\s*([\s\S]*?)\s*\*\/\s*\n\s+(\w+)(\??):\s*([\s\S]*?)(?=\n\s+\/\*\*|\n\s{4}\};)/g;
+    /\/\*\*\s*([\s\S]*?)\s*\*\/\s*\n\s+(\w+)(\??):\s*([\s\S]*?)(?=\n\s+\/\*\*|\n\s*\};|$)/g;
   let m;
   while ((m = propRegex.exec(argsBody)) !== null) {
     const description = m[1]

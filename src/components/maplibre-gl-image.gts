@@ -78,7 +78,7 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
     if (!url || typeof url !== 'string') {
       return false;
     }
-    return /\.svg$/.test(url);
+    return /\.svg(?:[?#]|$)/.test(url);
   }
 
   /** @internal */

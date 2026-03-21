@@ -1,10 +1,8 @@
 import Component from '@glimmer/component';
 import { guidFor } from '@ember/object/internals';
 import { assert } from '@ember/debug';
-import maplibregl, {
-  type FilterSpecification,
-  type LayerSpecification,
-} from 'maplibre-gl';
+import type maplibregl from 'maplibre-gl';
+import type { FilterSpecification, LayerSpecification } from 'maplibre-gl';
 import { hash } from '@ember/helper';
 import {
   associateDestroyableChild,

@@ -1,5 +1,4 @@
 import Component from '@glimmer/component';
-import { tracked } from '@glimmer/tracking';
 import { Marker, Popup, type PopupOptions, type LngLatLike } from 'maplibre-gl';
 import MapLibreGLOn from './maplibre-gl-on.gts';
 import type { WithBoundArgs } from '@glint/template';
@@ -47,9 +46,9 @@ export interface MapLibreGLPopupSignature {
  */
 export default class MapLibreGLPopup extends Component<MapLibreGLPopupSignature> {
   /** @internal */
-  @tracked popup?: Popup;
+  popup?: Popup;
   /** @internal */
-  @tracked domContent = document.createElement('div');
+  domContent = document.createElement('div');
 
   /** @internal */
   constructor(owner: Owner, args: MapLibreGLPopupSignature['Args']) {

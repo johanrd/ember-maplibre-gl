@@ -77,6 +77,7 @@ interface MapLibreGLPopupSignature {
 |-----|------|----------|-------------|
 | `marker` | `Marker` | No | Marker to attach this popup to. When set, the popup opens on marker interaction. |
 | `lngLat` | [LngLatLike](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/LngLatLike/) | No | Geographic position for standalone popups (not attached to a marker). Reactively updates. |
+| `initOptions` | [PopupOptions](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/PopupOptions/) | No | Popup configuration passed once at construction (closeButton, closeOnClick, anchor, offset, etc.). |
 
 <!-- /ARGS -->
 

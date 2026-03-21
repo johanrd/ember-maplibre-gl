@@ -106,7 +106,7 @@ export default class MapLibreGLCall extends Component<MapLibreGLCallSignature> {
     );
 
     const method = obj[func] as (...args: unknown[]) => unknown;
-    return this.onResp?.(method.apply(obj, positionalArguments));
+    this.onResp?.(method.apply(obj, positionalArguments));
   };
 
   <template>{{this.call @obj @func @positionalArguments}}</template>

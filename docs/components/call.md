@@ -53,6 +53,7 @@ interface MapLibreGLCallSignature {
 |-----|------|----------|-------------|
 | `func` | `keyof MapInstance` | Yes | Name of the method to invoke (e.g. "flyTo", "setStyle", "resize"). |
 | `positionalArguments` | unknown[] | Yes | Arguments to pass to the method. |
+| `onResp` | `Function` | No | Optional callback that receives the method's return value. |
 
 <!-- /ARGS -->
 
