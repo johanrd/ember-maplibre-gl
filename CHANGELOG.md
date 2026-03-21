@@ -2,6 +2,18 @@
 
 ## Release (2026-03-21)
 
+* ember-maplibre-gl 0.2.5 (patch)
+
+#### :bug: Bug Fix
+* `ember-maplibre-gl`
+  * [#18](https://github.com/johanrd/ember-maplibre-gl/pull/18) Error handling ([@johanrd](https://github.com/johanrd))
+  * [#16](https://github.com/johanrd/ember-maplibre-gl/pull/16) flaky ci ([@johanrd](https://github.com/johanrd))
+
+#### Committers: 1
+- [@johanrd](https://github.com/johanrd)
+
+## Release (2026-03-21)
+
 * ember-maplibre-gl 0.2.4 (patch)
 
 #### :bug: Bug Fix
