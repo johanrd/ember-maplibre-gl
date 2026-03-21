@@ -93,10 +93,7 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
           as |m|
         >
           {{#if state.show}}
-            <m.image
-              @name="cleanup-test"
-              @url="/fake-image.png"
-            />
+            <m.image @name="cleanup-test" @url="/fake-image.png" />
           {{/if}}
           <span data-test-loaded />
         </MapLibreGL>

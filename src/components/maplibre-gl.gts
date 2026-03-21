@@ -18,6 +18,7 @@ import maplibregl, {
   type MapOptions,
   type Map as MaplibreMap,
   type MapContextEvent,
+  type ErrorEvent as MapErrorEvent,
 } from 'maplibre-gl';
 
 import { registerDestructor } from '@ember/destroyable';
@@ -86,8 +87,8 @@ export interface MapLibreGLSignature {
         component: MapLibreGL;
       },
     ];
-    /** Yielded when the map encounters a fatal error (e.g. WebGL context lost). */
-    error: [ErrorEvent];
+    /** Yielded when the map encounters a fatal error (e.g. WebGL context lost). Receives an `Error` with a `.message` property. */
+    error: [Error];
   };
 }
 
@@ -124,7 +125,7 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
   map?: MaplibreMap;
 
   /** @internal */
-  @tracked error?: ErrorEvent;
+  @tracked error?: Error;
 
   /** @internal */
   registerElement = modifier(
@@ -136,9 +137,12 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
         this.args.mapLoaded?.(this.map as MaplibreMap);
       };
 
-      const onError = (error: ErrorEvent) => {
-        console.error('MapLibre GL error:', error);
-        this.error = error;
+      const onError = (event: MapErrorEvent) => {
+        console.error('MapLibre GL error:', event);
+        this.error =
+          event.error instanceof Error
+            ? event.error
+            : new Error(event.error.message);
       };
 
       const onContextLost = (event: MapContextEvent) => {
@@ -253,7 +257,8 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
             'Failed to initialize map (likely WebGL issue):',
             error,
           );
-          this.error = error as ErrorEvent;
+          this.error =
+            error instanceof Error ? error : new Error(String(error));
           return;
         }
       }

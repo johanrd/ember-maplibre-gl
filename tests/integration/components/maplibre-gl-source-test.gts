@@ -382,7 +382,14 @@ module('Integration | Component | maplibre-gl-source', function (hooks) {
         {
           type: 'Feature',
           properties: { name: 'replaced' },
-          geometry: { type: 'LineString', coordinates: [[1, 1], [2, 2], [3, 3]] },
+          geometry: {
+            type: 'LineString',
+            coordinates: [
+              [1, 1],
+              [2, 2],
+              [3, 3],
+            ],
+          },
         },
         {
           type: 'Feature',
