@@ -141,6 +141,18 @@ module('Integration | Component | maplibre-gl-source', function (hooks) {
     await settled();
 
     assert.true(setDataSpy.called, 'setData was called on the real source');
+    const calledWith = setDataSpy.firstCall.args[0] as FeatureCollection;
+    assert.strictEqual(
+      calledWith.features.length,
+      1,
+      'setData received the updated FeatureCollection',
+    );
+    assert.deepEqual(
+      (calledWith.features[0]!.geometry as { coordinates: number[] })
+        .coordinates,
+      [1, 1],
+      'setData received the correct updated coordinates',
+    );
   });
 
   test('it updates coordinates via setCoordinates for video sources', async function (assert) {
@@ -197,6 +209,11 @@ module('Integration | Component | maplibre-gl-source', function (hooks) {
       await settled();
 
       assert.true(spy.called, 'setCoordinates was called');
+      assert.deepEqual(
+        spy.firstCall.args[0],
+        updated,
+        'setCoordinates received the correct updated coordinates',
+      );
     } else {
       // Video sources may not be supported in all MapLibre builds
       assert.ok(true, 'video source created (setCoordinates not available)');

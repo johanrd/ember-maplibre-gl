@@ -36,8 +36,9 @@ module('Integration | Component | maplibre-gl-popup', function (hooks) {
   });
 
   test('popup content is rendered and events can be subscribed to', async function (assert) {
+    let closeFired = false;
     const onClose = () => {
-      // close event handler
+      closeFired = true;
     };
 
     await render(
@@ -61,6 +62,15 @@ module('Integration | Component | maplibre-gl-popup', function (hooks) {
     assert
       .dom('.maplibregl-popup-content')
       .containsText('Hi', 'popup content rendered');
+
+    // Close the popup via close button and verify event fires
+    const closeBtn = document.querySelector(
+      '.maplibregl-popup-close-button',
+    ) as HTMLElement;
+    closeBtn.click();
+    await settled();
+
+    assert.true(closeFired, 'close event handler was called');
   });
 
   test('it handles re-renders after closing when lngLat changes', async function (assert) {

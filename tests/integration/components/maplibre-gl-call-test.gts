@@ -32,6 +32,29 @@ module('Integration | Component | maplibre-gl-call', function (hooks) {
     );
   });
 
+  test('it binds the correct this context when calling the function', async function (assert) {
+    const flyToFn = sinon.stub();
+    const obj = { flyTo: flyToFn } as unknown as MapInstance;
+
+    const args = [{ center: [0, 0] }];
+
+    await render(
+      <template>
+        <MapLibreGLCall
+          @obj={{obj}}
+          @func="flyTo"
+          @positionalArguments={{args}}
+        />
+      </template>,
+    );
+
+    assert.true(flyToFn.calledOnce, 'function was called');
+    assert.true(
+      flyToFn.calledOn(obj),
+      'function was called with the object as this context',
+    );
+  });
+
   test('it passes the return value to onResp', async function (assert) {
     assert.expect(1);
 

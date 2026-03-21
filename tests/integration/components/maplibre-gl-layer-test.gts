@@ -195,6 +195,15 @@ module('Integration | Component | maplibre-gl-layer', function (hooks) {
     // Both layers should exist
     assert.ok(map?.getLayer('first-layer'), 'first layer exists');
     assert.ok(map?.getLayer('before-test'), 'before layer exists');
+
+    // Verify layer ordering: 'before-test' should be rendered before 'first-layer'
+    const layers = map?.getStyle().layers ?? [];
+    const beforeIdx = layers.findIndex((l) => l.id === 'before-test');
+    const firstIdx = layers.findIndex((l) => l.id === 'first-layer');
+    assert.true(
+      beforeIdx < firstIdx,
+      'before-test layer is ordered before first-layer',
+    );
   });
 
   test('it updates layout properties', async function (assert) {
@@ -354,6 +363,19 @@ module('Integration | Component | maplibre-gl-layer', function (hooks) {
       ['!=', '$type', 'LineString'],
       'filter was updated',
     );
+
+    // Clear the filter
+    state.layerOptions = {
+      ...state.layerOptions,
+      filter: undefined,
+    };
+    await settled();
+
+    assert.strictEqual(
+      map?.getFilter('filter-test'),
+      undefined,
+      'filter was cleared',
+    );
   });
 
   test('it updates minzoom and maxzoom', async function (assert) {
@@ -392,12 +414,22 @@ module('Integration | Component | maplibre-gl-layer', function (hooks) {
 
     await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
 
+    // Verify initial minzoom/maxzoom were passed through
+    const layer = map?.getLayer('zoom-test');
+    assert.strictEqual(layer?.minzoom, 5, 'initial minzoom is 5');
+    assert.strictEqual(layer?.maxzoom, 10, 'initial maxzoom is 10');
+
     const setZoomSpy = sinon.spy(map!, 'setLayerZoomRange');
 
     state.layerOptions = { ...state.layerOptions, minzoom: 2, maxzoom: 15 };
     await settled();
 
-    assert.true(setZoomSpy.called, 'setLayerZoomRange called');
+    assert.true(setZoomSpy.called, 'setLayerZoomRange called on update');
+    assert.strictEqual(
+      setZoomSpy.firstCall.args[0],
+      'zoom-test',
+      'setLayerZoomRange called with correct layerId',
+    );
     assert.strictEqual(setZoomSpy.firstCall.args[1], 2, 'minzoom updated');
     assert.strictEqual(setZoomSpy.firstCall.args[2], 15, 'maxzoom updated');
   });
