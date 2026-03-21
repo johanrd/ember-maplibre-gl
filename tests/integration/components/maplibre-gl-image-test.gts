@@ -131,8 +131,8 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
 
     const setMap = (m: Map) => {
       loadImageStub = sinon.stub(m, 'loadImage');
-      // First call never resolves (simulating slow network)
-      loadImageStub.onFirstCall().returns(new Promise(() => {}) as never);
+      // Default: return a never-resolving promise (so calls don't crash)
+      loadImageStub.returns(new Promise(() => {}) as never);
       // Second call resolves immediately
       loadImageStub.onSecondCall().resolves({ data: new Image() } as never);
       addImageStub = sinon.stub(m, 'addImage');

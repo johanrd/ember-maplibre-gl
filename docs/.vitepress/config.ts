@@ -120,8 +120,17 @@ const examplesSidebar = [
 
 export default defineConfig({
   title: 'ember-maplibre-gl',
-  description: 'MapLibre GL JS components for Ember.js',
+  description: 'Declarative MapLibre GL JS components for Ember.js',
   base: '/ember-maplibre-gl/',
+
+  head: [
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/ember-maplibre-gl/ember-icon.svg' }],
+    ['meta', { property: 'og:title', content: 'ember-maplibre-gl' }],
+    ['meta', { property: 'og:description', content: 'Declarative MapLibre GL JS components for Ember.js' }],
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:url', content: 'https://johanrd.github.io/ember-maplibre-gl/' }],
+    ['meta', { property: 'og:image', content: 'https://johanrd.github.io/ember-maplibre-gl/og-image.png' }],
+  ],
 
   vite: {
     plugins: [embroiderImportSyncTransform(), vitePluginEmber()],
