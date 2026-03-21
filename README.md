@@ -2,6 +2,8 @@
 
 Declarative [MapLibre GL JS](https://maplibre.org/maplibre-gl-js/docs/) components for [Ember.js](https://emberjs.com/).
 
+[Demo and docs](https://johanrd.github.io/ember-maplibre-gl)
+
 ## Compatibility
 
 - Ember.js v5.8 or above
