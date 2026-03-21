@@ -1,22 +1,18 @@
 {
   "solution": {
     "ember-maplibre-gl": {
-      "impact": "minor",
-      "oldVersion": "0.1.2",
-      "newVersion": "0.2.0",
+      "impact": "patch",
+      "oldVersion": "0.2.0",
+      "newVersion": "0.2.1",
       "tagName": "latest",
       "constraints": [
         {
-          "impact": "minor",
-          "reason": "Appears in changelog section :rocket: Enhancement"
-        },
-        {
           "impact": "patch",
-          "reason": "Appears in changelog section :house: Internal"
+          "reason": "Appears in changelog section :bug: Bug Fix"
         }
       ],
       "pkgJSONPath": "./package.json"
     }
   },
-  "description": "## Release (2026-03-21)\n\n* ember-maplibre-gl 0.2.0 (minor)\n\n#### :rocket: Enhancement\n* `ember-maplibre-gl`\n  * [#6](https://github.com/johanrd/ember-maplibre-gl/pull/6) m ([@johanrd](https://github.com/johanrd))\n\n#### :house: Internal\n* `ember-maplibre-gl`\n  * [#5](https://github.com/johanrd/ember-maplibre-gl/pull/5) Prepare Release vnull ([@github-actions[bot]](https://github.com/apps/github-actions))\n\n#### Committers: 2\n- GitHub Actions [Bot] ([@github-actions](https://github.com/apps/github-actions))\n- [@johanrd](https://github.com/johanrd)\n"
+  "description": "## Release (2026-03-21)\n\n* ember-maplibre-gl 0.2.1 (patch)\n\n#### :bug: Bug Fix\n* `ember-maplibre-gl`\n  * [#9](https://github.com/johanrd/ember-maplibre-gl/pull/9) m2 ([@johanrd](https://github.com/johanrd))\n\n#### Committers: 1\n- [@johanrd](https://github.com/johanrd)\n"
 }
