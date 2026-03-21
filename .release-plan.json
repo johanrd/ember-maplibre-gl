@@ -1,18 +1,8 @@
 {
   "solution": {
     "ember-maplibre-gl": {
-      "impact": "patch",
-      "oldVersion": "0.1.1",
-      "newVersion": "0.1.2",
-      "tagName": "latest",
-      "constraints": [
-        {
-          "impact": "patch",
-          "reason": "Appears in changelog section :house: Internal"
-        }
-      ],
-      "pkgJSONPath": "./package.json"
+      "oldVersion": "0.1.2"
     }
   },
-  "description": "## Release (2026-03-21)\n\n* ember-maplibre-gl 0.1.2 (patch)\n\n#### :house: Internal\n* `ember-maplibre-gl`\n  * [#4](https://github.com/johanrd/ember-maplibre-gl/pull/4) docs/styles ([@johanrd](https://github.com/johanrd))\n  * [#2](https://github.com/johanrd/ember-maplibre-gl/pull/2) release-plan ([@johanrd](https://github.com/johanrd))\n\n#### Committers: 1\n- [@johanrd](https://github.com/johanrd)\n"
+  "description": "\n\n\n\n"
 }

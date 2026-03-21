@@ -1,5 +1,10 @@
 # Changelog
 
+
+
+
+
+
 ## Release (2026-03-21)
 
 * ember-maplibre-gl 0.1.2 (patch)
