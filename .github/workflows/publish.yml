@@ -79,7 +79,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - run: pnpm install --frozen-lockfile
       - name: Publish to npm
-        run: pnpm release-plan publish
+        run: test -f '.release-plan.json' && pnpm release-plan publish || echo "No release plan found, skipping publish"
         env:
           GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
