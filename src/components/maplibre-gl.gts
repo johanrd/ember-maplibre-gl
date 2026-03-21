@@ -138,7 +138,7 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
       };
 
       const onError = (event: MapErrorEvent) => {
-        console.error('MapLibre GL error:', event);
+        console.error('MapLibre GL error:', event.error?.message ?? event.error);
         this.error =
           event.error instanceof Error
             ? event.error
