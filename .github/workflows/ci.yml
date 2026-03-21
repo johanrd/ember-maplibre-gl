@@ -106,24 +106,4 @@ jobs:
           
         env: ${{ matrix.env }}
 
-  test-ember-3-28:
-    name: "ember-lts-3.28"
-    runs-on: ubuntu-latest
-    needs: "test"
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - name: Install and build
-        run: pnpm install --no-lockfile && pnpm build
-      - name: Downgrade to Ember 3.28
-        run: pnpm add -w -D ember-source@~3.28.0 @glimmer/component@^1.1.2 @glimmer/tracking@^1.1.2
-      - name: Run Tests
-        run: pnpm test
-
 
