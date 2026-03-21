@@ -2,6 +2,17 @@
 
 ## Release (2026-03-21)
 
+* ember-maplibre-gl 0.2.2 (patch)
+
+#### :bug: Bug Fix
+* `ember-maplibre-gl`
+  * [#10](https://github.com/johanrd/ember-maplibre-gl/pull/10) add maplibre as peer ([@johanrd](https://github.com/johanrd))
+
+#### Committers: 1
+- [@johanrd](https://github.com/johanrd)
+
+## Release (2026-03-21)
+
 * ember-maplibre-gl 0.2.1 (patch)
 
 #### :bug: Bug Fix
