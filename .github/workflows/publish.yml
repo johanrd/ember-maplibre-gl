@@ -23,12 +23,9 @@ jobs:
         with:
           fetch-depth: 0
           ref: "main"
-      # This will only cause the job to run on push events when the latest
-      # commit has added a changeset. On a PR event, it will check for the
-      # "release" label.
       - id: check-release
         run: |
-          if git diff HEAD~1 --diff-filter=A --name-only | grep -v 'README\.md' | grep -q '^\.changeset/[^/]*\.md$'; then
+          if ls .changeset/*.md 2>/dev/null | grep -v README | grep -q .; then
             echo 'command=release' >> $GITHUB_OUTPUT
           fi
 
