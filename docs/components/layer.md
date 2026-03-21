@@ -20,24 +20,62 @@ import MapLibreGLLayer from 'ember-maplibre-gl/components/maplibre-gl-layer';
 ```
 :::
 
+## Reactive Updates
+
+When `@options` changes, the layer automatically updates its `paint`, `layout`, `filter`, and zoom range properties. Removed properties are reset to their defaults (following the react-map-gl pattern).
+
+<!-- SIGNATURE -->
+## Signature
+
+```ts
+interface MapLibreGLLayerSignature {
+    Args: {
+        /** The MapLibre map instance (pre-bound by parent). */
+        map: maplibregl.Map;
+        /** Source ID to render data from (pre-bound when used via `source.layer`). */
+        sourceId: string;
+        /** Layer specification (type, paint, layout, filter, etc.). The `id` and `source` are optional and auto-filled. */
+        options: Omit<LayerSpecification, 'id'> & {
+            id?: LayerSpecification['id'];
+            source?: string;
+        };
+        /** Layer ID or position to insert this layer before in the stack. */
+        before?: Parameters<maplibregl.Map['addLayer']>[1];
+        /** Parent component for destroyable association (pre-bound by parent). */
+        parent?: MapLibreGLSource | MapLibreGL;
+    };
+    Blocks: {
+        /** Yields the layer's ID, useful for event binding or querying features. */
+        default: [
+            {
+                /** The ID of this layer on the map. */
+                id: string;
+            }
+        ];
+    };
+}
+```
+<!-- /SIGNATURE -->
+
+<!-- ARGS -->
 ## Args
 
 | Arg | Type | Required | Description |
 |-----|------|----------|-------------|
-| `map` | `Map` | Yes | Map instance (auto-bound). |
-| `sourceId` | `string` | Yes | ID of the source to render (auto-bound from `<source.layer>`). |
-| `options` | `LayerSpecification` | Yes | Layer config: `type`, `paint`, `layout`, `filter`, `minzoom`, `maxzoom`. |
-| `before` | `string` | No | Insert this layer before the specified layer ID. |
+| `sourceId` | `string` | Yes | Source ID to render data from (pre-bound when used via `source.layer`). |
+| `options` | Omit<[LayerSpecification](https://maplibre.org/maplibre-style-spec/layers/), 'id'> & { id?: LayerSp... | Yes | Layer specification (type, paint, layout, filter, etc.). The `id` and `source` are optional and auto-filled. |
+| `before` | `string` | No | Layer ID or position to insert this layer before in the stack. |
 
+<!-- /ARGS -->
+
+<!-- YIELDS -->
 ## Yields
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `id` | `string` | The auto-generated or provided layer ID. |
+| `id` | `string` | The ID of this layer on the map. |
 
-## Reactive Updates
-
-When `@options` changes, the layer automatically updates its `paint`, `layout`, `filter`, and zoom range properties. Removed properties are reset to their defaults (following the react-map-gl pattern).
+<!-- /YIELDS -->
 
 ## Demo
 

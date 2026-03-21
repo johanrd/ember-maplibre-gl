@@ -2,7 +2,7 @@ import Component from '@glimmer/component';
 import { guidFor } from '@ember/object/internals';
 
 import MapLibreGLLayer from './maplibre-gl-layer.gts';
-import MapLibreGL from './maplibre-gl.gts';
+import type MapLibreGL from './maplibre-gl.gts';
 
 import { hash } from '@ember/helper';
 import type { WithBoundArgs } from '@glint/template';
@@ -13,22 +13,28 @@ import {
 import type { Map } from 'maplibre-gl';
 import type Owner from '@ember/owner';
 
-export interface MapLibreGLSourceArgs {
-  map: Map;
-  sourceId?: string;
-  options: Parameters<Map['addSource']>['1'];
-  parent?: MapLibreGL;
-}
-
+/** Signature for {@link MapLibreGLSource}. */
 export interface MapLibreGLSourceSignature {
-  Args: MapLibreGLSourceArgs;
+  Args: {
+    /** The MapLibre map instance (pre-bound by parent). */
+    map: Map;
+    /** Custom source ID. Auto-generated if omitted. */
+    sourceId?: string;
+    /** Source specification matching MapLibre's `addSource` API (type, data, tiles, url, etc.). */
+    options: Parameters<Map['addSource']>['1'];
+    /** Parent component for destroyable association (pre-bound by parent). */
+    parent?: MapLibreGL;
+  };
   Blocks: {
+    /** Yields the source ID and a pre-bound `layer` component scoped to this source. */
     default: [
       {
+        /** The ID of this source on the map. */
         id: string;
+        /** Add a layer that renders data from this source. Pre-bound with map, sourceId, and parent. */
         layer: WithBoundArgs<
           typeof MapLibreGLLayer,
-          'map' | 'before' | 'sourceId'
+          'map' | 'sourceId' | 'parent'
         >;
       },
     ];
@@ -36,34 +42,26 @@ export interface MapLibreGLSourceSignature {
 }
 
 /**
-  Adds a data source to the map. The API matches the mapbox [source docs](https://www.mapbox.com/maplibre-gl-js/api/#sources).
-
-  Example:
-  ```hbs
-    <MapLibreGL as |map|>
-      <map.source @options={{hash
-          type='geojson'
-          data=(hash
-            type='FeatureCollection'
-            features=(array
-              (hash
-                type='Feature'
-                geometry=(hash
-                  type='Point'
-                  coordinates=(array -96.7969879 32.7766642)
-                )
-              )
-            )
-          )
-        }}>
-      </map.source>
-    </MapLibreGL>
-  ```
-*/
-
+ * Adds a data source to the map. Sources provide the data that layers render.
+ * Supports GeoJSON, vector tiles, raster, image, and video source types.
+ *
+ * Yielded by `<MapLibreGL>` as `map.source`. Yields a pre-bound `layer` component
+ * and the source ID. Updates to `@options` are applied reactively (e.g. setData for GeoJSON).
+ *
+ * @example
+ * ```gts
+ * <MapLibreGL @initOptions={{this.mapOptions}} as |map|>
+ *   <map.source @options={{this.geojsonSource}} as |source|>
+ *     <source.layer @options={{this.circleLayer}} />
+ *   </map.source>
+ * </MapLibreGL>
+ * ```
+ */
 export default class MapLibreGLSource extends Component<MapLibreGLSourceSignature> {
+  /** @internal */
   sourceId: string;
 
+  /** @internal */
   constructor(owner: Owner, args: MapLibreGLSource['args']) {
     super(owner, args);
     this.sourceId = args.sourceId || guidFor(this);
@@ -86,6 +84,7 @@ export default class MapLibreGLSource extends Component<MapLibreGLSourceSignatur
     });
   }
 
+  /** @internal */
   updateSource = (options: MapLibreGLSource['args']['options']) => {
     const source = this.args.map.getSource(this.sourceId);
     if (!source) return;
@@ -101,14 +100,17 @@ export default class MapLibreGLSource extends Component<MapLibreGLSourceSignatur
         options.data.type !== 'Feature' &&
         options.data.type !== 'FeatureCollection'
       ) {
-        options.data = {
+        const wrappedData = {
           type: 'Feature',
           properties: {},
           geometry: options.data,
         };
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- duck-typed: verified via 'in' + typeof
+        source.setData(wrappedData);
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- duck-typed: verified via 'in' + typeof
+        source.setData(options.data);
       }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- duck-typed: verified via 'in' + typeof
-      source.setData(options.data);
     }
     if (
       'setCoordinates' in source &&

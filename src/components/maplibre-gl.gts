@@ -32,63 +32,101 @@ interface SavedMap {
 
 const savedMaps = new Map<string, SavedMap>();
 
-export interface MapLibreGLArgs {
-  /**
-   * An options hash to pass on to the [maplibre-gl-js instance](https://www.mapbox.com/maplibre-gl-js/api/).
-   * This is only used during map construction, and updates will have no effect.
-   */
-  initOptions: Omit<MapOptions, 'container'>;
-
-  /**
-   * An action function to call when the map has finished loading.
-   * Note that the component does not yield until the map has loaded,
-   * so this is the only way to listen for the mapbox load event.
-   */
-  mapLoaded?: (map: MaplibreMap) => void;
-
-  /**
-   * If true, the map instance is cached when the component is destroyed
-   * and reused when a new MapLibreGL component mounts. This avoids
-   * expensive WebGL context creation on repeated route transitions.
-   * Follows the same pattern as react-map-gl's reuseMaps prop.
-   */
-  reuseMaps?: boolean;
-
-  mapLib?: new (...args: unknown[]) => MaplibreMap;
-}
-
+/** Signature for {@link MapLibreGL}. */
 export interface MapLibreGLSignature {
   Element: HTMLDivElement;
-  Args: MapLibreGLArgs;
+  Args: {
+    /**
+     * MapLibre map options (style, center, zoom, etc.). Passed once at construction; later changes are ignored.
+     * The `container` property is managed internally and should be omitted.
+     *
+     * @see https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/MapOptions/
+     */
+    initOptions: Omit<MapOptions, 'container'>;
+
+    /** Called once the map's style and tiles have loaded. Receives the map instance. */
+    mapLoaded?: (map: MaplibreMap) => void;
+
+    /**
+     * Cache the WebGL map instance on teardown and reuse it on remount.
+     * Avoids expensive context creation on repeated route transitions.
+     * Only works when `initOptions.style` is a URL string.
+     */
+    reuseMaps?: boolean;
+
+    /** Override the map constructor (e.g. for testing or mapbox-gl compatibility). */
+    mapLib?: new (...args: unknown[]) => MaplibreMap;
+  };
   Blocks: {
+    /**
+     * Yields an object with pre-bound child components and the map instance.
+     * Available after the map has loaded.
+     */
     default: [
       {
+        /** Invoke a method on the map instance declaratively. */
         call: WithBoundArgs<typeof MapLibreGLCall, 'obj'>;
+        /** Add a UI control (navigation, scale, etc.) to the map. */
         control: WithBoundArgs<typeof MapLibreGLControl, 'map' | 'parent'>;
-        image: WithBoundArgs<typeof MapLibreGLImage, 'map'>;
-        layer: WithBoundArgs<typeof MapLibreGLLayer, 'map'>;
+        /** Load and register a custom image for use in symbol layers. */
+        image: WithBoundArgs<typeof MapLibreGLImage, 'map' | 'parent'>;
+        /** Add a rendering layer directly (without an explicit source component). */
+        layer: WithBoundArgs<typeof MapLibreGLLayer, 'map' | 'parent'>;
+        /** Place a draggable marker on the map. */
         marker: WithBoundArgs<typeof MapLibreGLMarker, 'map' | 'parent'>;
+        /** Bind an event listener to the map. */
         on: WithBoundArgs<typeof MapLibreGLOn, 'eventSource'>;
+        /** Show a popup overlay on the map. */
         popup: WithBoundArgs<typeof MapLibreGLPopup, 'map'>;
-        source: WithBoundArgs<typeof MapLibreGLSource, 'map'>;
+        /** Add a data source (GeoJSON, vector tiles, etc.) to the map. */
+        source: WithBoundArgs<typeof MapLibreGLSource, 'map' | 'parent'>;
+        /** The underlying MapLibre map instance (always defined inside the default block). */
         instance: MaplibreMap | undefined;
+        /** The Ember component instance (useful for associateDestroyableChild). */
         component: MapLibreGL;
       },
     ];
+    /** Yielded when the map encounters a fatal error (e.g. WebGL context lost). */
     error: [ErrorEvent];
   };
 }
 
+/**
+ * The root map component. Renders a MapLibre GL JS map and yields pre-bound child
+ * components for adding sources, layers, markers, popups, controls, and event listeners.
+ *
+ * The block is only rendered after the map has fully loaded.
+ *
+ * @example
+ * ```gts
+ * <MapLibreGL
+ *   @initOptions={{hash style="https://demotiles.maplibre.org/style.json" center=(array 0 0) zoom=1}}
+ *   @mapLoaded={{this.onMapLoaded}}
+ *   as |map|
+ * >
+ *   <map.source @options={{this.geojsonSource}} as |source|>
+ *     <source.layer @options={{this.circleLayer}} />
+ *   </map.source>
+ *   <map.marker @lngLat={{this.markerPosition}} />
+ *   <map.on @event="click" @action={{this.onClick}} />
+ * </MapLibreGL>
+ * ```
+ */
 export default class MapLibreGL extends Component<MapLibreGLSignature> {
+  /** @internal */
   mapLibrary =
     this.args.mapLib ||
     (maplibregl.Map as new (...args: unknown[]) => MaplibreMap);
+  /** @internal */
   @tracked mapLoaded = false;
 
+  /** @internal */
   map?: MaplibreMap;
 
+  /** @internal */
   @tracked error?: ErrorEvent;
 
+  /** @internal */
   registerElement = modifier(
     (element: HTMLElement, [options]: [Omit<MapOptions, 'container'>]) => {
       if (this.map) return;
@@ -285,7 +323,7 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
           )
         }}
       {{else if this.error}}
-        {{#if (has-block "inverse")}}
+        {{#if (has-block "error")}}
           {{yield this.error to="error"}}
         {{else}}
           {{! template-lint-disable no-log }}

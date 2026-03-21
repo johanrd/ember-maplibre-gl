@@ -18,19 +18,6 @@ import MapLibreGLImage from 'ember-maplibre-gl/components/maplibre-gl-image';
 ```
 :::
 
-## Args
-
-| Arg | Type | Required | Description |
-|-----|------|----------|-------------|
-| `map` | `Map` | Yes | Map instance (auto-bound). |
-| `url` | `string` | Yes | Image URL (supports `.svg` and raster formats). |
-| `name` | `string` | Yes | Unique image ID referenced in layer `icon-image`. |
-| `options` | `object` | No | Image options (pixelRatio, sdf, etc.). |
-| `width` | `number` | No | Width for SVG images. |
-| `height` | `number` | No | Height for SVG images. |
-| `onLoad` | `() => void` | No | Callback on successful load. |
-| `onError` | `(err) => void` | No | Callback on load failure. |
-
 ## Example
 
 ```hbs
@@ -43,6 +30,50 @@ import MapLibreGLImage from 'ember-maplibre-gl/components/maplibre-gl-image';
   }} />
 </map.source>
 ```
+
+<!-- SIGNATURE -->
+## Signature
+
+```ts
+interface MapLibreGLImageSignature {
+    Args: {
+        /** The MapLibre map instance (pre-bound by parent). */
+        map: maplibregl.Map;
+        /** URL of the image to load. Supports PNG, JPEG, and SVG formats. */
+        url?: Parameters<maplibregl.Map['loadImage']>['0'];
+        /** Name to register the image under. Use this name in symbol layer `icon-image`. */
+        name: Parameters<maplibregl.Map['addImage']>['0'];
+        /** Image options (pixelRatio, sdf) passed to `map.addImage`. */
+        options?: Parameters<maplibregl.Map['addImage']>['2'];
+        /** Explicit width for SVG images (ignored for raster formats). */
+        width?: HTMLImageElement['width'];
+        /** Explicit height for SVG images (ignored for raster formats). */
+        height?: HTMLImageElement['height'];
+        /** Called when the image has been loaded and added to the map. */
+        onLoad?: () => void;
+        /** Called if the image fails to load. */
+        onError?: (err: unknown) => void;
+        /** Parent component for destroyable association (pre-bound by parent). */
+        parent?: MapLibreGL;
+    };
+}
+```
+<!-- /SIGNATURE -->
+
+<!-- ARGS -->
+## Args
+
+| Arg | Type | Required | Description |
+|-----|------|----------|-------------|
+| `url` | `string` | No | URL of the image to load. Supports PNG, JPEG, and SVG formats. |
+| `name` | `string` | Yes | Name to register the image under. Use this name in symbol layer `icon-image`. |
+| `options` | `ImageOptions` | No | Image options (pixelRatio, sdf) passed to `map.addImage`. |
+| `width` | `number` | No | Explicit width for SVG images (ignored for raster formats). |
+| `height` | `number` | No | Explicit height for SVG images (ignored for raster formats). |
+| `onLoad` | `Function` | No | Called when the image has been loaded and added to the map. |
+| `onError` | `Function` | No | Called if the image fails to load. |
+
+<!-- /ARGS -->
 
 ## Demo
 

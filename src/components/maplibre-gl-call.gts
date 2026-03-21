@@ -1,7 +1,6 @@
 import Component from '@glimmer/component';
 import { assert } from '@ember/debug';
 import type maplibregl from 'maplibre-gl';
-import type Owner from '@ember/owner';
 
 /**
  * User-facing types that represents the minimal intersection between Mapbox.Map and Maplibre.Map
@@ -54,36 +53,45 @@ export interface MapInstance extends Evented {
   setTerrain?: maplibregl.Map['setTerrain'];
 }
 
-export interface MapLibreGLCallArgs {
-  obj: MapInstance;
-  func: keyof MapInstance;
-  positionalArguments: unknown[];
-  onResp?: (result: unknown) => void;
-}
+/** Signature for {@link MapLibreGLCall}. */
 export interface MapLibreGLCallSignature {
-  Args: MapLibreGLCallArgs;
+  Args: {
+    /** The object to call the method on — typically the map instance (pre-bound by parent). */
+    obj: MapInstance;
+    /** Name of the method to invoke (e.g. "flyTo", "setStyle", "resize"). */
+    func: keyof MapInstance;
+    /** Arguments to pass to the method. */
+    positionalArguments: unknown[];
+    /** Optional callback that receives the method's return value. */
+    onResp?: (result: unknown) => void;
+  };
 }
 
+/**
+ * Declaratively invokes a method on the map instance (or any object). Re-invokes
+ * reactively when arguments change, making it useful for imperative map APIs
+ * like `flyTo`, `setStyle`, or `resize` in a template-driven way.
+ *
+ * Yielded by `<MapLibreGL>` as `map.call`. Does not yield any block content.
+ *
+ * @example
+ * ```gts
+ * <map.call @func="flyTo" @positionalArguments={{array (hash center=this.target zoom=14)}} />
+ * <map.call @func="resize" @positionalArguments={{array}} />
+ * ```
+ */
 export default class MapLibreGLCall extends Component<MapLibreGLCallSignature> {
+  /** @internal */
   get onResp() {
     return this.args.onResp || (() => {});
   }
 
-  constructor(owner: Owner, args: MapLibreGLCallArgs) {
-    super(owner, args);
-    this.call(args.obj, args.func, args.positionalArguments);
-  }
-
+  /** @internal */
   call = (
     obj: MapInstance,
     func: keyof MapInstance,
     positionalArguments: unknown[],
   ) => {
-    assert(
-      `maplibre-gl-call ${String(func)} must be a function on the provided object`,
-      typeof obj[func] === 'function',
-    );
-
     assert(
       'maplibre-gl-call obj is required',
       typeof obj === 'object' && !!obj,
@@ -92,9 +100,13 @@ export default class MapLibreGLCall extends Component<MapLibreGLCallSignature> {
       'maplibre-gl-call func is required and must be a string',
       typeof func === 'string',
     );
+    assert(
+      `maplibre-gl-call ${String(func)} must be a function on the provided object`,
+      typeof obj[func] === 'function',
+    );
 
     const method = obj[func] as (...args: unknown[]) => unknown;
-    return this.onResp?.(method.apply(obj, positionalArguments));
+    this.onResp?.(method.apply(obj, positionalArguments));
   };
 
   <template>{{this.call @obj @func @positionalArguments}}</template>

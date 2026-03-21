@@ -18,21 +18,6 @@ import MapLibreGLMarker from 'ember-maplibre-gl/components/maplibre-gl-marker';
 ```
 :::
 
-## Args
-
-| Arg | Type | Required | Description |
-|-----|------|----------|-------------|
-| `map` | `Map` | Yes | Map instance (auto-bound). |
-| `lngLat` | `LngLatLike` | Yes | Marker coordinates `[lng, lat]`. |
-| `initOptions` | `MarkerOptions` | No | MapLibre marker options (color, draggable, etc.). |
-
-## Yields
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `popup` | `MapLibreGLPopup` | Add a popup to this marker. |
-| `on` | `MapLibreGLOn` | Bind marker events (drag, click, etc.). |
-
 ## Custom Content
 
 Block content is rendered inside the marker element:
@@ -47,6 +32,56 @@ Block content is rendered inside the marker element:
   </marker.popup>
 </map.marker>
 ```
+
+<!-- SIGNATURE -->
+## Signature
+
+```ts
+interface MapLibreGLMarkerSignature {
+    Args: {
+        /** The MapLibre map instance (pre-bound by parent). */
+        map: maplibregl.Map;
+        /** Geographic position of the marker. Reactively updates when changed. */
+        lngLat: LngLatLike;
+        /** Marker configuration passed once at construction (draggable, color, anchor, etc.). */
+        initOptions?: MarkerOptions;
+        /** Parent component for destroyable association (pre-bound by parent). */
+        parent?: MapLibreGL;
+    };
+    Blocks: {
+        /** Yields a pre-bound `popup` (attached to this marker) and `on` for marker events (e.g. dragend). */
+        default: [
+            {
+                /** Attach a popup to this marker. Pre-bound with map and marker reference. */
+                popup: WithBoundArgs<typeof MapLibreGLPopup, 'map' | 'marker'>;
+                /** Listen to marker events (drag, dragstart, dragend). Pre-bound with eventSource. */
+                on: WithBoundArgs<typeof MapLibreGLOn, 'eventSource'>;
+            }
+        ];
+    };
+}
+```
+<!-- /SIGNATURE -->
+
+<!-- ARGS -->
+## Args
+
+| Arg | Type | Required | Description |
+|-----|------|----------|-------------|
+| `lngLat` | [LngLatLike](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/LngLatLike/) | Yes | Geographic position of the marker. Reactively updates when changed. |
+| `initOptions` | [MarkerOptions](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/MarkerOptions/) | No | Marker configuration passed once at construction (draggable, color, anchor, etc.). |
+
+<!-- /ARGS -->
+
+<!-- YIELDS -->
+## Yields
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `popup` | [MapLibreGLPopup](./popup) | Attach a popup to this marker. Pre-bound with map and marker reference. |
+| `on` | [MapLibreGLOn](./on) | Listen to marker events (drag, dragstart, dragend). Pre-bound with eventSource. |
+
+<!-- /YIELDS -->
 
 ## Demo
 

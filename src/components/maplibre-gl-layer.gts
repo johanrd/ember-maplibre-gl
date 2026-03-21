@@ -1,45 +1,65 @@
 import Component from '@glimmer/component';
 import { guidFor } from '@ember/object/internals';
 import { assert } from '@ember/debug';
-import maplibregl, {
-  type FilterSpecification,
-  type LayerSpecification,
-} from 'maplibre-gl';
+import type maplibregl from 'maplibre-gl';
+import type { FilterSpecification, LayerSpecification } from 'maplibre-gl';
 import { hash } from '@ember/helper';
 import {
   associateDestroyableChild,
   registerDestructor,
 } from '@ember/destroyable';
-import MapLibreGLSource from './maplibre-gl-source.gts';
+import type MapLibreGLSource from './maplibre-gl-source.gts';
 import type MapLibreGL from './maplibre-gl.gts';
 import type Owner from '@ember/owner';
 
-export interface MapLibreGLLayerArgs {
-  map: maplibregl.Map;
-  sourceId: string;
-  options: Omit<LayerSpecification, 'id'> & {
-    id?: LayerSpecification['id'];
-    source?: string;
-  };
-  before?: Parameters<maplibregl.Map['addLayer']>[1];
-  parent?: MapLibreGLSource | MapLibreGL;
-}
-
+/** Signature for {@link MapLibreGLLayer}. */
 export interface MapLibreGLLayerSignature {
-  Args: MapLibreGLLayerArgs;
+  Args: {
+    /** The MapLibre map instance (pre-bound by parent). */
+    map: maplibregl.Map;
+    /** Source ID to render data from (pre-bound when used via `source.layer`). */
+    sourceId: string;
+    /** Layer specification (type, paint, layout, filter, etc.). The `id` and `source` are optional and auto-filled. */
+    options: Omit<LayerSpecification, 'id'> & {
+      id?: LayerSpecification['id'];
+      source?: string;
+    };
+    /** Layer ID or position to insert this layer before in the stack. */
+    before?: Parameters<maplibregl.Map['addLayer']>[1];
+    /** Parent component for destroyable association (pre-bound by parent). */
+    parent?: MapLibreGLSource | MapLibreGL;
+  };
   Blocks: {
+    /** Yields the layer's ID, useful for event binding or querying features. */
     default: [
       {
+        /** The ID of this layer on the map. */
         id: string;
       },
     ];
   };
 }
 
+/**
+ * Adds a rendering layer to the map. Layers define how source data is styled and displayed.
+ *
+ * Usually used via `source.layer` (pre-bound to the source), but can also be used
+ * directly via `map.layer` with an explicit source reference. Reactively updates
+ * paint, layout, filter, zoom range, and position when args change.
+ *
+ * @example
+ * ```gts
+ * <map.source @options={{this.geojsonSource}} as |source|>
+ *   <source.layer @options={{hash type="circle" paint=(hash circle-radius=6 circle-color="#007cbf")}} />
+ * </map.source>
+ * ```
+ */
 export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature> {
+  /** @internal */
   layerId: string;
 
-  constructor(owner: Owner, args: MapLibreGLLayerArgs) {
+  /** @internal */
+  constructor(owner: Owner, args: MapLibreGLLayerSignature['Args']) {
     super(owner, args);
 
     assert(
@@ -74,10 +94,11 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
     });
   }
 
-  private prevOptions?: MapLibreGLLayerArgs['options'];
-  private prevBefore?: MapLibreGLLayerArgs['before'];
+  private prevOptions?: MapLibreGLLayerSignature['Args']['options'];
+  private prevBefore?: MapLibreGLLayerSignature['Args']['before'];
 
-  updateLayer = (options?: MapLibreGLLayerArgs['options']) => {
+  /** @internal */
+  updateLayer = (options?: MapLibreGLLayerSignature['Args']['options']) => {
     if (typeof options !== 'object') return;
 
     const prev = this.prevOptions;
@@ -119,17 +140,10 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
       }
     }
 
-    if (
-      'minzoom' in options &&
-      options.minzoom &&
-      'maxzoom' in options &&
-      options.maxzoom
-    ) {
-      this.args.map.setLayerZoomRange(
-        this.layerId,
-        options.minzoom,
-        options.maxzoom,
-      );
+    const minzoom = 'minzoom' in options && options.minzoom != null ? options.minzoom : 0;
+    const maxzoom = 'maxzoom' in options && options.maxzoom != null ? options.maxzoom : 24;
+    if ('minzoom' in options || 'maxzoom' in options) {
+      this.args.map.setLayerZoomRange(this.layerId, minzoom, maxzoom);
     }
 
     if ('filter' in options) {

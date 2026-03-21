@@ -11,6 +11,10 @@ class State {
   @tracked lngLat: [number, number] = [10.95, 59.61];
 }
 
+class ShowState {
+  @tracked showSecond = true;
+}
+
 module('Integration | Component | maplibre-gl-popup', function (hooks) {
   setupRenderingTest(hooks);
 
@@ -101,5 +105,51 @@ module('Integration | Component | maplibre-gl-popup', function (hooks) {
     } else {
       assert.ok(true, 'popup rendered (no close button)');
     }
+  });
+
+  test('popup stays open when a sibling marker is destroyed', async function (assert) {
+    const state = new ShowState();
+
+    await render(
+      <template>
+        <MapLibreGL
+          @initOptions={{hash style=STYLE center=(array 10.95 59.61) zoom=12}}
+          style="height:300px;"
+          as |map|
+        >
+          <map.popup @lngLat={{array 10.95 59.61}}>
+            <span data-test-popup-content>I should survive</span>
+          </map.popup>
+
+          {{#if state.showSecond}}
+            <map.marker @lngLat={{array 10.96 59.62}} />
+          {{/if}}
+        </MapLibreGL>
+      </template>,
+    );
+
+    await waitUntil(() => find('.maplibregl-popup-content'), {
+      timeout: 10000,
+    });
+
+    // Verify popup and marker both exist
+    assert
+      .dom('.maplibregl-popup-content')
+      .containsText('I should survive', 'popup rendered');
+    assert.dom('.maplibregl-marker').exists('sibling marker rendered');
+
+    // Destroy the sibling marker
+    state.showSecond = false;
+    await settled();
+
+    assert
+      .dom('.maplibregl-marker')
+      .doesNotExist('sibling marker removed from DOM');
+    assert
+      .dom('.maplibregl-popup-content')
+      .containsText(
+        'I should survive',
+        'popup content still in DOM after sibling marker destroyed',
+      );
   });
 });
