@@ -63,6 +63,14 @@
     "ember-source": ">=3.28.0",
     "maplibre-gl": "^5.0.0"
   },
+  "peerDependenciesMeta": {
+    "@glimmer/component": {
+      "optional": true
+    },
+    "@glimmer/tracking": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@babel/eslint-parser": "^7.25.1",
