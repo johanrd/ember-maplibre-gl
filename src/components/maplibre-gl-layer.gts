@@ -140,8 +140,10 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
       }
     }
 
-    const minzoom = 'minzoom' in options && options.minzoom != null ? options.minzoom : 0;
-    const maxzoom = 'maxzoom' in options && options.maxzoom != null ? options.maxzoom : 24;
+    const minzoom =
+      'minzoom' in options && options.minzoom != null ? options.minzoom : 0;
+    const maxzoom =
+      'maxzoom' in options && options.maxzoom != null ? options.maxzoom : 24;
     if ('minzoom' in options || 'maxzoom' in options) {
       this.args.map.setLayerZoomRange(this.layerId, minzoom, maxzoom);
     }

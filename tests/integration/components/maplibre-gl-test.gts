@@ -146,18 +146,20 @@ module('Integration | Component | maplibre-gl', function (hooks) {
           @mapLib={{BrokenMap}}
           style="height:200px;"
         >
-          <:default as |map|>
+          <:default>
             <span data-test-should-not-render>loaded</span>
           </:default>
           <:error as |error|>
-            <span data-test-error>{{error}}</span>
+            <span data-test-error>{{error.message}}</span>
           </:error>
         </MapLibreGL>
       </template>,
     );
 
     await waitUntil(() => find('[data-test-error]'), { timeout: 5000 });
-    assert.dom('[data-test-error]').exists('error block is rendered');
+    assert
+      .dom('[data-test-error]')
+      .hasText('WebGL not supported', 'error block renders the error message');
     assert
       .dom('[data-test-should-not-render]')
       .doesNotExist('default block is not rendered');

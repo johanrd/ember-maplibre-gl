@@ -10,7 +10,7 @@ import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
 
 ## Error Handling
 
-The component supports an `error` named block:
+The component supports an `error` named block. The yielded value is an `Error` object with a `.message` property:
 
 ```hbs
 <MapLibreGL @initOptions={{this.options}}>
@@ -18,7 +18,7 @@ The component supports an `error` named block:
     <!-- map content -->
   </:default>
   <:error as |error|>
-    <p>Map failed to load: {{error}}</p>
+    <p>Map failed to load: {{error.message}}</p>
   </:error>
 </MapLibreGL>
 ```
@@ -100,8 +100,8 @@ interface MapLibreGLSignature {
                 component: MapLibreGL;
             }
         ];
-        /** Yielded when the map encounters a fatal error (e.g. WebGL context lost). */
-        error: [ErrorEvent];
+        /** Yielded when the map encounters a fatal error (e.g. WebGL context lost). Receives an `Error` with a `.message` property. */
+        error: [Error];
     };
 }
 ```
