@@ -357,4 +357,81 @@ module('Integration | Component | maplibre-gl-source', function (hooks) {
     await waitUntil(() => find('[data-test-has-layer]'), { timeout: 10000 });
     assert.dom('[data-test-has-layer]').hasText('yes');
   });
+
+  test('it handles full source data replacement', async function (assert) {
+    let map: Map | undefined;
+    const setMap = (m: Map) => {
+      map = m;
+    };
+    const state = new State();
+
+    const initialData: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: { name: 'original' },
+          geometry: { type: 'Point', coordinates: [0, 0] },
+        },
+      ],
+    };
+
+    const replacementData: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: { name: 'replaced' },
+          geometry: { type: 'LineString', coordinates: [[1, 1], [2, 2], [3, 3]] },
+        },
+        {
+          type: 'Feature',
+          properties: { name: 'new-point' },
+          geometry: { type: 'Point', coordinates: [5, 5] },
+        },
+      ],
+    };
+
+    state.options = {
+      type: 'geojson',
+      data: initialData,
+    };
+
+    await render(
+      <template>
+        <MapLibreGL
+          @initOptions={{hash style=STYLE}}
+          @mapLoaded={{setMap}}
+          style="height:100px;"
+          as |m|
+        >
+          <m.source @sourceId="replace-test" @options={{state.options}}>
+            <span data-test-loaded />
+          </m.source>
+        </MapLibreGL>
+      </template>,
+    );
+
+    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
+
+    const source = map?.getSource('replace-test');
+    assert.ok(source, 'source exists');
+
+    const setDataSpy = sinon.spy(source as GeoJSONSource, 'setData');
+
+    // Replace with completely different FeatureCollection
+    state.options = {
+      type: 'geojson',
+      data: replacementData,
+    };
+    await settled();
+
+    assert.true(setDataSpy.called, 'setData was called with new data');
+    const calledWith = setDataSpy.firstCall.args[0] as FeatureCollection;
+    assert.strictEqual(
+      calledWith.features.length,
+      2,
+      'setData received the replacement FeatureCollection with 2 features',
+    );
+  });
 });

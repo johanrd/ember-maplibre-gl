@@ -84,7 +84,6 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
   /** @internal */
   constructor(owner: Owner, args: MapLibreGLImageSignature['Args']) {
     super(owner, args);
-    this.loadImage(args.url, args.name, args.options, args.width, args.height);
 
     if (args.parent) associateDestroyableChild(args.parent, this);
     registerDestructor(this, () => {

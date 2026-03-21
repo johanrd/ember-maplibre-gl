@@ -31,10 +31,10 @@ export interface MapLibreGLSourceSignature {
       {
         /** The ID of this source on the map. */
         id: string;
-        /** Add a layer that renders data from this source. Pre-bound with map, sourceId, and before. */
+        /** Add a layer that renders data from this source. Pre-bound with map, sourceId, and parent. */
         layer: WithBoundArgs<
           typeof MapLibreGLLayer,
-          'map' | 'before' | 'sourceId'
+          'map' | 'sourceId' | 'parent'
         >;
       },
     ];

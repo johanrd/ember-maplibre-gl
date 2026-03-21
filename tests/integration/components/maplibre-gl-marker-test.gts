@@ -139,4 +139,70 @@ module('Integration | Component | maplibre-gl-marker', function (hooks) {
     );
     assert.strictEqual(firedEvent, '', 'no events fired yet');
   });
+
+  test('it renders multiple markers and cleans up DOM', async function (assert) {
+    class ItemsState {
+      @tracked items = [1, 2, 3];
+    }
+
+    const state = new ItemsState();
+
+    await render(
+      <template>
+        <MapLibreGL
+          @initOptions={{hash style=STYLE center=(array 0 0) zoom=1}}
+          style="height:200px;"
+          as |map|
+        >
+          {{#each state.items as |n|}}
+            <map.marker @lngLat={{array n 0}} />
+          {{/each}}
+          <span data-test-markers-loaded>loaded</span>
+        </MapLibreGL>
+      </template>,
+    );
+
+    await waitUntil(() => find('[data-test-markers-loaded]'), {
+      timeout: 10000,
+    });
+    await waitUntil(
+      () => document.querySelectorAll('.maplibregl-marker').length === 3,
+      { timeout: 10000 },
+    );
+    assert.strictEqual(
+      document.querySelectorAll('.maplibregl-marker').length,
+      3,
+      'three markers rendered in DOM',
+    );
+
+    state.items = [1];
+    await settled();
+
+    assert.strictEqual(
+      document.querySelectorAll('.maplibregl-marker').length,
+      1,
+      'markers reduced to one after state change',
+    );
+  });
+
+  test('it creates actual DOM marker elements', async function (assert) {
+    await render(
+      <template>
+        <MapLibreGL
+          @initOptions={{hash style=STYLE center=(array 0 0) zoom=1}}
+          style="height:200px;"
+          as |map|
+        >
+          <map.marker @lngLat={{array 0 0}} />
+        </MapLibreGL>
+      </template>,
+    );
+
+    await waitUntil(() => find('.maplibregl-marker'), { timeout: 10000 });
+    const container = find('.maplibregl-canvas-container')?.parentElement;
+    assert.ok(
+      container?.querySelector('.maplibregl-marker'),
+      'marker DOM element created',
+    );
+  });
 });

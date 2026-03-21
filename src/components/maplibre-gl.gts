@@ -69,9 +69,9 @@ export interface MapLibreGLSignature {
         /** Add a UI control (navigation, scale, etc.) to the map. */
         control: WithBoundArgs<typeof MapLibreGLControl, 'map' | 'parent'>;
         /** Load and register a custom image for use in symbol layers. */
-        image: WithBoundArgs<typeof MapLibreGLImage, 'map'>;
+        image: WithBoundArgs<typeof MapLibreGLImage, 'map' | 'parent'>;
         /** Add a rendering layer directly (without an explicit source component). */
-        layer: WithBoundArgs<typeof MapLibreGLLayer, 'map'>;
+        layer: WithBoundArgs<typeof MapLibreGLLayer, 'map' | 'parent'>;
         /** Place a draggable marker on the map. */
         marker: WithBoundArgs<typeof MapLibreGLMarker, 'map' | 'parent'>;
         /** Bind an event listener to the map. */
@@ -79,7 +79,7 @@ export interface MapLibreGLSignature {
         /** Show a popup overlay on the map. */
         popup: WithBoundArgs<typeof MapLibreGLPopup, 'map'>;
         /** Add a data source (GeoJSON, vector tiles, etc.) to the map. */
-        source: WithBoundArgs<typeof MapLibreGLSource, 'map'>;
+        source: WithBoundArgs<typeof MapLibreGLSource, 'map' | 'parent'>;
         /** The underlying MapLibre map instance, or undefined before load. */
         instance: MaplibreMap | undefined;
         /** The Ember component instance (useful for associateDestroyableChild). */
