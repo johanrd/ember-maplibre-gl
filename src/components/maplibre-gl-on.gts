@@ -18,14 +18,16 @@ interface EventTarget {
 
 interface Args {
   event: string;
-  action: (...args: unknown[]) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- event handlers receive library-specific event types
+  action: (...args: any[]) => void;
   eventSource?: EventTarget;
   layerId?: string;
 }
 
 export function mapOn(
   event: string,
-  action: (...args: unknown[]) => void,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  action: (...args: any[]) => void,
   eventSource?: EventTarget,
   layerId?: string,
 ) {
