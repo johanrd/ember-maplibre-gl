@@ -28,9 +28,8 @@ jobs:
           node-version: 22
           cache: pnpm
           registry-url: "https://registry.npmjs.org"
-      - run: npm install -g npm@latest
       - run: pnpm install --frozen-lockfile
       - name: Publish to NPM
-        run: NPM_CONFIG_PROVENANCE=true pnpm release-plan publish
+        run: pnpm release-plan publish
         env:
           GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
