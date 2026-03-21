@@ -1,4 +1,5 @@
 import Component from '@glimmer/component';
+import { assert } from '@ember/debug';
 import { Marker, Popup, type PopupOptions, type LngLatLike } from 'maplibre-gl';
 import MapLibreGLOn from './maplibre-gl-on.gts';
 import type { WithBoundArgs } from '@glint/template';
@@ -54,6 +55,11 @@ export default class MapLibreGLPopup extends Component<MapLibreGLPopupSignature>
   constructor(owner: Owner, args: MapLibreGLPopupSignature['Args']) {
     super(owner, args);
 
+    assert(
+      '`map` argument is required for `MapLibreGLPopup` component',
+      args.map,
+    );
+
     const { initOptions, marker, map, lngLat } = args;
 
     const options = {
@@ -85,9 +91,8 @@ export default class MapLibreGLPopup extends Component<MapLibreGLPopupSignature>
       if (this.popup?.isOpen()) {
         this.popup?.setLngLat(lngLat);
       } else {
-        this.popup?.remove();
-        this.popup?.addTo(this.args.map);
         this.popup?.setLngLat(lngLat);
+        this.popup?.addTo(this.args.map);
       }
     }
   };

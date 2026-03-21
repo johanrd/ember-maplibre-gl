@@ -3,55 +3,50 @@ import { assert } from '@ember/debug';
 import type maplibregl from 'maplibre-gl';
 
 /**
- * User-facing types that represents the minimal intersection between Mapbox.Map and Maplibre.Map
- * User provided `mapLib.Map` is supposed to implement this interface
- * Only losely typed for compatibility
- * inspired by https://github.com/visgl/react-map-gl/blob/master/src/types/lib.ts#L26
+ * Callable method surface for `<map.call>`. Curated allow-list so `@func`
+ * auto-completes only methods that make sense to invoke declaratively.
+ * Types are derived from `maplibregl.Map` so they stay in sync automatically.
+ *
+ * Inspired by https://github.com/visgl/react-map-gl/blob/master/src/types/lib.ts#L26
  */
-
-interface Evented {
-  on: maplibregl.Map['on'];
-  off: maplibregl.Map['off'];
-  once: maplibregl.Map['once'];
-}
-
-export interface MapInstance extends Evented {
-  fire: maplibregl.Map['fire'];
-  addControl: maplibregl.Map['addControl'];
-  flyTo: maplibregl.Map['flyTo'];
-  removeControl: maplibregl.Map['removeControl'];
-  hasControl: maplibregl.Map['hasControl'];
-  resize: maplibregl.Map['resize'];
-  queryRenderedFeatures: maplibregl.Map['queryRenderedFeatures'];
-  setStyle: maplibregl.Map['setStyle'];
-  isMoving: maplibregl.Map['isMoving'];
-  getStyle: maplibregl.Map['getStyle'];
-  getZoom: maplibregl.Map['getZoom'];
-  isStyleLoaded: maplibregl.Map['isStyleLoaded'];
-  addSource: maplibregl.Map['addSource'];
-  removeSource: maplibregl.Map['removeSource'];
-  getSource: maplibregl.Map['getSource'];
-  addLayer: maplibregl.Map['addLayer'];
-  moveLayer: maplibregl.Map['moveLayer'];
-  removeLayer: maplibregl.Map['removeLayer'];
-  getLayer: maplibregl.Map['getLayer'];
-  setFilter: maplibregl.Map['setFilter'];
-  setLayerZoomRange: maplibregl.Map['setLayerZoomRange'];
-  setPaintProperty: maplibregl.Map['setPaintProperty'];
-  setLayoutProperty: maplibregl.Map['setLayoutProperty'];
-  project: maplibregl.Map['project'];
-  unproject: maplibregl.Map['unproject'];
-  queryTerrainElevation?: maplibregl.Map['queryTerrainElevation'];
-  getContainer: maplibregl.Map['getContainer'];
-  getCanvas: maplibregl.Map['getCanvas'];
-  remove: maplibregl.Map['remove'];
-  triggerRepaint: maplibregl.Map['triggerRepaint'];
-  setPadding: maplibregl.Map['setPadding'];
-  fitBounds: maplibregl.Map['fitBounds'];
-  //setFog?: T extends maplibregl.Map ? maplibregl.Map['setFog'] : undefined
-  setLight?: maplibregl.Map['setLight'];
-  setTerrain?: maplibregl.Map['setTerrain'];
-}
+export type MapInstance = Pick<
+  maplibregl.Map,
+  | 'on'
+  | 'off'
+  | 'once'
+  | 'fire'
+  | 'addControl'
+  | 'flyTo'
+  | 'removeControl'
+  | 'hasControl'
+  | 'resize'
+  | 'queryRenderedFeatures'
+  | 'setStyle'
+  | 'isMoving'
+  | 'getStyle'
+  | 'getZoom'
+  | 'isStyleLoaded'
+  | 'addSource'
+  | 'removeSource'
+  | 'getSource'
+  | 'addLayer'
+  | 'moveLayer'
+  | 'removeLayer'
+  | 'getLayer'
+  | 'setFilter'
+  | 'setLayerZoomRange'
+  | 'setPaintProperty'
+  | 'setLayoutProperty'
+  | 'project'
+  | 'unproject'
+  | 'getContainer'
+  | 'getCanvas'
+  | 'remove'
+  | 'triggerRepaint'
+  | 'setPadding'
+  | 'fitBounds'
+> &
+  Partial<Pick<maplibregl.Map, 'queryTerrainElevation' | 'setLight' | 'setTerrain'>>;
 
 /** Signature for {@link MapLibreGLCall}. */
 export interface MapLibreGLCallSignature {

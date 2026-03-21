@@ -1,5 +1,6 @@
 import Component from '@glimmer/component';
 import { guidFor } from '@ember/object/internals';
+import { assert } from '@ember/debug';
 
 import MapLibreGLLayer from './maplibre-gl-layer.gts';
 import type MapLibreGL from './maplibre-gl.gts';
@@ -60,10 +61,20 @@ export interface MapLibreGLSourceSignature {
 export default class MapLibreGLSource extends Component<MapLibreGLSourceSignature> {
   /** @internal */
   sourceId: string;
+  private _prevData?: unknown;
+  private _prevCoordinates?: unknown;
+  private _prevUrl?: unknown;
+  private _prevTiles?: unknown;
 
   /** @internal */
   constructor(owner: Owner, args: MapLibreGLSource['args']) {
     super(owner, args);
+
+    assert(
+      '`map` argument is required for `MapLibreGLSource` component',
+      args.map,
+    );
+
     this.sourceId = args.sourceId || guidFor(this);
     if (!args.map.getSource(this.sourceId)) {
       args.map.addSource(this.sourceId, args.options);
@@ -92,8 +103,10 @@ export default class MapLibreGLSource extends Component<MapLibreGLSourceSignatur
       'setData' in source &&
       typeof source.setData === 'function' &&
       'data' in options &&
-      options.data
+      options.data &&
+      options.data !== this._prevData
     ) {
+      this._prevData = options.data;
       if (
         typeof options.data === 'object' &&
         'type' in options.data &&
@@ -116,8 +129,10 @@ export default class MapLibreGLSource extends Component<MapLibreGLSourceSignatur
       'setCoordinates' in source &&
       typeof source.setCoordinates === 'function' &&
       'coordinates' in options &&
-      options.coordinates
+      options.coordinates &&
+      options.coordinates !== this._prevCoordinates
     ) {
+      this._prevCoordinates = options.coordinates;
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       source.setCoordinates(options.coordinates);
     }
@@ -126,8 +141,10 @@ export default class MapLibreGLSource extends Component<MapLibreGLSourceSignatur
       'setUrl' in source &&
       typeof source.setUrl === 'function' &&
       'url' in options &&
-      options.url
+      options.url &&
+      options.url !== this._prevUrl
     ) {
+      this._prevUrl = options.url;
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       source.setUrl(options.url);
     }
@@ -135,8 +152,10 @@ export default class MapLibreGLSource extends Component<MapLibreGLSourceSignatur
       'setTiles' in source &&
       typeof source.setTiles === 'function' &&
       'tiles' in options &&
-      options.tiles
+      options.tiles &&
+      options.tiles !== this._prevTiles
     ) {
+      this._prevTiles = options.tiles;
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       source.setTiles(options.tiles);
     }

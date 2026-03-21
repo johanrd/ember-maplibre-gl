@@ -1,5 +1,5 @@
 import Component from '@glimmer/component';
-import { tracked } from '@glimmer/tracking';
+import { assert } from '@ember/debug';
 import type MapLibreGL from './maplibre-gl.gts';
 import {
   associateDestroyableChild,
@@ -61,7 +61,12 @@ export class SvgLoadError extends Error {
  */
 export default class MapLibreGLImage extends Component<MapLibreGLImageSignature> {
   /** @internal */
-  @tracked _lastName?: string;
+  _lastName?: string;
+  private _lastLoadUrl?: typeof this.args.url;
+  private _lastLoadName?: string;
+  private _lastLoadWidth?: typeof this.args.width;
+  private _lastLoadHeight?: typeof this.args.height;
+  private _lastLoadOptions?: typeof this.args.options;
 
   /** @internal */
   get onError() {
@@ -85,6 +90,15 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
   constructor(owner: Owner, args: MapLibreGLImageSignature['Args']) {
     super(owner, args);
 
+    assert(
+      '`map` argument is required for `MapLibreGLImage` component',
+      args.map,
+    );
+    assert(
+      '`name` argument is required for `MapLibreGLImage` component',
+      args.name,
+    );
+
     if (args.parent) associateDestroyableChild(args.parent, this);
     registerDestructor(this, () => {
       try {
@@ -105,6 +119,21 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
     width?: MapLibreGLImageSignature['Args']['width'],
     height?: MapLibreGLImageSignature['Args']['height'],
   ) => {
+    // Skip if nothing has changed (avoids redundant loads on re-render)
+    if (
+      url === this._lastLoadUrl &&
+      name === this._lastLoadName &&
+      width === this._lastLoadWidth &&
+      height === this._lastLoadHeight &&
+      options === this._lastLoadOptions
+    )
+      return;
+    this._lastLoadUrl = url;
+    this._lastLoadName = name;
+    this._lastLoadWidth = width;
+    this._lastLoadHeight = height;
+    this._lastLoadOptions = options;
+
     // If the component already has added an image to the map, remove it
     if (this._lastName && this.args.map.hasImage(this._lastName)) {
       this.args.map.removeImage(this._lastName);

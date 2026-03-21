@@ -3,7 +3,7 @@ import type MapLibreGLCall from './components/maplibre-gl-call.gts';
 import type MapLibreGLOn from './components/maplibre-gl-on.gts';
 import type MapLibreGLMarker from './components/maplibre-gl-marker.gts';
 import type MapLibreGLPopup from './components/maplibre-gl-popup.gts';
-import type MapLibreGLControl from './components/maplibre-gl-control';
+import type MapLibreGLControl from './components/maplibre-gl-control.gts';
 import type MapLibreGLSource from './components/maplibre-gl-source.gts';
 import type MapLibreGLLayer from './components/maplibre-gl-layer.gts';
 import type MapLibreGLImage from './components/maplibre-gl-image.gts';
