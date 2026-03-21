@@ -2,7 +2,7 @@ import Component from '@glimmer/component';
 import { guidFor } from '@ember/object/internals';
 
 import MapLibreGLLayer from './maplibre-gl-layer.gts';
-import MapLibreGL from './maplibre-gl.gts';
+import type MapLibreGL from './maplibre-gl.gts';
 
 import { hash } from '@ember/helper';
 import type { WithBoundArgs } from '@glint/template';
@@ -100,14 +100,17 @@ export default class MapLibreGLSource extends Component<MapLibreGLSourceSignatur
         options.data.type !== 'Feature' &&
         options.data.type !== 'FeatureCollection'
       ) {
-        options.data = {
+        const wrappedData = {
           type: 'Feature',
           properties: {},
           geometry: options.data,
         };
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- duck-typed: verified via 'in' + typeof
+        source.setData(wrappedData);
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- duck-typed: verified via 'in' + typeof
+        source.setData(options.data);
       }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- duck-typed: verified via 'in' + typeof
-      source.setData(options.data);
     }
     if (
       'setCoordinates' in source &&

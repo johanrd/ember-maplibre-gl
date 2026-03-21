@@ -323,7 +323,7 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
           )
         }}
       {{else if this.error}}
-        {{#if (has-block "inverse")}}
+        {{#if (has-block "error")}}
           {{yield this.error to="error"}}
         {{else}}
           {{! template-lint-disable no-log }}

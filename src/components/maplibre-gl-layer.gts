@@ -10,7 +10,7 @@ import {
   associateDestroyableChild,
   registerDestructor,
 } from '@ember/destroyable';
-import MapLibreGLSource from './maplibre-gl-source.gts';
+import type MapLibreGLSource from './maplibre-gl-source.gts';
 import type MapLibreGL from './maplibre-gl.gts';
 import type Owner from '@ember/owner';
 
@@ -142,17 +142,10 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
       }
     }
 
-    if (
-      'minzoom' in options &&
-      options.minzoom &&
-      'maxzoom' in options &&
-      options.maxzoom
-    ) {
-      this.args.map.setLayerZoomRange(
-        this.layerId,
-        options.minzoom,
-        options.maxzoom,
-      );
+    const minzoom = 'minzoom' in options && options.minzoom != null ? options.minzoom : 0;
+    const maxzoom = 'maxzoom' in options && options.maxzoom != null ? options.maxzoom : 24;
+    if ('minzoom' in options || 'maxzoom' in options) {
+      this.args.map.setLayerZoomRange(this.layerId, minzoom, maxzoom);
     }
 
     if ('filter' in options) {

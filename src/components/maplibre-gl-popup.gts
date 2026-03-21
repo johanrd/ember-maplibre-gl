@@ -64,8 +64,8 @@ export default class MapLibreGLPopup extends Component<MapLibreGLPopupSignature>
     this.popup = new Popup(options).setDOMContent(this.domContent);
 
     if (marker === undefined) {
-      this.popup.addTo(map);
       if (lngLat) this.popup.setLngLat(lngLat);
+      this.popup.addTo(map);
     } else {
       marker.setPopup(this.popup);
     }

@@ -1,7 +1,6 @@
 import Component from '@glimmer/component';
 import { assert } from '@ember/debug';
 import type maplibregl from 'maplibre-gl';
-import type Owner from '@ember/owner';
 
 /**
  * User-facing types that represents the minimal intersection between Mapbox.Map and Maplibre.Map
@@ -88,22 +87,11 @@ export default class MapLibreGLCall extends Component<MapLibreGLCallSignature> {
   }
 
   /** @internal */
-  constructor(owner: Owner, args: MapLibreGLCallSignature['Args']) {
-    super(owner, args);
-    this.call(args.obj, args.func, args.positionalArguments);
-  }
-
-  /** @internal */
   call = (
     obj: MapInstance,
     func: keyof MapInstance,
     positionalArguments: unknown[],
   ) => {
-    assert(
-      `maplibre-gl-call ${String(func)} must be a function on the provided object`,
-      typeof obj[func] === 'function',
-    );
-
     assert(
       'maplibre-gl-call obj is required',
       typeof obj === 'object' && !!obj,
@@ -111,6 +99,10 @@ export default class MapLibreGLCall extends Component<MapLibreGLCallSignature> {
     assert(
       'maplibre-gl-call func is required and must be a string',
       typeof func === 'string',
+    );
+    assert(
+      `maplibre-gl-call ${String(func)} must be a function on the provided object`,
+      typeof obj[func] === 'function',
     );
 
     const method = obj[func] as (...args: unknown[]) => unknown;

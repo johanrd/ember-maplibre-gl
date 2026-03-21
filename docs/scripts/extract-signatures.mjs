@@ -223,9 +223,8 @@ function buildYieldsTable(yields) {
   return table;
 }
 
-function getComponentName(declFile) {
-  const content = readFileSync(join(DECL_DIR, declFile), 'utf-8');
-  const match = content.match(/export default class (\w+)/);
+function getComponentName(declContent) {
+  const match = declContent.match(/export default class (\w+)/);
   return match ? match[1] : null;
 }
 
@@ -270,7 +269,7 @@ for (const [docFile, declFile] of Object.entries(COMPONENT_MAP)) {
     continue;
   }
 
-  const componentName = getComponentName(declFile);
+  const componentName = getComponentName(declContent);
   if (!componentName) {
     console.log(`Skipping ${declFile} (no default export found)`);
     continue;

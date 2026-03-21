@@ -3,7 +3,6 @@ import {
   registerDestructor,
 } from '@ember/destroyable';
 import Component from '@glimmer/component';
-import { tracked } from '@glimmer/tracking';
 import type MapLibreGL from './maplibre-gl.gts';
 import type maplibregl from 'maplibre-gl';
 import type Owner from '@ember/owner';
@@ -37,7 +36,7 @@ export interface MapLibreGLControlSignature {
  */
 export default class MapLibreGLControl extends Component<MapLibreGLControlSignature> {
   /** @internal */
-  @tracked control: MapLibreGLControlSignature['Args']['control'] | undefined;
+  control: MapLibreGLControlSignature['Args']['control'] | undefined;
 
   /** @internal */
   constructor(owner: Owner, args: MapLibreGLControlSignature['Args']) {

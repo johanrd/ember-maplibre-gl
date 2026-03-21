@@ -93,7 +93,6 @@ const examplesSidebar = [
     items: [
       { text: '3D Buildings', link: '/examples/3d-buildings' },
       { text: '3D Tiles (Three.js)', link: '/examples/3d-tiles-threejs' },
-      { text: 'Satellite & Terrain', link: '/examples/satellite-terrain' },
       { text: '3D Terrain', link: '/examples/3d-terrain' },
     ],
   },
