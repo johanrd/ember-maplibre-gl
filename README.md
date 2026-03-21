@@ -4,7 +4,7 @@ Declarative [MapLibre GL JS](https://maplibre.org/maplibre-gl-js/docs/) componen
 
 ## Compatibility
 
-- Ember.js v5.8 or above
+- Ember.js v3.28 or above
 - Embroider v2 addon
 - MapLibre GL JS v5
 

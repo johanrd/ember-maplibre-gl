@@ -58,6 +58,7 @@
     "ember-resources": "^7.0.0"
   },
   "peerDependencies": {
+    "ember-source": ">=3.28.0",
     "maplibre-gl": "^5.0.0"
   },
   "devDependencies": {
