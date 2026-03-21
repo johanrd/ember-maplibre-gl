@@ -33,7 +33,7 @@ const options = {
           cursor: pointer;
           filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
         ">{{city.emoji}}</div>
-        <marker.popup @initOptions={{hash offset=20 closeButton=false}}>
+        <marker.popup @initOptions={{hash offset=20}}>
           <div style="padding: 8px 12px; font-family: system-ui;">
             <strong style="font-size: 16px;">{{city.name}}</strong>
             <p style="margin: 4px 0 0; color: #666;">{{city.desc}}</p>

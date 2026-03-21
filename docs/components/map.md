@@ -8,44 +8,6 @@ The main map component. Creates a MapLibre GL JS map instance and yields sub-com
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
 ```
 
-## Error Handling
-
-The component supports an `error` named block. The yielded value is an `Error` object with a `.message` property:
-
-```hbs
-<MapLibreGL @initOptions={{this.options}}>
-  <:default as |map|>
-    <!-- map content -->
-  </:default>
-  <:error as |error|>
-    <p>Map failed to load: {{error.message}}</p>
-  </:error>
-</MapLibreGL>
-```
-
-## Custom Map Constructor
-
-The `@mapLib` arg lets you swap in a different map constructor. This is useful for:
-
-- **Testing** — pass a mock/stub constructor to avoid WebGL in tests
-- **Mapbox GL JS** — in theory, Mapbox's `Map` class could work since MapLibre forked from it, but API drift means this is not guaranteed
-- **Custom subclasses** — extend `maplibregl.Map` with project-specific behavior
-
-```gts
-import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
-import { Map as CustomMap } from 'some-maplibre-fork';
-
-const options = { style: '...', center: [0, 0], zoom: 2 };
-
-<template>
-  <MapLibreGL @initOptions={{options}} @mapLib={{CustomMap}} />
-</template>
-```
-
-::: warning
-The constructor must be API-compatible with `maplibregl.Map`. Passing an incompatible constructor will likely cause runtime errors in sub-components that call MapLibre-specific methods.
-:::
-
 <!-- SIGNATURE -->
 ## Signature
 
@@ -155,3 +117,41 @@ const options = {
   />
 </template>
 ```
+
+## Error Handling
+
+The component supports an `error` named block. The yielded value is an `Error` object with a `.message` property:
+
+```hbs
+<MapLibreGL @initOptions={{this.options}}>
+  <:default as |map|>
+    <!-- map content -->
+  </:default>
+  <:error as |error|>
+    <p>Map failed to load: {{error.message}}</p>
+  </:error>
+</MapLibreGL>
+```
+
+## Custom Map Constructor
+
+The `@mapLib` arg lets you swap in a different map constructor. This is useful for:
+
+- **Testing** — pass a mock/stub constructor to avoid WebGL in tests
+- **Mapbox GL JS** — in theory, Mapbox's `Map` class could work since MapLibre forked from it, but API drift means this is not guaranteed
+- **Custom subclasses** — extend `maplibregl.Map` with project-specific behavior
+
+```gts
+import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
+import { Map as CustomMap } from 'some-maplibre-fork';
+
+const options = { style: '...', center: [0, 0], zoom: 2 };
+
+<template>
+  <MapLibreGL @initOptions={{options}} @mapLib={{CustomMap}} />
+</template>
+```
+
+::: warning
+The constructor must be API-compatible with `maplibregl.Map`. Passing an incompatible constructor will likely cause runtime errors in sub-components that call MapLibre-specific methods.
+:::

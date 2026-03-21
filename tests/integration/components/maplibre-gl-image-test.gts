@@ -126,10 +126,22 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
   });
 
   test('it discards stale loads when url changes mid-flight', async function (assert) {
-    let map: Map | undefined;
+    let loadImageStub: sinon.SinonStub | undefined;
+    let addImageStub: sinon.SinonStub | undefined;
+
     const setMap = (m: Map) => {
-      map = m;
+      loadImageStub = sinon.stub(m, 'loadImage');
+      // First call never resolves (simulating slow network)
+      loadImageStub.onFirstCall().returns(new Promise(() => {}) as never);
+      // Second call resolves immediately
+      loadImageStub.onSecondCall().resolves({ data: new Image() } as never);
+      addImageStub = sinon.stub(m, 'addImage');
     };
+
+    class UrlState {
+      @tracked url = '/first.png';
+    }
+    const urlState = new UrlState();
 
     await render(
       <template>
@@ -137,32 +149,44 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
           @initOptions={{hash style=STYLE}}
           @mapLoaded={{setMap}}
           style="height:100px;"
+          as |m|
         >
+          <m.image @name="stale-test" @url={{urlState.url}} />
           <span data-test-loaded />
         </MapLibreGL>
       </template>,
     );
 
     await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
+    await waitUntil(() => loadImageStub?.called, { timeout: 5000 });
 
-    // Stub loadImage to return a pending promise we control
-    const loadImageStub = sinon.stub(map!, 'loadImage');
-    loadImageStub.onFirstCall().callsFake(() => new Promise(() => {}) as never);
-    loadImageStub.onSecondCall().callsFake(() => new Promise(() => {})); // never resolves
+    assert.strictEqual(
+      loadImageStub!.firstCall.args[0],
+      '/first.png',
+      'first loadImage called with first URL',
+    );
 
-    const addImageSpy = sinon.spy(map!, 'addImage');
+    // Change URL while first load is still pending
+    urlState.url = '/second.png';
+    await settled();
 
-    // Manually instantiate the image component logic:
-    // First load starts (pending), then url changes, then first load resolves
-    // The component should discard the stale result
-    await import('ember-maplibre-gl/components/maplibre-gl-image');
+    await waitUntil(() => loadImageStub!.callCount >= 2, { timeout: 5000 });
 
-    // This test verifies the component's internal url-mismatch guard.
-    // Since the component has a re-render loop issue with tracked _lastName,
-    // we verify the guard exists by checking that loadImage is called.
-    assert.ok(loadImageStub, 'loadImage can be stubbed on real map');
-    loadImageStub.restore();
-    addImageSpy.restore();
+    assert.strictEqual(
+      loadImageStub!.secondCall.args[0],
+      '/second.png',
+      'second loadImage called with new URL',
+    );
+
+    // Second load resolves immediately; addImage should be called once
+    await waitUntil(() => addImageStub!.called, { timeout: 5000 });
+    assert.true(
+      addImageStub!.calledOnce,
+      'addImage called only once (stale first result discarded)',
+    );
+
+    loadImageStub!.restore();
+    addImageStub!.restore();
   });
 
   test('it does not add the image if component is destroyed before load completes', async function (assert) {
@@ -221,10 +245,16 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
     addImageSpy.restore();
   });
 
-  test('it handles SVG images via Image element', async function (assert) {
-    let map: Map | undefined;
+  test('it handles SVG images via Image element, not loadImage', async function (assert) {
+    let loadImageSpy: sinon.SinonSpy | undefined;
+
     const setMap = (m: Map) => {
-      map = m;
+      loadImageSpy = sinon.spy(m, 'loadImage');
+    };
+
+    let receivedError: unknown;
+    const onError = (err: unknown) => {
+      receivedError = err;
     };
 
     await render(
@@ -235,17 +265,26 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
           style="height:100px;"
           as |m|
         >
-          <m.image @name="svg-test" @url="/test.svg" />
+          <m.image @name="svg-test" @url="/test.svg" @onError={{onError}} />
           <span data-test-loaded />
         </MapLibreGL>
       </template>,
     );
 
     await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
+    // SVG uses Image() constructor which triggers onerror for missing file
+    await waitUntil(() => receivedError !== undefined, { timeout: 5000 });
 
-    // SVG path uses Image() constructor, NOT map.loadImage
-    // The component should have already detected .svg and used Image() path
-    assert.ok(map, 'map loaded with SVG image component without error');
+    assert.false(
+      loadImageSpy!.called,
+      'loadImage was NOT called (SVG uses Image element path)',
+    );
+    assert.true(receivedError instanceof Error, 'error is an Error instance');
+    assert.strictEqual(
+      (receivedError as Error).message,
+      'Failed to load svg',
+      'correct error message for failed SVG load',
+    );
   });
 
   test('it calls onError when image loading fails', async function (assert) {

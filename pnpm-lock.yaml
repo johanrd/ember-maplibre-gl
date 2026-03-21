@@ -189,6 +189,9 @@ importers:
       ember-maplibre-gl:
         specifier: workspace:*
         version: link:..
+      maplibregl-mapbox-request-transformer:
+        specifier: ^0.0.3
+        version: 0.0.3
       terra-draw:
         specifier: ^1.0.0
         version: 1.26.0
@@ -4750,6 +4753,9 @@ packages:
   maplibre-gl@5.21.0:
     resolution: {integrity: sha512-n0v4J/Ge0EG8ix/z3TY3ragtJYMqzbtSnj1riOC0OwQbzwp0lUF2maS1ve1z8HhitQCKtZZiZJhb8to36aMMfQ==}
     engines: {node: '>=16.14.0', npm: '>=8.1.0'}
+
+  maplibregl-mapbox-request-transformer@0.0.3:
+    resolution: {integrity: sha512-YqK4em6Ksxx8C5CA5GOyojIbSAmJZgZM64rgUAAG2M5myyTCbRJqRr9y8oBB1aNIQUA1ZCF3WHmWeDT2Pdpjbw==}
 
   mark.js@8.11.1:
     resolution: {integrity: sha512-1I+1qpDt4idfgLQG+BNWmrqku+7/2bi5nLf4YwF8y8zXvmfiTBY3PV3ZibfrjBueCByROpuBjLLFCajqkgYoLQ==}
@@ -12785,6 +12791,8 @@ snapshots:
       potpack: 2.1.0
       quickselect: 3.0.0
       tinyqueue: 3.0.0
+
+  maplibregl-mapbox-request-transformer@0.0.3: {}
 
   mark.js@8.11.1: {}
 

@@ -2,7 +2,7 @@
 layout: home
 hero:
   name: Ember MapLibre GL
-  tagline: Ambitious maps for ambitious web applications
+  tagline: Ambitious maps for ambitious apps
   actions:
     - theme: brand
       text: Examples
@@ -20,22 +20,22 @@ features:
       width: 40
       height: 40
     title: Powerful vector maps
-    details: Unmatched user experience powered by MapLibre GL JS
+    details: Unmatched user experience
   - icon: 🍔
     title: Declarative rendering
-    details: Compose in a declarative HTML-first approach.
+    details: Like your HTML
   - icon:
       src: /ember-icon.svg
       alt: Ember
       width: 40
       height: 40
     title: Modern Ember
-    details: Simple and elegant.
+    details: Elegant components
   - icon:
       src: /typescript-icon.svg
       alt: TypeScript
       width: 40
       height: 40
     title: Fully typed
-    details: First-class TypeScript support for humans and agents.
+    details: For humans and agents
 ---
