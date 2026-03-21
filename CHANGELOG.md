@@ -1,5 +1,21 @@
 # Changelog
 
+## Release (2026-03-21)
+
+* ember-maplibre-gl 0.2.0 (minor)
+
+#### :rocket: Enhancement
+* `ember-maplibre-gl`
+  * [#6](https://github.com/johanrd/ember-maplibre-gl/pull/6) m ([@johanrd](https://github.com/johanrd))
+
+#### :house: Internal
+* `ember-maplibre-gl`
+  * [#5](https://github.com/johanrd/ember-maplibre-gl/pull/5) Prepare Release vnull ([@github-actions[bot]](https://github.com/apps/github-actions))
+
+#### Committers: 2
+- GitHub Actions [Bot] ([@github-actions](https://github.com/apps/github-actions))
+- [@johanrd](https://github.com/johanrd)
+
 
 
 
