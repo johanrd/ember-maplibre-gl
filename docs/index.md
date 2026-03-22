@@ -1,7 +1,7 @@
 ---
 layout: home
 hero:
-  name: Ember MapLibre GL
+  name: MapLibre GL
   tagline: Ambitious maps for ambitious apps
   actions:
     - theme: brand
@@ -23,7 +23,7 @@ features:
     details: Unmatched user experience
   - icon: 🍔
     title: Declarative rendering
-    details: Tastes like HTML
+    details: Like your grandma's HTML
   - icon:
       src: /ember-icon.svg
       alt: Ember
