@@ -1,4 +1,5 @@
 import Component from '@glimmer/component';
+import { assert } from '@ember/debug';
 import { Marker, Popup, type PopupOptions, type LngLatLike } from 'maplibre-gl';
 import MapLibreGLOn from './maplibre-gl-on.gts';
 import type { WithBoundArgs } from '@glint/template';
@@ -14,7 +15,7 @@ export interface MapLibreGLPopupSignature {
     map: maplibregl.Map;
     /** Marker to attach this popup to. When set, the popup opens on marker interaction. */
     marker?: Marker;
-    /** Geographic position for standalone popups (not attached to a marker). Reactively updates. */
+    /** Geographic position for standalone popups (not attached to a marker). Reactively updates. Note: changing `lngLat` will reopen a user-closed popup. */
     lngLat?: LngLatLike;
     /** Popup configuration passed once at construction (closeButton, closeOnClick, anchor, offset, etc.). */
     initOptions?: PopupOptions;
@@ -54,6 +55,11 @@ export default class MapLibreGLPopup extends Component<MapLibreGLPopupSignature>
   constructor(owner: Owner, args: MapLibreGLPopupSignature['Args']) {
     super(owner, args);
 
+    assert(
+      '`map` argument is required for `MapLibreGLPopup` component',
+      args.map,
+    );
+
     const { initOptions, marker, map, lngLat } = args;
 
     const options = {
@@ -85,9 +91,8 @@ export default class MapLibreGLPopup extends Component<MapLibreGLPopupSignature>
       if (this.popup?.isOpen()) {
         this.popup?.setLngLat(lngLat);
       } else {
-        this.popup?.remove();
-        this.popup?.addTo(this.args.map);
         this.popup?.setLngLat(lngLat);
+        this.popup?.addTo(this.args.map);
       }
     }
   };

@@ -1,5 +1,6 @@
 import Component from '@glimmer/component';
 import { guidFor } from '@ember/object/internals';
+import { assert } from '@ember/debug';
 
 import MapLibreGLLayer from './maplibre-gl-layer.gts';
 import type MapLibreGL from './maplibre-gl.gts';
@@ -64,12 +65,13 @@ export default class MapLibreGLSource extends Component<MapLibreGLSourceSignatur
   /** @internal */
   constructor(owner: Owner, args: MapLibreGLSource['args']) {
     super(owner, args);
+
+    assert(
+      '`map` argument is required for `MapLibreGLSource` component',
+      args.map,
+    );
+
     this.sourceId = args.sourceId || guidFor(this);
-    if (!args.map.getSource(this.sourceId)) {
-      args.map.addSource(this.sourceId, args.options);
-    } else {
-      this.updateSource(args.options);
-    }
 
     if (args.parent) associateDestroyableChild(args.parent, this);
 
@@ -85,9 +87,14 @@ export default class MapLibreGLSource extends Component<MapLibreGLSourceSignatur
   }
 
   /** @internal */
-  updateSource = (options: MapLibreGLSource['args']['options']) => {
+  upsertSource = (options: MapLibreGLSource['args']['options']) => {
     const source = this.args.map.getSource(this.sourceId);
-    if (!source) return;
+
+    if (!source) {
+      this.args.map.addSource(this.sourceId, options);
+      return;
+    }
+
     if (
       'setData' in source &&
       typeof source.setData === 'function' &&
@@ -100,13 +107,12 @@ export default class MapLibreGLSource extends Component<MapLibreGLSourceSignatur
         options.data.type !== 'Feature' &&
         options.data.type !== 'FeatureCollection'
       ) {
-        const wrappedData = {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- duck-typed: verified via 'in' + typeof
+        source.setData({
           type: 'Feature',
           properties: {},
           geometry: options.data,
-        };
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- duck-typed: verified via 'in' + typeof
-        source.setData(wrappedData);
+        });
       } else {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- duck-typed: verified via 'in' + typeof
         source.setData(options.data);
@@ -121,7 +127,6 @@ export default class MapLibreGLSource extends Component<MapLibreGLSourceSignatur
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       source.setCoordinates(options.coordinates);
     }
-    // Additional source update methods (react-map-gl pattern)
     if (
       'setUrl' in source &&
       typeof source.setUrl === 'function' &&
@@ -143,7 +148,7 @@ export default class MapLibreGLSource extends Component<MapLibreGLSourceSignatur
   };
 
   <template>
-    {{this.updateSource @options}}
+    {{this.upsertSource @options}}
 
     {{yield
       (hash

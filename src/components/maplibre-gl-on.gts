@@ -1,4 +1,3 @@
-// app/components/maplibre-gl-on.gts
 import { isPresent } from '@ember/utils';
 import { resource, resourceFactory } from 'ember-resources';
 import { assert } from '@ember/debug';

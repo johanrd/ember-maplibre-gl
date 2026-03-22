@@ -4,7 +4,7 @@ import { tracked } from '@glimmer/tracking';
 import MapLibreGLCall from './maplibre-gl-call.gts';
 import MapLibreGLOn from './maplibre-gl-on.gts';
 import MapLibreGLPopup from './maplibre-gl-popup.gts';
-import MapLibreGLControl from './maplibre-gl-control.ts';
+import MapLibreGLControl from './maplibre-gl-control.gts';
 import MapLibreGLImage from './maplibre-gl-image.gts';
 import MapLibreGLSource from './maplibre-gl-source.gts';
 import MapLibreGLLayer from './maplibre-gl-layer.gts';
@@ -333,9 +333,6 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
       {{else if this.error}}
         {{#if (has-block "error")}}
           {{yield this.error to="error"}}
-        {{else}}
-          {{! template-lint-disable no-log }}
-          {{log "error rendering maplibre-gl" this.error}}
         {{/if}}
       {{/if}}
     </div>

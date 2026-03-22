@@ -18,8 +18,8 @@ export type { MapLibreGLMarkerSignature } from './components/maplibre-gl-marker.
 export { default as MapLibreGLPopup } from './components/maplibre-gl-popup.gts';
 export type { MapLibreGLPopupSignature } from './components/maplibre-gl-popup.gts';
 
-export { default as MapLibreGLControl } from './components/maplibre-gl-control.ts';
-export type { MapLibreGLControlSignature } from './components/maplibre-gl-control.ts';
+export { default as MapLibreGLControl } from './components/maplibre-gl-control.gts';
+export type { MapLibreGLControlSignature } from './components/maplibre-gl-control.gts';
 
 export { default as MapLibreGLSource } from './components/maplibre-gl-source.gts';
 export type { MapLibreGLSourceSignature } from './components/maplibre-gl-source.gts';
