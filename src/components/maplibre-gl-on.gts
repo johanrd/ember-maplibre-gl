@@ -78,7 +78,7 @@ resourceFactory(mapOn);
  *
  * When used with `@layerId`, the event only fires for features in that layer.
  *
- * @access `<MapLibreGL>` as `map.on`, `<map.marker>` as `marker.on`, `<map.popup>` as `popup.on`
+ * @access `<MapLibreGL>` as `map.on`, `<map.marker>` as `marker.on`, `<map.popup>` as `popup.on`, `<map.control>` as `control.on`
  * @example
  * ```gts
  * <MapLibreGL @initOptions={{this.mapOptions}} as |map|>

@@ -12,16 +12,13 @@ import type { Evented, IControl } from 'maplibre-gl';
 import type maplibregl from 'maplibre-gl';
 import type Owner from '@ember/owner';
 
-/** A control that also supports event binding (e.g. GeolocateControl). */
-type EventedControl = IControl & Evented;
-
 /** Signature for {@link MapLibreGLControl}. */
 export interface MapLibreGLControlSignature {
   Args: {
     /** The MapLibre map instance (pre-bound by parent). */
     map: maplibregl.Map;
     /** A MapLibre IControl instance. Controls that extend Evented (e.g. `GeolocateControl`) support event binding via the yielded `on` component. */
-    control: IControl | EventedControl;
+    control: IControl;
     /** Corner placement: "top-left", "top-right", "bottom-left", or "bottom-right". */
     position: Parameters<maplibregl.Map['addControl']>['1'];
     /** Parent component for destroyable association (pre-bound by parent). */
@@ -53,7 +50,7 @@ export interface MapLibreGLControlSignature {
  */
 export default class MapLibreGLControl extends Component<MapLibreGLControlSignature> {
   /** @internal */
-  private _currentControl?: IControl | EventedControl;
+  private _currentControl?: IControl;
   private _currentPosition?: MapLibreGLControlSignature['Args']['position'];
 
   /** @internal */
@@ -88,7 +85,7 @@ export default class MapLibreGLControl extends Component<MapLibreGLControlSignat
 
   /** @internal */
   updateControl = (
-    control: IControl | EventedControl,
+    control: IControl,
     position: MapLibreGLControlSignature['Args']['position'],
   ) => {
     if (control === this._currentControl && position === this._currentPosition)
@@ -110,7 +107,7 @@ export default class MapLibreGLControl extends Component<MapLibreGLControlSignat
   /** @internal */
   get eventSource(): Evented | undefined {
     const ctrl = this._currentControl;
-    return ctrl && 'on' in ctrl ? (ctrl as Evented) : undefined;
+    return ctrl && 'on' in ctrl ? (ctrl as unknown as Evented) : undefined;
   }
 
   <template>
