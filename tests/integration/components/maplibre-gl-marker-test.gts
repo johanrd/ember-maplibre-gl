@@ -5,7 +5,7 @@ import { tracked } from '@glimmer/tracking';
 import { hash, array } from '@ember/helper';
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
 
-const STYLE = 'https://demotiles.maplibre.org/style.json';
+const STYLE = { version: 8 as const, sources: {}, layers: [] };
 
 class State {
   @tracked show = true;

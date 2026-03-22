@@ -7,7 +7,7 @@ import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
 import type { Map, LayerSpecification } from 'maplibre-gl';
 import sinon from 'sinon';
 
-const STYLE = 'https://demotiles.maplibre.org/style.json';
+const STYLE = { version: 8 as const, sources: {}, layers: [] };
 
 import type { FeatureCollection } from 'geojson';
 

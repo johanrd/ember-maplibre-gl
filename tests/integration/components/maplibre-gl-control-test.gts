@@ -6,7 +6,7 @@ import { hash } from '@ember/helper';
 import { NavigationControl, ScaleControl } from 'maplibre-gl';
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
 
-const STYLE = 'https://demotiles.maplibre.org/style.json';
+const STYLE = { version: 8 as const, sources: {}, layers: [] };
 
 class State {
   @tracked show = true;

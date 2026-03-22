@@ -7,7 +7,8 @@ import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
 import type { Map } from 'maplibre-gl';
 import mapboxgl from 'mapbox-gl';
 
-const STYLE = 'https://demotiles.maplibre.org/style.json';
+const STYLE = { version: 8 as const, sources: {}, layers: [] };
+const STYLE_URL = 'https://demotiles.maplibre.org/style.json';
 
 module('Integration | Component | maplibre-gl', function (hooks) {
   setupRenderingTest(hooks);
@@ -94,7 +95,7 @@ module('Integration | Component | maplibre-gl', function (hooks) {
     await render(
       <template>
         <MapLibreGL
-          @initOptions={{hash style=STYLE center=(array 0 0) zoom=1}}
+          @initOptions={{hash style=STYLE_URL center=(array 0 0) zoom=1}}
           @mapLib={{MapLib}}
           @mapLoaded={{onMapLoaded}}
           style="height:200px;"
@@ -183,7 +184,7 @@ module('Integration | Component | maplibre-gl', function (hooks) {
       <template>
         {{#if state.show}}
           <MapLibreGL
-            @initOptions={{hash style=STYLE center=(array 0 0) zoom=1}}
+            @initOptions={{hash style=STYLE_URL center=(array 0 0) zoom=1}}
             @reuseMaps={{true}}
             @mapLoaded={{captureMap}}
             style="height:200px;"

@@ -8,7 +8,7 @@ import type { Map, GeoJSONSource } from 'maplibre-gl';
 import type { FeatureCollection } from 'geojson';
 import sinon from 'sinon';
 
-const STYLE = 'https://demotiles.maplibre.org/style.json';
+const STYLE = { version: 8 as const, sources: {}, layers: [] };
 
 class State {
   @tracked show = true;
