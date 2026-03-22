@@ -89,10 +89,8 @@ export default class MapLibreGLPopup extends Component<MapLibreGLPopupSignature>
   /** @internal */
   updatePopupLngLat = (lngLat: MapLibreGLPopupSignature['Args']['lngLat']) => {
     if (lngLat) {
-      if (this.popup?.isOpen()) {
-        this.popup?.setLngLat(lngLat);
-      } else {
-        this.popup?.setLngLat(lngLat);
+      this.popup?.setLngLat(lngLat);
+      if (!this.popup?.isOpen()) {
         this.popup?.addTo(this.args.map);
       }
     }

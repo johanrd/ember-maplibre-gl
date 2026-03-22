@@ -2,7 +2,25 @@
 
 For most use cases, the declarative components (`<map.source>`, `<source.layer>`, `<map.marker>`, etc.) are the right choice. But sometimes you need direct access to the MapLibre `Map` instance — for custom WebGL layers, runtime style queries, or APIs the addon doesn't wrap.
 
-Use the `@mapLoaded` callback to get the map instance:
+## Getting the map instance
+
+Use the `@mapLoaded` callback to get the map instance. Note that `@mapLoaded` fires when MapLibre's style and tiles are ready — child components (sources, layers) may not be on the map until the next frame. If you need to interact with sources imperatively, defer with `requestAnimationFrame`:
+
+```ts
+onMapLoaded = (map: Map) => {
+  this.map = map;
+  // Sources and layers are added during the render that follows.
+  // Defer imperative work to the next frame.
+  requestAnimationFrame(() => {
+    const source = map.getSource('my-source');
+    source.setData(newData);
+  });
+};
+```
+
+See the [Animate a Line](/examples/animate-a-line) example for a full working demo.
+
+## Example
 
 ```gts live preview
 import Component from '@glimmer/component';

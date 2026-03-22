@@ -83,7 +83,7 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
     if (!url || typeof url !== 'string') {
       return false;
     }
-    return /\.svg(?:[?#]|$)/.test(url);
+    return /\.svg(?:[?#]|$)/i.test(url) || url.startsWith('data:image/svg+xml');
   }
 
   /** @internal */
@@ -175,8 +175,8 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
       return;
     }
 
-    if (this.args.url !== url) {
-      // image has changed since we started loading
+    if (this.args.url !== url || this.args.name !== name) {
+      // url or name has changed since we started loading
       return;
     }
 

@@ -513,6 +513,66 @@ module('Integration | Component | maplibre-gl-layer', function (hooks) {
     );
   });
 
+  test('it updates layer position when @before changes', async function (assert) {
+    let map: Map | undefined;
+    const setMap = (m: Map) => {
+      map = m;
+    };
+
+    class BeforeState {
+      @tracked before: string | undefined = undefined;
+    }
+    const state = new BeforeState();
+
+    await render(
+      <template>
+        <MapLibreGL
+          @initOptions={{hash style=STYLE}}
+          @mapLoaded={{setMap}}
+          style="height:100px;"
+          as |m|
+        >
+          <m.source
+            @sourceId="src"
+            @options={{hash type="geojson" data=GEOJSON}}
+            as |source|
+          >
+            <source.layer @options={{hash id="anchor-layer" type="circle"}} />
+            <source.layer
+              @options={{hash id="movable-layer" type="circle"}}
+              @before={{state.before}}
+            >
+              <span data-test-loaded />
+            </source.layer>
+          </m.source>
+        </MapLibreGL>
+      </template>,
+    );
+
+    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
+
+    // Initially movable-layer should be after anchor-layer (added second)
+    let layers = map?.getStyle().layers ?? [];
+    let anchorIdx = layers.findIndex((l) => l.id === 'anchor-layer');
+    let movableIdx = layers.findIndex((l) => l.id === 'movable-layer');
+    assert.true(
+      movableIdx > anchorIdx,
+      'movable-layer is after anchor-layer initially',
+    );
+
+    // Move movable-layer before anchor-layer
+    state.before = 'anchor-layer';
+    await settled();
+
+    layers = map?.getStyle().layers ?? [];
+    anchorIdx = layers.findIndex((l) => l.id === 'anchor-layer');
+    movableIdx = layers.findIndex((l) => l.id === 'movable-layer');
+    assert.true(
+      movableIdx < anchorIdx,
+      'movable-layer moved before anchor-layer',
+    );
+  });
+
   test('it yields the layer id', async function (assert) {
     await render(
       <template>

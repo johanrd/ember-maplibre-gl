@@ -375,6 +375,71 @@ module('Integration | Component | maplibre-gl-source', function (hooks) {
     assert.dom('[data-test-has-layer]').hasText('yes');
   });
 
+  test('it wraps raw geometry objects in a Feature', async function (assert) {
+    let map: Map | undefined;
+    const setMap = (m: Map) => {
+      map = m;
+    };
+    const state = new State();
+    state.options = {
+      type: 'geojson',
+      data: { type: 'FeatureCollection' as const, features: [] },
+    };
+
+    await render(
+      <template>
+        <MapLibreGL
+          @initOptions={{hash style=STYLE}}
+          @mapLoaded={{setMap}}
+          style="height:100px;"
+          as |m|
+        >
+          <m.source @sourceId="wrap-test" @options={{state.options}}>
+            <span data-test-loaded />
+          </m.source>
+        </MapLibreGL>
+      </template>,
+    );
+
+    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
+
+    const source = map?.getSource('wrap-test');
+    assert.ok(source, 'source exists');
+
+    const setDataSpy = sinon.spy(source as GeoJSONSource, 'setData');
+
+    // Pass a raw Point geometry (not a Feature or FeatureCollection)
+    state.options = {
+      type: 'geojson',
+      data: {
+        type: 'Point',
+        coordinates: [5, 5],
+      } as unknown as FeatureCollection,
+    };
+    await settled();
+
+    assert.true(setDataSpy.called, 'setData was called');
+    const calledWith = setDataSpy.firstCall.args[0] as {
+      type: string;
+      geometry: { type: string; coordinates: number[] };
+    };
+    assert.strictEqual(
+      calledWith.type,
+      'Feature',
+      'raw geometry was wrapped in a Feature',
+    );
+    assert.strictEqual(
+      calledWith.geometry.type,
+      'Point',
+      'geometry is preserved inside the Feature wrapper',
+    );
+    assert.deepEqual(
+      calledWith.geometry.coordinates,
+      [5, 5],
+      'coordinates preserved in wrapped Feature',
+    );
+  });
+
   test('it handles full source data replacement', async function (assert) {
     let map: Map | undefined;
     const setMap = (m: Map) => {

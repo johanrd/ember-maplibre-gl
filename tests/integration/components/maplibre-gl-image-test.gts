@@ -287,6 +287,62 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
     );
   });
 
+  test('it discards stale loads when name changes with same url', async function (assert) {
+    let addImageStub: sinon.SinonStub | undefined;
+    let loadImageStub: sinon.SinonStub | undefined;
+
+    const setMap = (m: Map) => {
+      loadImageStub = sinon.stub(m, 'loadImage');
+      // First call: never resolves (simulates slow load)
+      loadImageStub.onFirstCall().returns(new Promise(() => {}) as never);
+      // Second call: resolves immediately
+      loadImageStub.onSecondCall().resolves({ data: new Image() } as never);
+      addImageStub = sinon.stub(m, 'addImage');
+    };
+
+    class NameState {
+      @tracked name = 'icon-a';
+    }
+    const nameState = new NameState();
+
+    await render(
+      <template>
+        <MapLibreGL
+          @initOptions={{hash style=STYLE}}
+          @mapLoaded={{setMap}}
+          style="height:100px;"
+          as |m|
+        >
+          <m.image @name={{nameState.name}} @url="/same-icon.png" />
+          <span data-test-loaded />
+        </MapLibreGL>
+      </template>,
+    );
+
+    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
+    await waitUntil(() => loadImageStub?.called, { timeout: 5000 });
+
+    // Change name while first load is still pending
+    nameState.name = 'icon-b';
+    await settled();
+
+    await waitUntil(() => loadImageStub!.callCount >= 2, { timeout: 5000 });
+    await waitUntil(() => addImageStub!.called, { timeout: 5000 });
+
+    assert.true(
+      addImageStub!.calledOnce,
+      'addImage called only once (stale first result discarded)',
+    );
+    assert.strictEqual(
+      addImageStub!.firstCall.args[0],
+      'icon-b',
+      'addImage called with the new name, not the stale one',
+    );
+
+    loadImageStub!.restore();
+    addImageStub!.restore();
+  });
+
   test('it calls onError when image loading fails', async function (assert) {
     let receivedError: unknown;
     const onError = (err: unknown) => {
