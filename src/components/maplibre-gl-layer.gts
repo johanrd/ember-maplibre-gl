@@ -98,7 +98,8 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
         source: this.args.sourceId || options.source,
       };
 
-      // @ts-expect-error: However much we'd like to type this, it seems impossible to please both maplibre-gl and maplibre-gl types here
+      // @ts-expect-error — LayerSpecification is a discriminated union on `type`;
+      // TypeScript can't narrow a spread of the full union to a single variant.
       this.args.map.addLayer(layerOptions, this.args.before);
       this.prevBefore = this.args.before;
       return;
