@@ -3,6 +3,7 @@ import { setupRenderingTest } from 'ember-qunit';
 import { render, settled } from '@ember/test-helpers';
 import { tracked } from '@glimmer/tracking';
 import MapLibreGLOn from 'ember-maplibre-gl/components/maplibre-gl-on';
+import type { Evented } from 'maplibre-gl';
 
 class State {
   @tracked show = true;
@@ -22,7 +23,7 @@ module('Integration | Component | maplibre-gl-on', function (hooks) {
         setTimeout(() => cb(event), 0);
       },
       off() {},
-    };
+    } as unknown as Evented;
 
     const onEvent = (ev: unknown) => {
       assert.strictEqual(ev, event, 'sends event to the action');
@@ -56,7 +57,7 @@ module('Integration | Component | maplibre-gl-on', function (hooks) {
         assert.strictEqual(eventName, 'click', 'unsubscribes to event name');
         assert.strictEqual(layerId, 'my-layer', 'passes on layer');
       },
-    };
+    } as unknown as Evented;
 
     const onEvent = (ev: unknown) => {
       assert.strictEqual(ev, event, 'sends event to the action');
@@ -89,7 +90,7 @@ module('Integration | Component | maplibre-gl-on', function (hooks) {
           'unsubscribes from event on destroy',
         );
       },
-    };
+    } as unknown as Evented;
 
     const onEvent = () => {};
     const state = new State();

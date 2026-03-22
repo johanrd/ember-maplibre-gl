@@ -3,17 +3,12 @@ import { resource, resourceFactory } from 'ember-resources';
 import { assert } from '@ember/debug';
 
 import type {
+  Evented,
   Listener,
   Map as MaplibreMap,
   MapLayerEventType,
 } from 'maplibre-gl';
 import type { TOC } from '@ember/component/template-only';
-
-/** Minimal interface for any object that supports on/off event binding. */
-interface EventTarget {
-  on(...args: unknown[]): unknown;
-  off(...args: unknown[]): unknown;
-}
 
 /** Args for the `MapLibreGLOn` template-only component. */
 interface Args {
@@ -22,8 +17,8 @@ interface Args {
   /** Callback invoked when the event fires. Receives the MapLibre event object. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- event handlers receive library-specific event types
   action: (...args: any[]) => void;
-  /** The object to listen on — map, marker, or popup (pre-bound by parent). */
-  eventSource?: EventTarget;
+  /** The object to listen on — map, marker, popup, or control (pre-bound by parent). */
+  eventSource?: Evented;
   /** Optional layer ID to scope map events to features in a specific layer. */
   layerId?: string;
 }
@@ -36,7 +31,7 @@ export function mapOn(
   event: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   action: (...args: any[]) => void,
-  eventSource?: EventTarget,
+  eventSource?: Evented,
   layerId?: string,
 ) {
   assert(
@@ -51,29 +46,25 @@ export function mapOn(
       action(...args);
     };
 
-    if ('on' in eventSource) {
+    if (layerId) {
+      (eventSource as MaplibreMap).on(
+        event as keyof MapLayerEventType,
+        layerId,
+        boundHandler,
+      );
+    } else {
+      eventSource.on(event, boundHandler);
+    }
+
+    on.cleanup(() => {
       if (layerId) {
-        (eventSource as MaplibreMap).on(
+        (eventSource as MaplibreMap).off(
           event as keyof MapLayerEventType,
           layerId,
           boundHandler,
         );
       } else {
-        eventSource.on(event, boundHandler);
-      }
-    }
-
-    on.cleanup(() => {
-      if ('off' in eventSource) {
-        if (layerId) {
-          (eventSource as MaplibreMap).off(
-            event as keyof MapLayerEventType,
-            layerId,
-            boundHandler,
-          );
-        } else {
-          eventSource.off(event, boundHandler);
-        }
+        eventSource.off(event, boundHandler);
       }
     });
   });
