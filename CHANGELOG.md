@@ -2,6 +2,21 @@
 
 ## Release (2026-03-22)
 
+* ember-maplibre-gl 0.3.1 (patch)
+
+#### :bug: Bug Fix
+* `ember-maplibre-gl`
+  * [#26](https://github.com/johanrd/ember-maplibre-gl/pull/26) Generate API docs from JSdocs ([@johanrd](https://github.com/johanrd))
+
+#### :house: Internal
+* `ember-maplibre-gl`
+  * [#24](https://github.com/johanrd/ember-maplibre-gl/pull/24) fix ci ([@johanrd](https://github.com/johanrd))
+
+#### Committers: 1
+- [@johanrd](https://github.com/johanrd)
+
+## Release (2026-03-22)
+
 * ember-maplibre-gl 0.3.0 (minor)
 
 #### :rocket: Enhancement
