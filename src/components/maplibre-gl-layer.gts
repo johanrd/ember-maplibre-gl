@@ -145,9 +145,7 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
 
     if (this.args.before !== this.prevBefore) {
       this.prevBefore = this.args.before;
-      if (this.args.before !== undefined) {
-        this.args.map.moveLayer(this.layerId, this.args.before);
-      }
+      this.args.map.moveLayer(this.layerId, this.args.before);
     }
   };
 

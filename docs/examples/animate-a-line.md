@@ -67,10 +67,11 @@ export default class AnimateLineDemo extends Component {
 
   onMapLoaded = (map: Map) => {
     this.map = map;
-    this.animate();
+    // Defer to next frame so child components (sources, layers) are on the map
+    requestAnimationFrame(() => this.tick());
   };
 
-  animate = () => {
+  tick = () => {
     if (this.currentIndex < fullRoute.length) {
       this.geojson.features[0].geometry.coordinates.push(fullRoute[this.currentIndex]);
       this.map!.getSource('route')!.setData(this.geojson);
@@ -80,11 +81,10 @@ export default class AnimateLineDemo extends Component {
       });
       this.currentIndex++;
     } else {
-      // Reset and loop
       this.currentIndex = 0;
       this.geojson.features[0].geometry.coordinates = [fullRoute[0]];
     }
-    this.animation = requestAnimationFrame(this.animate);
+    this.animation = requestAnimationFrame(this.tick);
   };
 
   togglePause = () => {
@@ -92,7 +92,7 @@ export default class AnimateLineDemo extends Component {
     if (this.isPaused) {
       cancelAnimationFrame(this.animation!);
     } else {
-      this.animate();
+      this.tick();
     }
   };
 

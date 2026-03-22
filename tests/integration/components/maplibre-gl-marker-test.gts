@@ -185,6 +185,84 @@ module('Integration | Component | maplibre-gl-marker', function (hooks) {
     );
   });
 
+  test('it updates marker position when @lngLat changes', async function (assert) {
+    class LngLatState {
+      @tracked lngLat: [number, number] = [0, 0];
+    }
+    const state = new LngLatState();
+
+    await render(
+      <template>
+        <MapLibreGL
+          @initOptions={{hash style=STYLE center=(array 0 0) zoom=1}}
+          style="height:200px;"
+          as |mapYield|
+        >
+          <mapYield.marker @lngLat={{state.lngLat}}>
+            <span data-test-content>marker</span>
+          </mapYield.marker>
+        </MapLibreGL>
+      </template>,
+    );
+
+    await waitUntil(() => find('.maplibregl-marker'), { timeout: 10000 });
+
+    // Find the marker instance via the map's internal marker tracking
+    const markerEl = document.querySelector(
+      '.maplibregl-marker',
+    ) as HTMLElement;
+    assert.ok(markerEl, 'marker element exists');
+
+    const initialTransform = markerEl.style.transform;
+
+    // Change lngLat
+    state.lngLat = [30, 30];
+    await settled();
+
+    const updatedTransform = markerEl.style.transform;
+    assert.notStrictEqual(
+      updatedTransform,
+      initialTransform,
+      'marker DOM transform changed after lngLat update',
+    );
+  });
+
+  test('it renders a popup attached to a marker', async function (assert) {
+    await render(
+      <template>
+        <MapLibreGL
+          @initOptions={{hash style=STYLE center=(array 0 0) zoom=1}}
+          style="height:200px;"
+          as |map|
+        >
+          <map.marker @lngLat={{array 0 0}} as |marker|>
+            <marker.popup @initOptions={{hash closeButton=false}}>
+              <span data-test-marker-popup>Marker popup content</span>
+            </marker.popup>
+          </map.marker>
+        </MapLibreGL>
+      </template>,
+    );
+
+    await waitUntil(() => find('.maplibregl-marker'), { timeout: 10000 });
+    assert.dom('.maplibregl-marker').exists('marker rendered');
+
+    // Click the marker to open the popup
+    const markerEl = document.querySelector(
+      '.maplibregl-marker',
+    ) as HTMLElement;
+    markerEl.click();
+    await settled();
+
+    await waitUntil(() => find('.maplibregl-popup-content'), { timeout: 5000 });
+    assert
+      .dom('.maplibregl-popup-content')
+      .containsText(
+        'Marker popup content',
+        'popup content rendered when marker clicked',
+      );
+  });
+
   test('it creates actual DOM marker elements', async function (assert) {
     await render(
       <template>
