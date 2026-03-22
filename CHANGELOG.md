@@ -2,6 +2,21 @@
 
 ## Release (2026-03-22)
 
+* ember-maplibre-gl 0.4.0 (minor)
+
+#### :rocket: Enhancement
+* `ember-maplibre-gl`
+  * [#29](https://github.com/johanrd/ember-maplibre-gl/pull/29) Yield the `on` component also from the Control component ([@johanrd](https://github.com/johanrd))
+
+#### :memo: Documentation
+* `ember-maplibre-gl`
+  * [#28](https://github.com/johanrd/ember-maplibre-gl/pull/28) add tests and clarify effectful onMapLoaded should use requestAnimationFrame ([@johanrd](https://github.com/johanrd))
+
+#### Committers: 1
+- [@johanrd](https://github.com/johanrd)
+
+## Release (2026-03-22)
+
 * ember-maplibre-gl 0.3.1 (patch)
 
 #### :bug: Bug Fix
