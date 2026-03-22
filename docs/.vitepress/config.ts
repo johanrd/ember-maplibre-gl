@@ -130,6 +130,12 @@ export default defineConfig({
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:url', content: 'https://johanrd.github.io/ember-maplibre-gl/' }],
     ['meta', { property: 'og:image', content: 'https://johanrd.github.io/ember-maplibre-gl/og-image.png' }],
+    ['meta', { property: 'og:image:width', content: '1200' }],
+    ['meta', { property: 'og:image:height', content: '630' }],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['meta', { name: 'twitter:title', content: 'ember-maplibre-gl' }],
+    ['meta', { name: 'twitter:description', content: 'Declarative MapLibre GL JS components for Ember.js' }],
+    ['meta', { name: 'twitter:image', content: 'https://johanrd.github.io/ember-maplibre-gl/og-image.png' }],
   ],
 
   vite: {
