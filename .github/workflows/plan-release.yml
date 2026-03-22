@@ -44,7 +44,7 @@ jobs:
         id: explanation
 
       - uses: peter-evans/create-pull-request@v8
-        if: steps.explanation.outputs.new-version
+        if: steps.explanation.outputs.new-version && steps.explanation.outputs.new-version != 'null'
         with:
           commit-message: "Prepare Release ${{ steps.explanation.outputs.new-version }} using release-plan"
           labels: "internal"
