@@ -23,14 +23,14 @@ features:
     details: Unmatched user experience
   - icon: 🍔
     title: Declarative rendering
-    details: Like your HTML
+    details: Tastes like HTML
   - icon:
       src: /ember-icon.svg
       alt: Ember
       width: 40
       height: 40
     title: Modern Ember
-    details: Elegant components
+    details: Elegant conventions
   - icon:
       src: /typescript-icon.svg
       alt: TypeScript

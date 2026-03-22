@@ -1,28 +1,36 @@
 # Layer
 
-Adds a rendering layer to the map. Layers define how data from a source is styled and displayed.
+<!-- DESCRIPTION -->
+Adds a rendering layer to the map. Layers define how source data is styled and displayed.
 
-## Usage
+Usually used via `source.layer` (pre-bound to the source), but can also be used
+directly via `map.layer` with an explicit source reference. Reactively updates
+paint, layout, filter, zoom range, and position when args change.
+<!-- /DESCRIPTION -->
 
-This component is yielded by `<map.source>` — no import needed:
+<!-- EXAMPLE -->
+## Example
 
-```hbs
-<MapLibreGL @initOptions={{options}} as |map|>
-  <map.source @options={{...}} as |source|>
-    <source.layer ... />
+```gts
+<MapLibreGL @initOptions={{this.mapOptions}} as |map|>
+  <map.source @options={{this.geojsonSource}} as |source|>
+    <source.layer @options={{hash type="circle" paint=(hash circle-radius=6 circle-color="#007cbf")}} />
   </map.source>
 </MapLibreGL>
 ```
+<!-- /EXAMPLE -->
+
+<!-- IMPORT -->
+## Import
+
+Yielded by `<map.source>` as `source.layer`, or `<MapLibreGL>` as `map.layer` — no import needed.
 
 ::: details Direct import (rare)
 ```ts
 import MapLibreGLLayer from 'ember-maplibre-gl/components/maplibre-gl-layer';
 ```
 :::
-
-## Reactive Updates
-
-When `@options` changes, the layer automatically updates its `paint`, `layout`, `filter`, and zoom range properties. Removed properties are reset to their defaults (following the react-map-gl pattern).
+<!-- /IMPORT -->
 
 <!-- SIGNATURE -->
 ## Signature

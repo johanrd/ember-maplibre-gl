@@ -2,25 +2,8 @@
 
 Declaratively bind event handlers to the map, markers, popups, or specific layers.
 
-## Usage
-
-This component is yielded by `<MapLibreGL>`, `<map.marker>`, and `<map.popup>` — no import needed:
-
-```hbs
-<MapLibreGL @initOptions={{options}} as |map|>
-  <map.on @event="click" @action={{handler}} />
-
-  <map.marker @lngLat={{lngLat}} as |marker|>
-    <marker.on @event="dragend" @action={{handler}} />
-  </map.marker>
-</MapLibreGL>
-```
-
-::: details Direct import (rare)
-```ts
-import MapLibreGLOn from 'ember-maplibre-gl/components/maplibre-gl-on';
-```
-:::
+<!-- IMPORT -->
+<!-- /IMPORT -->
 
 ## Map Events
 

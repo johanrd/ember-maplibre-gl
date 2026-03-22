@@ -1,31 +1,35 @@
 # Call
 
-Invokes a method on the map instance. Useful for imperative map operations like `flyTo`, `fitBounds`, etc.
+<!-- DESCRIPTION -->
+Declaratively invokes a method on the map instance (or any object). Re-invokes
+reactively when arguments change, making it useful for imperative map APIs
+like `flyTo`, `setStyle`, or `resize` in a template-driven way.
 
-## Usage
+**Caution:** the method is called on every render. Guard with a conditional
+to avoid repeated invocations (e.g. `flyTo` re-animating on unrelated state changes).
+<!-- /DESCRIPTION -->
 
-This component is yielded by `<MapLibreGL>` — no import needed:
+<!-- EXAMPLE -->
+## Example
 
-```hbs
-<MapLibreGL @initOptions={{options}} as |map|>
-  <map.call ... />
+```gts
+<MapLibreGL @initOptions={{this.mapOptions}} as |map|>
+  <map.call @func="flyTo" @positionalArguments={{array (hash center=this.target zoom=14)}} />
 </MapLibreGL>
 ```
+<!-- /EXAMPLE -->
+
+<!-- IMPORT -->
+## Import
+
+Yielded by `<MapLibreGL>` as `map.call` — no import needed.
 
 ::: details Direct import (rare)
 ```ts
 import MapLibreGLCall from 'ember-maplibre-gl/components/maplibre-gl-call';
 ```
 :::
-
-## Example
-
-```hbs
-<map.call
-  @func="flyTo"
-  @positionalArguments={{array (hash center=(array -74.5 40) zoom=12)}}
-/>
-```
+<!-- /IMPORT -->
 
 <!-- SIGNATURE -->
 ## Signature

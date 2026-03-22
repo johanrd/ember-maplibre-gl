@@ -1,40 +1,35 @@
 # Source
 
-Adds a data source to the map. Supports GeoJSON, vector tiles, raster tiles, and other [MapLibre source types](https://maplibre.org/maplibre-style-spec/sources/).
+<!-- DESCRIPTION -->
+Adds a data source to the map. Sources provide the data that layers render.
+Supports GeoJSON, vector tiles, raster, image, and video source types.
 
-## Usage
+Updates to `@options` are applied reactively (e.g. setData for GeoJSON).
+<!-- /DESCRIPTION -->
 
-This component is yielded by `<MapLibreGL>` — no import needed:
+<!-- EXAMPLE -->
+## Example
 
-```hbs
-<MapLibreGL @initOptions={{options}} as |map|>
-  <map.source ... />
+```gts
+<MapLibreGL @initOptions={{this.mapOptions}} as |map|>
+  <map.source @options={{this.geojsonSource}} as |source|>
+    <source.layer @options={{this.circleLayer}} />
+  </map.source>
 </MapLibreGL>
 ```
+<!-- /EXAMPLE -->
+
+<!-- IMPORT -->
+## Import
+
+Yielded by `<MapLibreGL>` as `map.source` — no import needed.
 
 ::: details Direct import (rare)
 ```ts
 import MapLibreGLSource from 'ember-maplibre-gl/components/maplibre-gl-source';
 ```
 :::
-
-## Reactive Updates
-
-When `@options` changes, the source is automatically updated:
-- GeoJSON sources: calls `setData()`
-- Image/video sources: calls `setCoordinates()`
-- Vector/raster sources: calls `setUrl()` or `setTiles()`
-
-## Example
-
-```hbs
-<map.source @options={{hash type="geojson" data=this.geojsonData}} as |source|>
-  <source.layer @options={{hash
-    type="circle"
-    paint=(hash circle-color="#007cbf" circle-radius=8)
-  }} />
-</map.source>
-```
+<!-- /IMPORT -->
 
 <!-- SIGNATURE -->
 ## Signature

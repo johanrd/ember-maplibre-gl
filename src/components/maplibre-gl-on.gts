@@ -85,15 +85,15 @@ resourceFactory(mapOn);
  * Declaratively binds an event listener to a map, marker, or popup. Automatically
  * cleans up the listener when the component is destroyed.
  *
- * Yielded by `<MapLibreGL>` as `map.on`, by `<marker>` as `marker.on`, and by
- * `<popup>` as `popup.on`. The `eventSource` is pre-bound by the parent.
- *
  * When used with `@layerId`, the event only fires for features in that layer.
  *
+ * @access `<MapLibreGL>` as `map.on`, `<map.marker>` as `marker.on`, `<map.popup>` as `popup.on`
  * @example
  * ```gts
- * <map.on @event="click" @action={{this.handleClick}} />
- * <map.on @event="click" @layerId="my-layer" @action={{this.handleLayerClick}} />
+ * <MapLibreGL @initOptions={{this.mapOptions}} as |map|>
+ *   <map.on @event="click" @action={{this.handleClick}} />
+ *   <map.on @event="click" @layerId="my-layer" @action={{this.handleLayerClick}} />
+ * </MapLibreGL>
  * ```
  */
 const MapLibreGLOn =

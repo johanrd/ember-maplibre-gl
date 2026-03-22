@@ -44,16 +44,17 @@ export interface MapLibreGLMarkerSignature {
  * Places a marker on the map at a given position. The block content becomes the
  * marker's DOM element, so you can render any Ember template inside it.
  *
- * Yielded by `<MapLibreGL>` as `map.marker`. Yields a pre-bound `popup` and `on` component.
- *
+ * @access `<MapLibreGL>` as `map.marker`
  * @example
  * ```gts
- * <map.marker @lngLat={{array -96.79 32.77}} @initOptions={{hash draggable=true}} as |marker|>
- *   <marker.popup>
- *     <p>Hello from Dallas!</p>
- *   </marker.popup>
- *   <marker.on @event="dragend" @action={{this.onDragEnd}} />
- * </map.marker>
+ * <MapLibreGL @initOptions={{this.mapOptions}} as |map|>
+ *   <map.marker @lngLat={{array -96.79 32.77}} @initOptions={{hash draggable=true}} as |marker|>
+ *     <marker.popup>
+ *       <p>Hello from Dallas!</p>
+ *     </marker.popup>
+ *     <marker.on @event="dragend" @action={{this.onDragEnd}} />
+ *   </map.marker>
+ * </MapLibreGL>
  * ```
  */
 export default class MapLibreGLMarker extends Component<MapLibreGLMarkerSignature> {

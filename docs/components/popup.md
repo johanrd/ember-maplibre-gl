@@ -1,46 +1,34 @@
 # Popup
 
-Displays a popup on the map, either standalone at coordinates or attached to a marker.
+<!-- DESCRIPTION -->
+Displays a popup overlay on the map. Can be attached to a marker or positioned
+standalone at a coordinate. The block content becomes the popup's DOM.
+<!-- /DESCRIPTION -->
 
-## Usage
+<!-- EXAMPLE -->
+## Example
 
-This component is yielded by `<MapLibreGL>` and `<map.marker>` — no import needed:
-
-```hbs
-<MapLibreGL @initOptions={{options}} as |map|>
-  {{! Standalone popup }}
-  <map.popup @lngLat={{lngLat}}>Content</map.popup>
-
-  {{! Marker-attached popup }}
-  <map.marker @lngLat={{lngLat}} as |marker|>
-    <marker.popup>Content</marker.popup>
-  </map.marker>
+```gts
+<MapLibreGL @initOptions={{this.mapOptions}} as |map|>
+  <map.popup @lngLat={{array -96.79 32.77}} @initOptions={{hash closeButton=false}} as |popup|>
+    <p>Standalone popup content</p>
+    <popup.on @event="close" @action={{this.onPopupClose}} />
+  </map.popup>
 </MapLibreGL>
 ```
+<!-- /EXAMPLE -->
+
+<!-- IMPORT -->
+## Import
+
+Yielded by `<MapLibreGL>` as `map.popup`, or `<map.marker>` as `marker.popup` — no import needed.
 
 ::: details Direct import (rare)
 ```ts
 import MapLibreGLPopup from 'ember-maplibre-gl/components/maplibre-gl-popup';
 ```
 :::
-
-## Standalone Popup
-
-```hbs
-<map.popup @lngLat={{array -96.8 32.8}}>
-  <h3>Dallas, TX</h3>
-</map.popup>
-```
-
-## Marker Popup
-
-```hbs
-<map.marker @lngLat={{array -96.8 32.8}} as |marker|>
-  <marker.popup>
-    <p>Click the marker to see this!</p>
-  </marker.popup>
-</map.marker>
-```
+<!-- /IMPORT -->
 
 <!-- SIGNATURE -->
 ## Signature
@@ -52,7 +40,7 @@ interface MapLibreGLPopupSignature {
         map: maplibregl.Map;
         /** Marker to attach this popup to. When set, the popup opens on marker interaction. */
         marker?: Marker;
-        /** Geographic position for standalone popups (not attached to a marker). Reactively updates. */
+        /** Geographic position for standalone popups (not attached to a marker). Reactively updates. Note: changing `lngLat` will reopen a user-closed popup. */
         lngLat?: LngLatLike;
         /** Popup configuration passed once at construction (closeButton, closeOnClick, anchor, offset, etc.). */
         initOptions?: PopupOptions;
@@ -76,7 +64,7 @@ interface MapLibreGLPopupSignature {
 | Arg | Type | Required | Description |
 |-----|------|----------|-------------|
 | `marker` | `Marker` | No | Marker to attach this popup to. When set, the popup opens on marker interaction. |
-| `lngLat` | [LngLatLike](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/LngLatLike/) | No | Geographic position for standalone popups (not attached to a marker). Reactively updates. |
+| `lngLat` | [LngLatLike](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/LngLatLike/) | No | Geographic position for standalone popups (not attached to a marker). Reactively updates. Note: changing `lngLat` will reopen a user-closed popup. |
 | `initOptions` | [PopupOptions](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/PopupOptions/) | No | Popup configuration passed once at construction (closeButton, closeOnClick, anchor, offset, etc.). |
 
 <!-- /ARGS -->
@@ -94,7 +82,7 @@ interface MapLibreGLPopupSignature {
 
 ```gts live preview
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
-import { array } from '@ember/helper';
+import { array, hash } from '@ember/helper';
 
 const options = {
   style: 'https://tiles.openfreemap.org/styles/bright',
@@ -104,7 +92,7 @@ const options = {
 
 <template>
   <MapLibreGL @initOptions={{options}} style="height: 300px; width: 100%; border-radius: 8px;" as |map|>
-    <map.popup @lngLat={{array -96.8 32.8}}>
+    <map.popup @lngLat={{array -96.8 32.8}} @initOptions={{hash focusAfterOpen=false}}>
       <div style="padding: 8px 12px; font-family: system-ui;">
         <strong>Dallas, TX</strong>
         <p style="margin: 4px 0 0; color: #666;">A standalone popup at coordinates</p>

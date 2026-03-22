@@ -1,34 +1,32 @@
 # Control
 
-Adds a UI control to the map (navigation, scale, fullscreen, etc.).
+<!-- DESCRIPTION -->
+Adds a UI control to the map (navigation, scale, attribution, geolocation, etc.).
+The control is removed when the component is destroyed. Reactively updates
+when `@control` or `@position` changes.
+<!-- /DESCRIPTION -->
 
-## Usage
+<!-- EXAMPLE -->
+## Example
 
-This component is yielded by `<MapLibreGL>` — no import needed:
-
-```hbs
-<MapLibreGL @initOptions={{options}} as |map|>
-  <map.control ... />
+```gts
+<MapLibreGL @initOptions={{this.mapOptions}} as |map|>
+  <map.control @control={{this.navControl}} @position="top-right" />
 </MapLibreGL>
 ```
+<!-- /EXAMPLE -->
+
+<!-- IMPORT -->
+## Import
+
+Yielded by `<MapLibreGL>` as `map.control` — no import needed.
 
 ::: details Direct import (rare)
 ```ts
 import MapLibreGLControl from 'ember-maplibre-gl/components/maplibre-gl-control';
 ```
 :::
-
-## Example
-
-```gts
-import { NavigationControl } from 'maplibre-gl';
-
-const nav = new NavigationControl();
-
-<template>
-  <map.control @control={{nav}} @position="top-right" />
-</template>
-```
+<!-- /IMPORT -->
 
 <!-- SIGNATURE -->
 ## Signature

@@ -47,11 +47,14 @@ export interface MapLibreGLLayerSignature {
  * directly via `map.layer` with an explicit source reference. Reactively updates
  * paint, layout, filter, zoom range, and position when args change.
  *
+ * @access `<map.source>` as `source.layer`, or `<MapLibreGL>` as `map.layer`
  * @example
  * ```gts
- * <map.source @options={{this.geojsonSource}} as |source|>
- *   <source.layer @options={{hash type="circle" paint=(hash circle-radius=6 circle-color="#007cbf")}} />
- * </map.source>
+ * <MapLibreGL @initOptions={{this.mapOptions}} as |map|>
+ *   <map.source @options={{this.geojsonSource}} as |source|>
+ *     <source.layer @options={{hash type="circle" paint=(hash circle-radius=6 circle-color="#007cbf")}} />
+ *   </map.source>
+ * </MapLibreGL>
  * ```
  */
 export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature> {

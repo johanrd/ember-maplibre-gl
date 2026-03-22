@@ -1,35 +1,32 @@
 # Image
 
-Loads an image or SVG for use in symbol layers.
+<!-- DESCRIPTION -->
+Loads an image from a URL and registers it on the map for use in symbol layers.
+Handles both raster (PNG/JPEG via `map.loadImage`) and SVG images (via `<img>`).
+The image is removed from the map when the component is destroyed.
+<!-- /DESCRIPTION -->
 
-## Usage
+<!-- EXAMPLE -->
+## Example
 
-This component is yielded by `<MapLibreGL>` — no import needed:
-
-```hbs
-<MapLibreGL @initOptions={{options}} as |map|>
-  <map.image ... />
+```gts
+<MapLibreGL @initOptions={{this.mapOptions}} as |map|>
+  <map.image @url="/icons/pin.png" @name="pin-icon" @onLoad={{this.onImageReady}} />
 </MapLibreGL>
 ```
+<!-- /EXAMPLE -->
+
+<!-- IMPORT -->
+## Import
+
+Yielded by `<MapLibreGL>` as `map.image` — no import needed.
 
 ::: details Direct import (rare)
 ```ts
 import MapLibreGLImage from 'ember-maplibre-gl/components/maplibre-gl-image';
 ```
 :::
-
-## Example
-
-```hbs
-<map.image @name="marker-icon" @url="/assets/marker.png" />
-
-<map.source @options={{hash type="geojson" data=this.points}} as |source|>
-  <source.layer @options={{hash
-    type="symbol"
-    layout=(hash icon-image="marker-icon" icon-size=0.5)
-  }} />
-</map.source>
-```
+<!-- /IMPORT -->
 
 <!-- SIGNATURE -->
 ## Signature
