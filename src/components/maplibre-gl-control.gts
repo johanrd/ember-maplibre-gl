@@ -27,13 +27,12 @@ export interface MapLibreGLControlSignature {
  * The control is removed when the component is destroyed. Reactively updates
  * when `@control` or `@position` changes.
  *
- * Yielded by `<MapLibreGL>` as `map.control`. Does not yield any block content.
- *
+ * @access `<MapLibreGL>` as `map.control`
  * @example
  * ```gts
- * import { NavigationControl } from 'maplibre-gl';
- *
- * <map.control @control={{this.navControl}} @position="top-right" />
+ * <MapLibreGL @initOptions={{this.mapOptions}} as |map|>
+ *   <map.control @control={{this.navControl}} @position="top-right" />
+ * </MapLibreGL>
  * ```
  */
 export default class MapLibreGLControl extends Component<MapLibreGLControlSignature> {

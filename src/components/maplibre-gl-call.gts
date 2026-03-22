@@ -72,12 +72,12 @@ export interface MapLibreGLCallSignature {
  * **Caution:** the method is called on every render. Guard with a conditional
  * to avoid repeated invocations (e.g. `flyTo` re-animating on unrelated state changes).
  *
- * Yielded by `<MapLibreGL>` as `map.call`. Does not yield any block content.
- *
+ * @access `<MapLibreGL>` as `map.call`
  * @example
  * ```gts
- * <map.call @func="flyTo" @positionalArguments={{array (hash center=this.target zoom=14)}} />
- * <map.call @func="resize" @positionalArguments={{array}} />
+ * <MapLibreGL @initOptions={{this.mapOptions}} as |map|>
+ *   <map.call @func="flyTo" @positionalArguments={{array (hash center=this.target zoom=14)}} />
+ * </MapLibreGL>
  * ```
  */
 export default class MapLibreGLCall extends Component<MapLibreGLCallSignature> {

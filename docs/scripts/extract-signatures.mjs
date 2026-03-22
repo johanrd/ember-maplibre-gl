@@ -5,9 +5,12 @@
  * Usage: node docs/scripts/extract-signatures.mjs
  *
  * Markers in /docs/components/*.md:
- *   <!-- SIGNATURE --> ... <!-- /SIGNATURE -->  → raw Signature code block
- *   <!-- ARGS -->      ... <!-- /ARGS -->       → Args table
- *   <!-- YIELDS -->    ... <!-- /YIELDS -->     → Yields table
+ *   <!-- DESCRIPTION --> ... <!-- /DESCRIPTION -->  → class-level JSDoc description
+ *   <!-- EXAMPLE -->     ... <!-- /EXAMPLE -->      → @example code block
+ *   <!-- IMPORT -->      ... <!-- /IMPORT -->       → @access tag → import/yield info
+ *   <!-- SIGNATURE -->   ... <!-- /SIGNATURE -->    → raw Signature code block
+ *   <!-- ARGS -->        ... <!-- /ARGS -->         → Args table
+ *   <!-- YIELDS -->      ... <!-- /YIELDS -->       → Yields table
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -69,6 +72,55 @@ function linkMapLibreTypes(typeStr) {
     result = result.replace(regex, `[${typeName}](${url})`);
   }
   return result;
+}
+
+/**
+ * Extract the class-level JSDoc comment (description + @example) from the
+ * declaration file. Returns { description, example } or null.
+ */
+function extractClassJSDoc(declContent, componentName) {
+  // Match the last /** ... */ block immediately before `export default class ComponentName`.
+  // Use a greedy prefix to skip earlier JSDoc blocks in the file.
+  const regex = new RegExp(
+    `[\\s\\S]*/\\*\\*\\s*\\n([\\s\\S]*?)\\*/\\s*\\nexport default class ${componentName}`,
+  );
+  const match = declContent.match(regex);
+  if (!match) return null;
+
+  const raw = match[1];
+
+  // Split into sections by @tags
+  const accessIdx = raw.indexOf('@access');
+  const exampleIdx = raw.indexOf('@example');
+
+  // Description: everything before the first @tag
+  const firstTagIdx = [accessIdx, exampleIdx].filter((i) => i !== -1).sort((a, b) => a - b)[0] ?? raw.length;
+  const descRaw = raw.slice(0, firstTagIdx);
+
+  // Clean description: strip leading ` * ` prefixes and trim
+  const description = descRaw
+    .replace(/^\s*\* ?/gm, '')
+    .replace(/\{@link (\w+)\}/g, '$1')
+    .trim();
+
+  // Extract @access tag value
+  let access = null;
+  if (accessIdx !== -1) {
+    const accessEnd = exampleIdx !== -1 && exampleIdx > accessIdx ? exampleIdx : raw.length;
+    access = raw.slice(accessIdx + '@access'.length, accessEnd)
+      .replace(/^\s*\* ?/gm, '')
+      .trim();
+  }
+
+  // Extract @example code block
+  const exampleRaw = exampleIdx !== -1 ? raw.slice(exampleIdx + '@example'.length) : '';
+  const cleanedExample = exampleRaw.replace(/^\s*\* ?/gm, '').trim();
+  const exampleMatch = cleanedExample.match(/```(\w+)\s*\n([\s\S]*?)```/);
+  const example = exampleMatch
+    ? { lang: exampleMatch[1], code: exampleMatch[2].trim() }
+    : null;
+
+  return { description: description || null, access, example };
 }
 
 function extractSignature(declContent, componentName) {
@@ -297,6 +349,9 @@ for (const [docFile, declFile] of Object.entries(COMPONENT_MAP)) {
     continue;
   }
 
+  // Extract class-level JSDoc (description + example)
+  const jsdoc = extractClassJSDoc(declContent, componentName);
+
   // Extract signature code block
   const signature = extractSignature(declContent, componentName);
 
@@ -305,6 +360,23 @@ for (const [docFile, declFile] of Object.entries(COMPONENT_MAP)) {
   const yields = parseYields(declContent, componentName);
 
   // Inject blocks
+  if (jsdoc?.description) {
+    docContent = injectBlock(docContent, 'DESCRIPTION', jsdoc.description);
+  }
+
+  if (jsdoc?.example) {
+    const exampleBlock = `## Example\n\n\`\`\`${jsdoc.example.lang}\n${jsdoc.example.code}\n\`\`\``;
+    docContent = injectBlock(docContent, 'EXAMPLE', exampleBlock);
+  }
+
+  if (jsdoc?.access) {
+    // Look up the direct import path from COMPONENT_MAP
+    const importName = componentName;
+    const importPath = `ember-maplibre-gl/components/${declFile.replace('.d.ts', '')}`;
+    const importBlock = `## Import\n\nYielded by ${jsdoc.access} — no import needed.\n\n::: details Direct import (rare)\n\`\`\`ts\nimport ${importName} from '${importPath}';\n\`\`\`\n:::`;
+    docContent = injectBlock(docContent, 'IMPORT', importBlock);
+  }
+
   if (signature) {
     const sigBlock = `## Signature\n\n\`\`\`ts\n${signature}\n\`\`\``;
     docContent = injectBlock(docContent, 'SIGNATURE', sigBlock);
@@ -320,6 +392,6 @@ for (const [docFile, declFile] of Object.entries(COMPONENT_MAP)) {
 
   writeFileSync(docPath, docContent);
   console.log(
-    `Updated ${docFile}: signature=${!!signature}, args=${args.length}, yields=${yields.length}`,
+    `Updated ${docFile}: desc=${!!jsdoc?.description}, example=${!!jsdoc?.example}, import=${!!jsdoc?.access}, signature=${!!signature}, args=${args.length}, yields=${yields.length}`,
   );
 }

@@ -51,12 +51,12 @@ export class SvgLoadError extends Error {
  * Handles both raster (PNG/JPEG via `map.loadImage`) and SVG images (via `<img>`).
  * The image is removed from the map when the component is destroyed.
  *
- * Yielded by `<MapLibreGL>` as `map.image`. Does not yield any block content.
- *
+ * @access `<MapLibreGL>` as `map.image`
  * @example
  * ```gts
- * <map.image @url="/icons/pin.png" @name="pin-icon" @onLoad={{this.onImageReady}} />
- * <map.image @url="/icons/marker.svg" @name="svg-marker" @width={{32}} @height={{32}} />
+ * <MapLibreGL @initOptions={{this.mapOptions}} as |map|>
+ *   <map.image @url="/icons/pin.png" @name="pin-icon" @onLoad={{this.onImageReady}} />
+ * </MapLibreGL>
  * ```
  */
 export default class MapLibreGLImage extends Component<MapLibreGLImageSignature> {

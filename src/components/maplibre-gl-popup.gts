@@ -35,14 +35,15 @@ export interface MapLibreGLPopupSignature {
  * Displays a popup overlay on the map. Can be attached to a marker or positioned
  * standalone at a coordinate. The block content becomes the popup's DOM.
  *
- * Yielded by `<MapLibreGL>` as `map.popup` or by `<marker.popup>`.
- *
+ * @access `<MapLibreGL>` as `map.popup`, or `<map.marker>` as `marker.popup`
  * @example
  * ```gts
- * <map.popup @lngLat={{array -96.79 32.77}} @initOptions={{hash closeButton=false}} as |popup|>
- *   <p>Standalone popup content</p>
- *   <popup.on @event="close" @action={{this.onPopupClose}} />
- * </map.popup>
+ * <MapLibreGL @initOptions={{this.mapOptions}} as |map|>
+ *   <map.popup @lngLat={{array -96.79 32.77}} @initOptions={{hash closeButton=false}} as |popup|>
+ *     <p>Standalone popup content</p>
+ *     <popup.on @event="close" @action={{this.onPopupClose}} />
+ *   </map.popup>
+ * </MapLibreGL>
  * ```
  */
 export default class MapLibreGLPopup extends Component<MapLibreGLPopupSignature> {

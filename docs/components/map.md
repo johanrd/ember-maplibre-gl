@@ -1,12 +1,35 @@
 # MapLibreGL
 
-The main map component. Creates a MapLibre GL JS map instance and yields sub-components for composing map content.
+<!-- DESCRIPTION -->
+The root map component. Renders a MapLibre GL JS map and yields pre-bound child
+components for adding sources, layers, markers, popups, controls, and event listeners.
+
+The block is only rendered after the map has fully loaded.
+<!-- /DESCRIPTION -->
 
 ## Import
 
 ```ts
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
 ```
+
+<!-- EXAMPLE -->
+## Example
+
+```gts
+<MapLibreGL
+  @initOptions={{hash style="https://demotiles.maplibre.org/style.json" center=(array 0 0) zoom=1}}
+  @mapLoaded={{this.onMapLoaded}}
+  as |map|
+>
+  <map.source @options={{this.geojsonSource}} as |source|>
+    <source.layer @options={{this.circleLayer}} />
+  </map.source>
+  <map.marker @lngLat={{this.markerPosition}} />
+  <map.on @event="click" @action={{this.onClick}} />
+</MapLibreGL>
+```
+<!-- /EXAMPLE -->
 
 <!-- SIGNATURE -->
 ## Signature

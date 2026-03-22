@@ -46,9 +46,9 @@ export interface MapLibreGLSourceSignature {
  * Adds a data source to the map. Sources provide the data that layers render.
  * Supports GeoJSON, vector tiles, raster, image, and video source types.
  *
- * Yielded by `<MapLibreGL>` as `map.source`. Yields a pre-bound `layer` component
- * and the source ID. Updates to `@options` are applied reactively (e.g. setData for GeoJSON).
+ * Updates to `@options` are applied reactively (e.g. setData for GeoJSON).
  *
+ * @access `<MapLibreGL>` as `map.source`
  * @example
  * ```gts
  * <MapLibreGL @initOptions={{this.mapOptions}} as |map|>

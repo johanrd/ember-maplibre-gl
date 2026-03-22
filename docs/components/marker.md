@@ -1,37 +1,36 @@
 # Marker
 
-Places a marker on the map at specified coordinates. Supports custom Ember content as the marker element.
+<!-- DESCRIPTION -->
+Places a marker on the map at a given position. The block content becomes the
+marker's DOM element, so you can render any Ember template inside it.
+<!-- /DESCRIPTION -->
 
-## Usage
+<!-- EXAMPLE -->
+## Example
 
-This component is yielded by `<MapLibreGL>` — no import needed:
-
-```hbs
-<MapLibreGL @initOptions={{options}} as |map|>
-  <map.marker ... />
+```gts
+<MapLibreGL @initOptions={{this.mapOptions}} as |map|>
+  <map.marker @lngLat={{array -96.79 32.77}} @initOptions={{hash draggable=true}} as |marker|>
+    <marker.popup>
+      <p>Hello from Dallas!</p>
+    </marker.popup>
+    <marker.on @event="dragend" @action={{this.onDragEnd}} />
+  </map.marker>
 </MapLibreGL>
 ```
+<!-- /EXAMPLE -->
+
+<!-- IMPORT -->
+## Import
+
+Yielded by `<MapLibreGL>` as `map.marker` — no import needed.
 
 ::: details Direct import (rare)
 ```ts
 import MapLibreGLMarker from 'ember-maplibre-gl/components/maplibre-gl-marker';
 ```
 :::
-
-## Custom Content
-
-Block content is rendered inside the marker element:
-
-```hbs
-<map.marker @lngLat={{array -74.5 40}} as |marker|>
-  <div class="custom-marker">
-    <img src="/pin.svg" alt="marker" />
-  </div>
-  <marker.popup>
-    <p>Hello from New York!</p>
-  </marker.popup>
-</map.marker>
-```
+<!-- /IMPORT -->
 
 <!-- SIGNATURE -->
 ## Signature
