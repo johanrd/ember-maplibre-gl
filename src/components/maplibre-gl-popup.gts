@@ -15,7 +15,7 @@ export interface MapLibreGLPopupSignature {
     map: maplibregl.Map;
     /** Marker to attach this popup to. When set, the popup opens on marker interaction. */
     marker?: Marker;
-    /** Geographic position for standalone popups (not attached to a marker). Reactively updates. */
+    /** Geographic position for standalone popups (not attached to a marker). Reactively updates. Note: changing `lngLat` will reopen a user-closed popup. */
     lngLat?: LngLatLike;
     /** Popup configuration passed once at construction (closeButton, closeOnClick, anchor, offset, etc.). */
     initOptions?: PopupOptions;

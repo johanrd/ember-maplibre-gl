@@ -73,36 +73,36 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
 
     this.layerId = args.options?.id ?? guidFor(this);
 
-    const layerOptions = {
-      ...this.args.options,
-      id: this.layerId,
-      type: this.args.options?.type ?? 'line',
-      source: this.args.sourceId || this.args.options?.source,
-    };
-
-    // @ts-expect-error: However much we'd like to type this, it seems impossible to please both maplibre-gl and maplibre-gl types here
-    args.map.addLayer(layerOptions, args.before);
-
     if (args.parent) associateDestroyableChild(args.parent, this);
     registerDestructor(this, () => {
       try {
-        if (args.map.getLayer(this.layerId))
-          args.map?.removeLayer(this.layerId);
+        if (this.args.map.getLayer(this.layerId))
+          this.args.map?.removeLayer(this.layerId);
       } catch {
         // Map may be in a broken state (e.g. WebGL context lost)
       }
     });
   }
 
-  private prevOptions?: MapLibreGLLayerSignature['Args']['options'];
   private prevBefore?: MapLibreGLLayerSignature['Args']['before'];
 
   /** @internal */
-  updateLayer = (options?: MapLibreGLLayerSignature['Args']['options']) => {
+  upsertLayer = (options?: MapLibreGLLayerSignature['Args']['options']) => {
     if (typeof options !== 'object') return;
 
-    const prev = this.prevOptions;
-    this.prevOptions = options;
+    if (!this.args.map.getLayer(this.layerId)) {
+      const layerOptions = {
+        ...options,
+        id: this.layerId,
+        type: options.type ?? 'line',
+        source: this.args.sourceId || options.source,
+      };
+
+      // @ts-expect-error: However much we'd like to type this, it seems impossible to please both maplibre-gl and maplibre-gl types here
+      this.args.map.addLayer(layerOptions, this.args.before);
+      this.prevBefore = this.args.before;
+      return;
+    }
 
     if (options.layout) {
       for (const k in options.layout) {
@@ -111,14 +111,6 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
           k,
           options.layout[k as keyof typeof options.layout],
         );
-      }
-      // Reset removed layout properties (react-map-gl pattern)
-      if (prev?.layout) {
-        for (const k in prev.layout) {
-          if (!(k in (options.layout ?? {}))) {
-            this.args.map.setLayoutProperty(this.layerId, k, undefined);
-          }
-        }
       }
     }
 
@@ -130,21 +122,13 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
           options.paint[k as keyof typeof options.paint],
         );
       }
-      // Reset removed paint properties (react-map-gl pattern)
-      if (prev?.paint) {
-        for (const k in prev.paint) {
-          if (!(k in (options.paint ?? {}))) {
-            this.args.map.setPaintProperty(this.layerId, k, undefined);
-          }
-        }
-      }
     }
 
-    const minzoom =
-      'minzoom' in options && options.minzoom != null ? options.minzoom : 0;
-    const maxzoom =
-      'maxzoom' in options && options.maxzoom != null ? options.maxzoom : 24;
     if ('minzoom' in options || 'maxzoom' in options) {
+      const minzoom =
+        'minzoom' in options && options.minzoom != null ? options.minzoom : 0;
+      const maxzoom =
+        'maxzoom' in options && options.maxzoom != null ? options.maxzoom : 24;
       this.args.map.setLayerZoomRange(this.layerId, minzoom, maxzoom);
     }
 
@@ -164,7 +148,7 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
   };
 
   <template>
-    {{this.updateLayer @options}}
+    {{this.upsertLayer @options}}
     {{yield (hash id=this.layerId)}}
   </template>
 }

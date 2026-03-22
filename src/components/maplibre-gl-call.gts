@@ -67,6 +67,9 @@ export interface MapLibreGLCallSignature {
  * reactively when arguments change, making it useful for imperative map APIs
  * like `flyTo`, `setStyle`, or `resize` in a template-driven way.
  *
+ * **Caution:** the method is called on every render. Guard with `{{#if}}` to
+ * avoid repeated invocations (e.g. `flyTo` re-animating on unrelated state changes).
+ *
  * Yielded by `<MapLibreGL>` as `map.call`. Does not yield any block content.
  *
  * @example

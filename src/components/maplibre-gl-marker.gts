@@ -97,6 +97,8 @@ export default class MapLibreGLMarker extends Component<MapLibreGLMarkerSignatur
     };
   }
 
+  private _prevLngLat?: LngLatLike;
+
   /** @internal */
   updateMarker = (lngLat: LngLatLike) => {
     assert(
@@ -104,6 +106,8 @@ export default class MapLibreGLMarker extends Component<MapLibreGLMarkerSignatur
       lngLat,
     );
 
+    if (lngLat === this._prevLngLat) return;
+    this._prevLngLat = lngLat;
     this.marker?.setLngLat(lngLat);
   };
 
