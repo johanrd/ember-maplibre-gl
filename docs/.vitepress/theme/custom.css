@@ -50,6 +50,15 @@
   background-position-y: bottom;
 }
 
+/* Hero image: vertically center the globe inside the VitePress image slot */
+@media (max-width: 960px) {
+  .VPHero .image-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 /* Feature cards — centered text, no icon background */
 .VPFeatures .VPFeature {
   text-align: center;

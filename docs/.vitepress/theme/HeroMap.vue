@@ -63,7 +63,7 @@ onMounted(async () => {
     container: mapContainer.value,
     style: 'https://demotiles.maplibre.org/globe.json',
     center: cities[0],
-    zoom: 1,
+    zoom: window.innerWidth <= 960 ? 0.65 : 1,
     projection: 'globe',
     attributionControl: false,
     pitchWithRotate: false,
