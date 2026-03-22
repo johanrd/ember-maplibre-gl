@@ -1,18 +1,22 @@
 {
   "solution": {
     "ember-maplibre-gl": {
-      "impact": "patch",
-      "oldVersion": "0.2.4",
-      "newVersion": "0.2.5",
+      "impact": "minor",
+      "oldVersion": "0.2.5",
+      "newVersion": "0.3.0",
       "tagName": "latest",
       "constraints": [
         {
+          "impact": "minor",
+          "reason": "Appears in changelog section :rocket: Enhancement"
+        },
+        {
           "impact": "patch",
-          "reason": "Appears in changelog section :bug: Bug Fix"
+          "reason": "Appears in changelog section :house: Internal"
         }
       ],
       "pkgJSONPath": "./package.json"
     }
   },
-  "description": "## Release (2026-03-21)\n\n* ember-maplibre-gl 0.2.5 (patch)\n\n#### :bug: Bug Fix\n* `ember-maplibre-gl`\n  * [#18](https://github.com/johanrd/ember-maplibre-gl/pull/18) Error handling ([@johanrd](https://github.com/johanrd))\n  * [#16](https://github.com/johanrd/ember-maplibre-gl/pull/16) flaky ci ([@johanrd](https://github.com/johanrd))\n\n#### Committers: 1\n- [@johanrd](https://github.com/johanrd)\n"
+  "description": "## Release (2026-03-22)\n\n* ember-maplibre-gl 0.3.0 (minor)\n\n#### :rocket: Enhancement\n* `ember-maplibre-gl`\n  * [#19](https://github.com/johanrd/ember-maplibre-gl/pull/19) Add Mapbox example ([@johanrd](https://github.com/johanrd))\n\n#### :house: Internal\n* `ember-maplibre-gl`\n  * [#21](https://github.com/johanrd/ember-maplibre-gl/pull/21) Update description ([@johanrd](https://github.com/johanrd))\n\n#### Committers: 1\n- [@johanrd](https://github.com/johanrd)\n"
 }

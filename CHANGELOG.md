@@ -1,5 +1,20 @@
 # Changelog
 
+## Release (2026-03-22)
+
+* ember-maplibre-gl 0.3.0 (minor)
+
+#### :rocket: Enhancement
+* `ember-maplibre-gl`
+  * [#19](https://github.com/johanrd/ember-maplibre-gl/pull/19) Add Mapbox example ([@johanrd](https://github.com/johanrd))
+
+#### :house: Internal
+* `ember-maplibre-gl`
+  * [#21](https://github.com/johanrd/ember-maplibre-gl/pull/21) Update description ([@johanrd](https://github.com/johanrd))
+
+#### Committers: 1
+- [@johanrd](https://github.com/johanrd)
+
 ## Release (2026-03-21)
 
 * ember-maplibre-gl 0.2.5 (patch)
