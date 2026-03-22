@@ -36,12 +36,21 @@ interface MapLibreGLControlSignature {
     Args: {
         /** The MapLibre map instance (pre-bound by parent). */
         map: maplibregl.Map;
-        /** A MapLibre IControl instance (e.g. `new NavigationControl()`, `new ScaleControl()`). */
-        control: maplibregl.IControl;
+        /** A MapLibre IControl instance. Controls that extend Evented (e.g. `GeolocateControl`) support event binding via the yielded `on` component. */
+        control: IControl;
         /** Corner placement: "top-left", "top-right", "bottom-left", or "bottom-right". */
         position: Parameters<maplibregl.Map['addControl']>['1'];
         /** Parent component for destroyable association (pre-bound by parent). */
         parent?: MapLibreGL;
+    };
+    Blocks: {
+        /** Yields an `on` component for listening to control events (e.g. geolocate). */
+        default: [
+            {
+                /** Listen to control events. Pre-bound with eventSource. Only works for controls that extend Evented. */
+                on: WithBoundArgs<typeof MapLibreGLOn, 'eventSource'>;
+            }
+        ];
     };
 }
 ```
@@ -52,10 +61,19 @@ interface MapLibreGLControlSignature {
 
 | Arg | Type | Required | Description |
 |-----|------|----------|-------------|
-| `control` | [IControl](https://maplibre.org/maplibre-gl-js/docs/API/interfaces/IControl/) | Yes | A MapLibre IControl instance (e.g. `new NavigationControl()`, `new ScaleControl()`). |
+| `control` | [IControl](https://maplibre.org/maplibre-gl-js/docs/API/interfaces/IControl/) | Yes | A MapLibre IControl instance. Controls that extend Evented (e.g. `GeolocateControl`) support event binding via the yielded `on` component. |
 | `position` | `ControlPosition` | Yes | Corner placement: "top-left", "top-right", "bottom-left", or "bottom-right". |
 
 <!-- /ARGS -->
+
+<!-- YIELDS -->
+## Yields
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `on` | [MapLibreGLOn](./on) | Listen to control events. Pre-bound with eventSource. Only works for controls that extend Evented. |
+
+<!-- /YIELDS -->
 
 ## Demo
 

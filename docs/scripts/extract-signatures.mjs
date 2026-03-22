@@ -268,7 +268,9 @@ function buildArgsTable(args) {
   for (const a of args) {
     const req = a.required ? 'Yes' : 'No';
     const linkedType = linkMapLibreTypes(a.type);
-    const typeCell = linkedType.includes('[') ? linkedType : `\`${linkedType}\``;
+    // Escape pipe characters in type names to avoid breaking markdown tables
+    const escapedType = linkedType.replace(/\|/g, '\\|');
+    const typeCell = escapedType.includes('[') ? escapedType : `\`${escapedType}\``;
     table += `| \`${a.name}\` | ${typeCell} | ${req} | ${a.description} |\n`;
   }
   return table;
