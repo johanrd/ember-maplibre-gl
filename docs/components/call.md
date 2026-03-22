@@ -1,12 +1,10 @@
 # Call
 
 <!-- DESCRIPTION -->
-Declaratively invokes a method on the map instance (or any object). Re-invokes
-reactively when arguments change, making it useful for imperative map APIs
-like `flyTo`, `setStyle`, or `resize` in a template-driven way.
-
-**Caution:** the method is called on every render. Guard with a conditional
-to avoid repeated invocations (e.g. `flyTo` re-animating on unrelated state changes).
+Declaratively invokes a method on the map instance. Re-invokes reactively
+when `@func` or `@positionalArguments` reference changes — Glimmer's
+`(array)`/`(hash)` helpers memoize references, so the method only fires
+when inputs actually change.
 <!-- /DESCRIPTION -->
 
 <!-- EXAMPLE -->
