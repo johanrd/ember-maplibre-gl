@@ -45,8 +45,10 @@ export type MapInstance = Pick<
   | 'triggerRepaint'
   | 'setPadding'
   | 'fitBounds'
-> &
-  Partial<Pick<maplibregl.Map, 'queryTerrainElevation' | 'setLight' | 'setTerrain'>>;
+  | 'queryTerrainElevation'
+  | 'setLight'
+  | 'setTerrain'
+>;
 
 /** Signature for {@link MapLibreGLCall}. */
 export interface MapLibreGLCallSignature {

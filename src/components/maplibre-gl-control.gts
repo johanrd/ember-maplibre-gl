@@ -76,10 +76,7 @@ export default class MapLibreGLControl extends Component<MapLibreGLControlSignat
     control: maplibregl.IControl,
     position: MapLibreGLControlSignature['Args']['position'],
   ) => {
-    if (
-      control === this._currentControl &&
-      position === this._currentPosition
-    )
+    if (control === this._currentControl && position === this._currentPosition)
       return;
 
     if (this._currentControl) {
