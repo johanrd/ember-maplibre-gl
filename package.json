@@ -58,7 +58,14 @@
     "ember-resources": "^7.0.0"
   },
   "peerDependencies": {
+    "@glimmer/component": ">= 1.1.2 || >= 2.0.0",
+    "ember-source": ">= 3.28.0",
     "maplibre-gl": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@glimmer/component": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
