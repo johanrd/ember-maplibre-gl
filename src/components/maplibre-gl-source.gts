@@ -14,6 +14,14 @@ import {
 import type { Map } from 'maplibre-gl';
 import type Owner from '@ember/owner';
 
+/**
+ * Source specification passed to `map.addSource()` — defines the data backing a layer.
+ *
+ * Resolves to [SourceSpecification ↗](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/SourceSpecification/) from MapLibre, a union of GeoJSON, vector, raster,
+ * raster-dem, image, and video source types.
+ */
+export type SourceOptions = Parameters<Map['addSource']>['1'];
+
 /** Signature for {@link MapLibreGLSource}. */
 export interface MapLibreGLSourceSignature {
   Args: {
@@ -22,7 +30,7 @@ export interface MapLibreGLSourceSignature {
     /** Custom source ID. Auto-generated if omitted. */
     sourceId?: string;
     /** Source specification matching MapLibre's `addSource` API (type, data, tiles, url, etc.). */
-    options: Parameters<Map['addSource']>['1'];
+    options: SourceOptions;
     /** Parent component for destroyable association (pre-bound by parent). */
     parent?: MapLibreGL;
   };

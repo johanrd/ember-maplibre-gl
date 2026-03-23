@@ -2,52 +2,26 @@ import Component from '@glimmer/component';
 import { assert } from '@ember/debug';
 import type maplibregl from 'maplibre-gl';
 
+type PublicMethodKeys<T> = {
+  [K in keyof T]: K extends `_${string}`
+    ? never
+    : // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pattern-match only; `any` does not leak into the resulting Pick
+      T[K] extends (...args: any[]) => any
+      ? K
+      : never;
+}[keyof T] &
+  keyof T;
+
 /**
- * Callable method surface for `<map.call>`. Curated allow-list so `@func`
- * auto-completes only methods that make sense to invoke declaratively.
- * Types are derived from `maplibregl.Map` so they stay in sync automatically.
+ * Public function method surface of the MapLibre [Map ↗](https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/).
  *
- * Inspired by https://github.com/visgl/react-map-gl/blob/master/src/types/lib.ts#L26
+ * Excludes `_`-prefixed internals and non-method properties so `@func` only
+ * auto-completes callable public methods.
  */
+
 export type MapInstance = Pick<
   maplibregl.Map,
-  | 'on'
-  | 'off'
-  | 'once'
-  | 'fire'
-  | 'addControl'
-  | 'flyTo'
-  | 'removeControl'
-  | 'hasControl'
-  | 'resize'
-  | 'queryRenderedFeatures'
-  | 'setStyle'
-  | 'isMoving'
-  | 'getStyle'
-  | 'getZoom'
-  | 'isStyleLoaded'
-  | 'addSource'
-  | 'removeSource'
-  | 'getSource'
-  | 'addLayer'
-  | 'moveLayer'
-  | 'removeLayer'
-  | 'getLayer'
-  | 'setFilter'
-  | 'setLayerZoomRange'
-  | 'setPaintProperty'
-  | 'setLayoutProperty'
-  | 'project'
-  | 'unproject'
-  | 'getContainer'
-  | 'getCanvas'
-  | 'remove'
-  | 'triggerRepaint'
-  | 'setPadding'
-  | 'fitBounds'
-  | 'queryTerrainElevation'
-  | 'setLight'
-  | 'setTerrain'
+  PublicMethodKeys<maplibregl.Map>
 >;
 
 /** Signature for {@link MapLibreGLCall}. */

@@ -12,6 +12,17 @@ import type MapLibreGLSource from './maplibre-gl-source.gts';
 import type MapLibreGL from './maplibre-gl.gts';
 import type Owner from '@ember/owner';
 
+/**
+ * Layer options with optional `id` and `source` (auto-filled by the component).
+ *
+ * Accepts any MapLibre [LayerSpecification ↗](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/LayerSpecification/)
+ * (fill, line, circle, symbol, etc.) but makes `id` optional since the component generates one.
+ */
+export type LayerOptions = Omit<LayerSpecification, 'id'> & {
+  id?: LayerSpecification['id'];
+  source?: string;
+};
+
 /** Signature for {@link MapLibreGLLayer}. */
 export interface MapLibreGLLayerSignature {
   Args: {
@@ -20,10 +31,7 @@ export interface MapLibreGLLayerSignature {
     /** Source ID to render data from (pre-bound when used via `source.layer`). */
     sourceId: string;
     /** Layer specification (type, paint, layout, filter, etc.). The `id` and `source` are optional and auto-filled. */
-    options: Omit<LayerSpecification, 'id'> & {
-      id?: LayerSpecification['id'];
-      source?: string;
-    };
+    options: LayerOptions;
     /** Layer ID or position to insert this layer before in the stack. */
     before?: Parameters<maplibregl.Map['addLayer']>[1];
     /** Parent component for destroyable association (pre-bound by parent). */

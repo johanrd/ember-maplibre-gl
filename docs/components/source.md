@@ -42,7 +42,7 @@ interface MapLibreGLSourceSignature {
         /** Custom source ID. Auto-generated if omitted. */
         sourceId?: string;
         /** Source specification matching MapLibre's `addSource` API (type, data, tiles, url, etc.). */
-        options: Parameters<Map['addSource']>['1'];
+        options: SourceOptions;
         /** Parent component for destroyable association (pre-bound by parent). */
         parent?: MapLibreGL;
     };
@@ -67,10 +67,19 @@ interface MapLibreGLSourceSignature {
 | Arg | Type | Required | Description |
 |-----|------|----------|-------------|
 | `sourceId` | `string` | No | Custom source ID. Auto-generated if omitted. |
-| `options` | [SourceSpecification](https://maplibre.org/maplibre-style-spec/sources/) | Yes | Source specification matching MapLibre's `addSource` API (type, data, tiles, url, etc.). |
+| `options` | [SourceOptions](#sourceoptions) | Yes | Source specification matching MapLibre's `addSource` API (type, data, tiles, url, etc.). |
+
+### SourceOptions
+
+Source specification passed to `map.addSource()` — defines the data backing a layer.
+Resolves to [SourceSpecification ↗](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/SourceSpecification/) from MapLibre, a union of GeoJSON, vector, raster,
+raster-dem, image, and video source types.
+
+```ts
+type SourceOptions = Parameters<Map['addSource']>['1']
+```
 
 <!-- /ARGS -->
-
 <!-- YIELDS -->
 ## Yields
 
@@ -80,7 +89,6 @@ interface MapLibreGLSourceSignature {
 | `layer` | [MapLibreGLLayer](./layer) | Add a layer that renders data from this source. Pre-bound with map, sourceId, and parent. |
 
 <!-- /YIELDS -->
-
 ## Demo
 
 ```gts live preview

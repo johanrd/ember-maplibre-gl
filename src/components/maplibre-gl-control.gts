@@ -12,6 +12,13 @@ import type { Evented, IControl } from 'maplibre-gl';
 import type maplibregl from 'maplibre-gl';
 import type Owner from '@ember/owner';
 
+/**
+ * Resolves toMapLibre [ControlPosition ↗](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/ControlPosition/) type.
+ *
+ * One of `"top-left"`, `"top-right"`, `"bottom-left"`, or `"bottom-right"`.
+ */
+export type ControlPosition = Parameters<maplibregl.Map['addControl']>['1'];
+
 /** Signature for {@link MapLibreGLControl}. */
 export interface MapLibreGLControlSignature {
   Args: {
@@ -20,7 +27,7 @@ export interface MapLibreGLControlSignature {
     /** A MapLibre IControl instance. Controls that extend Evented (e.g. `GeolocateControl`) support event binding via the yielded `on` component. */
     control: IControl;
     /** Corner placement: "top-left", "top-right", "bottom-left", or "bottom-right". */
-    position: Parameters<maplibregl.Map['addControl']>['1'];
+    position: ControlPosition;
     /** Parent component for destroyable association (pre-bound by parent). */
     parent?: MapLibreGL;
   };

@@ -9,7 +9,7 @@
  *   <!-- EXAMPLE -->     ... <!-- /EXAMPLE -->      → @example code block
  *   <!-- IMPORT -->      ... <!-- /IMPORT -->       → @access tag → import/yield info
  *   <!-- SIGNATURE -->   ... <!-- /SIGNATURE -->    → raw Signature code block
- *   <!-- ARGS -->        ... <!-- /ARGS -->         → Args table
+ *   <!-- ARGS -->        ... <!-- /ARGS -->         → Args table + inline type definitions
  *   <!-- YIELDS -->      ... <!-- /YIELDS -->       → Yields table
  */
 
@@ -46,6 +46,9 @@ const COMPONENT_DOC_URLS = {
   MapLibreGLSource: './source',
 };
 
+// Addon exported types — linked to same-page anchors (populated per-file by parseExportedTypes)
+let ADDON_TYPE_ANCHORS = {};
+
 // MapLibre type → documentation URL mapping
 const MAPLIBRE_TYPE_URLS = {
   MapOptions: 'https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/MapOptions/',
@@ -66,7 +69,10 @@ const MAPLIBRE_TYPE_URLS = {
  */
 function linkMapLibreTypes(typeStr) {
   let result = typeStr;
-  for (const [typeName, url] of Object.entries(MAPLIBRE_TYPE_URLS)) {
+  for (const [typeName, url] of Object.entries({
+    ...ADDON_TYPE_ANCHORS,
+    ...MAPLIBRE_TYPE_URLS,
+  })) {
     // Match the type name as a whole word (not already inside a markdown link)
     const regex = new RegExp(`(?<!\\[)\\b${typeName}\\b(?!\\])`, 'g');
     result = result.replace(regex, `[${typeName}](${url})`);
@@ -260,7 +266,50 @@ function parseYields(declContent, componentName) {
   return yields;
 }
 
-function buildArgsTable(args) {
+/**
+ * Extract exported type aliases from the declaration file.
+ * Returns an array of { name, definition, description, seeUrl }.
+ */
+function parseExportedTypes(declContent) {
+  const types = [];
+  // Match: JSDoc block followed by `export type Name = ...;`
+  const regex = /(?:\/\*\*\s*([\s\S]*?)\s*\*\/\s*\n)?export type (\w+)\s*=\s*([^;]+);/g;
+  let m;
+  while ((m = regex.exec(declContent)) !== null) {
+    const rawDoc = m[1] || '';
+    const name = m[2];
+    const definition = m[3].trim();
+
+    // Extract @see URL
+    const seeMatch = rawDoc.match(/@see\s+(https?:\S+)/);
+    const seeUrl = seeMatch ? seeMatch[1] : null;
+
+    // Clean description: remove @see, @tags, strip comment prefixes
+    const description = rawDoc
+      .replace(/@see\s+\S+/g, '')
+      .replace(/\{@link\s+[^|]*?\|\s*([^}]+)\}/g, '$1')
+      .replace(/\{@link\s+(\w+)\}/g, '$1')
+      .replace(/^\s*\*\s?/gm, '')
+      .trim();
+
+    types.push({ name, definition, description, seeUrl });
+  }
+  return types;
+}
+
+function buildTypeBlock(t) {
+  let block = `### ${t.name}\n\n`;
+  if (t.description) {
+    block += `${t.description}\n\n`;
+  }
+  block += `\`\`\`ts\ntype ${t.name} = ${t.definition}\n\`\`\`\n`;
+  if (t.seeUrl) {
+    block += `\n[MapLibre docs \u2192](${t.seeUrl})\n`;
+  }
+  return block;
+}
+
+function buildArgsTable(args, types) {
   if (args.length === 0) return '';
   let table = '## Args\n\n';
   table += '| Arg | Type | Required | Description |\n';
@@ -272,6 +321,10 @@ function buildArgsTable(args) {
     const escapedType = linkedType.replace(/\|/g, '\\|');
     const typeCell = escapedType.includes('[') ? escapedType : `\`${escapedType}\``;
     table += `| \`${a.name}\` | ${typeCell} | ${req} | ${a.description} |\n`;
+  }
+  // Append type definitions inline below the table
+  for (const t of types) {
+    table += `\n${buildTypeBlock(t)}`;
   }
   return table;
 }
@@ -357,7 +410,13 @@ for (const [docFile, declFile] of Object.entries(COMPONENT_MAP)) {
   // Extract signature code block
   const signature = extractSignature(declContent, componentName);
 
-  // Parse args and yields
+  // Parse args, types, and yields
+  const exportedTypes = parseExportedTypes(declContent);
+  // Set up same-page anchors for this file's types (VitePress lowercases headings)
+  ADDON_TYPE_ANCHORS = {};
+  for (const t of exportedTypes) {
+    ADDON_TYPE_ANCHORS[t.name] = `#${t.name.toLowerCase()}`;
+  }
   const args = parseArgs(declContent, componentName);
   const yields = parseYields(declContent, componentName);
 
@@ -385,8 +444,11 @@ for (const [docFile, declFile] of Object.entries(COMPONENT_MAP)) {
   }
 
   if (args.length > 0) {
-    docContent = injectBlock(docContent, 'ARGS', buildArgsTable(args));
+    docContent = injectBlock(docContent, 'ARGS', buildArgsTable(args, exportedTypes));
   }
+
+  // Remove stale standalone TYPES block if it exists from a previous run
+  docContent = docContent.replace(/\n*<!-- TYPES -->[\s\S]*?<!-- \/TYPES -->\n*/g, '\n');
 
   if (yields.length > 0) {
     docContent = injectBlock(docContent, 'YIELDS', buildYieldsTable(yields));
@@ -394,6 +456,6 @@ for (const [docFile, declFile] of Object.entries(COMPONENT_MAP)) {
 
   writeFileSync(docPath, docContent);
   console.log(
-    `Updated ${docFile}: desc=${!!jsdoc?.description}, example=${!!jsdoc?.example}, import=${!!jsdoc?.access}, signature=${!!signature}, args=${args.length}, yields=${yields.length}`,
+    `Updated ${docFile}: desc=${!!jsdoc?.description}, example=${!!jsdoc?.example}, import=${!!jsdoc?.access}, signature=${!!signature}, args=${args.length} (types=${exportedTypes.length}), yields=${yields.length}`,
   );
 }

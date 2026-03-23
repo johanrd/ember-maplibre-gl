@@ -41,7 +41,7 @@ interface MapLibreGLImageSignature {
         /** Name to register the image under. Use this name in symbol layer `icon-image`. */
         name: Parameters<maplibregl.Map['addImage']>['0'];
         /** Image options (pixelRatio, sdf) passed to `map.addImage`. */
-        options?: Parameters<maplibregl.Map['addImage']>['2'];
+        options?: ImageOptions;
         /** Explicit width for SVG images (ignored for raster formats). */
         width?: HTMLImageElement['width'];
         /** Explicit height for SVG images (ignored for raster formats). */
@@ -64,14 +64,22 @@ interface MapLibreGLImageSignature {
 |-----|------|----------|-------------|
 | `url` | `string` | No | URL of the image to load. Supports PNG, JPEG, and SVG formats. |
 | `name` | `string` | Yes | Name to register the image under. Use this name in symbol layer `icon-image`. |
-| `options` | `ImageOptions` | No | Image options (pixelRatio, sdf) passed to `map.addImage`. |
+| `options` | [ImageOptions](#imageoptions) | No | Image options (pixelRatio, sdf) passed to `map.addImage`. |
 | `width` | `number` | No | Explicit width for SVG images (ignored for raster formats). |
 | `height` | `number` | No | Explicit height for SVG images (ignored for raster formats). |
 | `onLoad` | `Function` | No | Called when the image has been loaded and added to the map. |
 | `onError` | `Function` | No | Called if the image fails to load. |
 
-<!-- /ARGS -->
+### ImageOptions
 
+Options passed to MapLibre's [map.addImage ↗](https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#addimage).
+Supports `pixelRatio` (for HiDPI images) and `sdf` (to enable runtime recoloring).
+
+```ts
+type ImageOptions = Parameters<maplibregl.Map['addImage']>['2']
+```
+
+<!-- /ARGS -->
 ## Demo
 
 Loads an SVG icon and renders it as symbols on a map layer.
