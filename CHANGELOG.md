@@ -1,5 +1,16 @@
 # Changelog
 
+## Release (2026-03-23)
+
+* ember-maplibre-gl 0.4.1 (patch)
+
+#### :bug: Bug Fix
+* `ember-maplibre-gl`
+  * [#35](https://github.com/johanrd/ember-maplibre-gl/pull/35) fix: override @babel/runtime to resolve GHSA-968p-4wvh-cqc8 ([@johanrd](https://github.com/johanrd))
+
+#### Committers: 1
+- [@johanrd](https://github.com/johanrd)
+
 ## Release (2026-03-22)
 
 * ember-maplibre-gl 0.4.0 (minor)
