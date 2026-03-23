@@ -2,6 +2,17 @@
 
 ## Release (2026-03-23)
 
+* ember-maplibre-gl 0.5.0 (minor)
+
+#### :rocket: Enhancement
+* `ember-maplibre-gl`
+  * [#38](https://github.com/johanrd/ember-maplibre-gl/pull/38) feat: export named option types for consumer use ([@johanrd](https://github.com/johanrd))
+
+#### Committers: 1
+- [@johanrd](https://github.com/johanrd)
+
+## Release (2026-03-23)
+
 * ember-maplibre-gl 0.4.1 (patch)
 
 #### :bug: Bug Fix
