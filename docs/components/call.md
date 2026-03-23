@@ -53,12 +53,21 @@ interface MapLibreGLCallSignature {
 
 | Arg | Type | Required | Description |
 |-----|------|----------|-------------|
-| `func` | `keyof MapInstance` | Yes | Name of the method to invoke (e.g. "flyTo", "setStyle", "resize"). |
+| `func` | keyof [MapInstance](#mapinstance) | Yes | Name of the method to invoke (e.g. "flyTo", "setStyle", "resize"). |
 | `positionalArguments` | unknown[] | Yes | Arguments to pass to the method. |
 | `onResp` | `Function` | No | Optional callback that receives the method's return value. |
 
-<!-- /ARGS -->
+### MapInstance
 
+Public function method surface of the MapLibre [Map ↗](https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/).
+Excludes `_`-prefixed internals and non-method properties so `@func` only
+auto-completes callable public methods.
+
+```ts
+type MapInstance = Pick<maplibregl.Map, PublicMethodKeys<maplibregl.Map>>
+```
+
+<!-- /ARGS -->
 ## Demo
 
 This map calls `fitBounds` on load to fit the view to a bounding box.

@@ -33,6 +33,11 @@ interface SavedMap {
 
 const savedMaps = new Map<string, SavedMap>();
 
+/**
+ * MapLibre [MapOptions ↗](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/MapOptions/) without `container`, which is managed internally.
+ */
+export type MapInitOptions = Omit<MapOptions, 'container'>;
+
 /** Signature for {@link MapLibreGL}. */
 export interface MapLibreGLSignature {
   Element: HTMLDivElement;
@@ -43,7 +48,7 @@ export interface MapLibreGLSignature {
      *
      * @see https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/MapOptions/
      */
-    initOptions: Omit<MapOptions, 'container'>;
+    initOptions: MapInitOptions;
 
     /** Called once the map's style and tiles have loaded. Receives the map instance. */
     mapLoaded?: (map: MaplibreMap) => void;

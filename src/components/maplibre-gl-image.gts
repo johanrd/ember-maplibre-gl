@@ -10,6 +10,14 @@ import {
 import type maplibregl from 'maplibre-gl';
 import type Owner from '@ember/owner';
 
+/**
+ * Options passed to MapLibre's [map.addImage ↗](https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#addimage).
+ *
+ * Supports `pixelRatio` (for HiDPI images) and `sdf` (to enable runtime recoloring).
+ *
+ */
+export type ImageOptions = Parameters<maplibregl.Map['addImage']>['2'];
+
 /** Signature for {@link MapLibreGLImage}. */
 export interface MapLibreGLImageSignature {
   Args: {
@@ -20,7 +28,7 @@ export interface MapLibreGLImageSignature {
     /** Name to register the image under. Use this name in symbol layer `icon-image`. */
     name: Parameters<maplibregl.Map['addImage']>['0'];
     /** Image options (pixelRatio, sdf) passed to `map.addImage`. */
-    options?: Parameters<maplibregl.Map['addImage']>['2'];
+    options?: ImageOptions;
     /** Explicit width for SVG images (ignored for raster formats). */
     width?: HTMLImageElement['width'];
     /** Explicit height for SVG images (ignored for raster formats). */

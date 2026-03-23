@@ -44,7 +44,7 @@ interface MapLibreGLSignature {
          *
          * @see https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/MapOptions/
          */
-        initOptions: Omit<MapOptions, 'container'>;
+        initOptions: MapInitOptions;
         /** Called once the map's style and tiles have loaded. Receives the map instance. */
         mapLoaded?: (map: MaplibreMap) => void;
         /**
@@ -97,13 +97,20 @@ interface MapLibreGLSignature {
 
 | Arg | Type | Required | Description |
 |-----|------|----------|-------------|
-| `initOptions` | Omit<[MapOptions](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/MapOptions/), 'container'> | Yes | MapLibre map options (style, center, zoom, etc.). Passed once at construction; later changes are ignored. The `container` property is managed internally and should be omitted. |
+| `initOptions` | [MapInitOptions](#mapinitoptions) | Yes | MapLibre map options (style, center, zoom, etc.). Passed once at construction; later changes are ignored. The `container` property is managed internally and should be omitted. |
 | `mapLoaded` | `Function` | No | Called once the map's style and tiles have loaded. Receives the map instance. |
 | `reuseMaps` | `boolean` | No | Cache the WebGL map instance on teardown and reuse it on remount. Avoids expensive context creation on repeated route transitions. Only works when `initOptions.style` is a URL string. |
 | `mapLib` | `MapConstructor` | No | Override the map constructor (e.g. for testing or mapbox-gl compatibility). |
 
-<!-- /ARGS -->
+### MapInitOptions
 
+MapLibre [MapOptions ↗](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/MapOptions/) without `container`, which is managed internally.
+
+```ts
+type MapInitOptions = Omit<MapOptions, 'container'>
+```
+
+<!-- /ARGS -->
 <!-- YIELDS -->
 ## Yields
 
@@ -121,7 +128,6 @@ interface MapLibreGLSignature {
 | `component` | `MapLibreGL` | The Ember component instance (useful for associateDestroyableChild). |
 
 <!-- /YIELDS -->
-
 ## Demo
 
 ```gts live preview

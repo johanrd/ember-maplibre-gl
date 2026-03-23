@@ -39,7 +39,7 @@ interface MapLibreGLControlSignature {
         /** A MapLibre IControl instance. Controls that extend Evented (e.g. `GeolocateControl`) support event binding via the yielded `on` component. */
         control: IControl;
         /** Corner placement: "top-left", "top-right", "bottom-left", or "bottom-right". */
-        position: Parameters<maplibregl.Map['addControl']>['1'];
+        position: ControlPosition;
         /** Parent component for destroyable association (pre-bound by parent). */
         parent?: MapLibreGL;
     };
@@ -62,10 +62,18 @@ interface MapLibreGLControlSignature {
 | Arg | Type | Required | Description |
 |-----|------|----------|-------------|
 | `control` | [IControl](https://maplibre.org/maplibre-gl-js/docs/API/interfaces/IControl/) | Yes | A MapLibre IControl instance. Controls that extend Evented (e.g. `GeolocateControl`) support event binding via the yielded `on` component. |
-| `position` | `ControlPosition` | Yes | Corner placement: "top-left", "top-right", "bottom-left", or "bottom-right". |
+| `position` | [ControlPosition](#controlposition) | Yes | Corner placement: "top-left", "top-right", "bottom-left", or "bottom-right". |
+
+### ControlPosition
+
+Resolves toMapLibre [ControlPosition ↗](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/ControlPosition/) type.
+One of `"top-left"`, `"top-right"`, `"bottom-left"`, or `"bottom-right"`.
+
+```ts
+type ControlPosition = Parameters<maplibregl.Map['addControl']>['1']
+```
 
 <!-- /ARGS -->
-
 <!-- YIELDS -->
 ## Yields
 
@@ -74,7 +82,6 @@ interface MapLibreGLControlSignature {
 | `on` | [MapLibreGLOn](./on) | Listen to control events. Pre-bound with eventSource. Only works for controls that extend Evented. |
 
 <!-- /YIELDS -->
-
 ## Demo
 
 ```gts live preview
