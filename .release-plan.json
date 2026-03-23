@@ -1,18 +1,8 @@
 {
   "solution": {
     "ember-maplibre-gl": {
-      "impact": "minor",
-      "oldVersion": "0.4.1",
-      "newVersion": "0.5.0",
-      "tagName": "latest",
-      "constraints": [
-        {
-          "impact": "minor",
-          "reason": "Appears in changelog section :rocket: Enhancement"
-        }
-      ],
-      "pkgJSONPath": "./package.json"
+      "oldVersion": "0.5.0"
     }
   },
-  "description": "## Release (2026-03-23)\n\n* ember-maplibre-gl 0.5.0 (minor)\n\n#### :rocket: Enhancement\n* `ember-maplibre-gl`\n  * [#38](https://github.com/johanrd/ember-maplibre-gl/pull/38) feat: export named option types for consumer use ([@johanrd](https://github.com/johanrd))\n\n#### Committers: 1\n- [@johanrd](https://github.com/johanrd)\n"
+  "description": "\n\n\n\n"
 }
