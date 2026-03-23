@@ -122,6 +122,11 @@
   "ember": {
     "edition": "octane"
   },
+  "pnpm": {
+    "overrides": {
+      "@babel/runtime": "^7.26.10"
+    }
+  },
   "ember-addon": {
     "version": 2,
     "type": "addon",
