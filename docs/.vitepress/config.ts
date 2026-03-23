@@ -136,6 +136,7 @@ export default defineConfig({
     ['meta', { name: 'twitter:title', content: 'ember-maplibre-gl' }],
     ['meta', { name: 'twitter:description', content: 'Declarative MapLibre GL JS components for Ember.js' }],
     ['meta', { name: 'twitter:image', content: 'https://johanrd.github.io/ember-maplibre-gl/og-image.png' }],
+    ['meta', { name: 'algolia-site-verification', content: '52977A5FE3B2C1AB' }],
   ],
 
   vite: {

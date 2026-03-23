@@ -15,7 +15,7 @@ import type Owner from '@ember/owner';
 /**
  * Layer options with optional `id` and `source` (auto-filled by the component).
  *
- * Accepts any MapLibre [LayerSpecification ↗](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/LayerSpecification/)
+ * Accepts any MapLibre [LayerSpecification ↗](https://maplibre.org/maplibre-style-spec/layers/)
  * (fill, line, circle, symbol, etc.) but makes `id` optional since the component generates one.
  */
 export type LayerOptions = Omit<LayerSpecification, 'id'> & {

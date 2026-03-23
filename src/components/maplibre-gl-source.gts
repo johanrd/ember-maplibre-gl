@@ -17,7 +17,7 @@ import type Owner from '@ember/owner';
 /**
  * Source specification passed to `map.addSource()` — defines the data backing a layer.
  *
- * Resolves to [SourceSpecification ↗](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/SourceSpecification/) from MapLibre, a union of GeoJSON, vector, raster,
+ * Resolves to [SourceSpecification ↗](https://maplibre.org/maplibre-style-spec/sources/) from MapLibre, a union of GeoJSON, vector, raster,
  * raster-dem, image, and video source types.
  */
 export type SourceOptions = Parameters<Map['addSource']>['1'];
