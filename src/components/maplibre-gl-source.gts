@@ -11,7 +11,12 @@ import {
   associateDestroyableChild,
   registerDestructor,
 } from '@ember/destroyable';
-import type { Map } from 'maplibre-gl';
+import type {
+  Map,
+  GeoJSONSourceSpecification,
+  ImageSourceSpecification,
+  VectorSourceSpecification,
+} from 'maplibre-gl';
 import type Owner from '@ember/owner';
 
 /**
@@ -94,12 +99,23 @@ export default class MapLibreGLSource extends Component<MapLibreGLSourceSignatur
     });
   }
 
+  private prevData?: GeoJSONSourceSpecification['data'];
+  private prevCoordinates?: ImageSourceSpecification['coordinates'];
+  private prevUrl?: string;
+  private prevTiles?: VectorSourceSpecification['tiles'];
+
   /** @internal */
   upsertSource = (options: MapLibreGLSource['args']['options']) => {
     const source = this.args.map.getSource(this.sourceId);
 
     if (!source) {
       this.args.map.addSource(this.sourceId, options);
+      // Seed prev-refs so the first revalidation after creation is a no-op
+      // when the consumer's @options reference is stable.
+      if ('data' in options) this.prevData = options.data;
+      if ('coordinates' in options) this.prevCoordinates = options.coordinates;
+      if ('url' in options) this.prevUrl = options.url;
+      if ('tiles' in options) this.prevTiles = options.tiles;
       return;
     }
 
@@ -107,7 +123,8 @@ export default class MapLibreGLSource extends Component<MapLibreGLSourceSignatur
       'setData' in source &&
       typeof source.setData === 'function' &&
       'data' in options &&
-      options.data
+      options.data &&
+      options.data !== this.prevData
     ) {
       if (
         typeof options.data === 'object' &&
@@ -125,33 +142,40 @@ export default class MapLibreGLSource extends Component<MapLibreGLSourceSignatur
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- duck-typed: verified via 'in' + typeof
         source.setData(options.data);
       }
+      this.prevData = options.data;
     }
     if (
       'setCoordinates' in source &&
       typeof source.setCoordinates === 'function' &&
       'coordinates' in options &&
-      options.coordinates
+      options.coordinates &&
+      options.coordinates !== this.prevCoordinates
     ) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       source.setCoordinates(options.coordinates);
+      this.prevCoordinates = options.coordinates;
     }
     if (
       'setUrl' in source &&
       typeof source.setUrl === 'function' &&
       'url' in options &&
-      options.url
+      options.url &&
+      options.url !== this.prevUrl
     ) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       source.setUrl(options.url);
+      this.prevUrl = options.url;
     }
     if (
       'setTiles' in source &&
       typeof source.setTiles === 'function' &&
       'tiles' in options &&
-      options.tiles
+      options.tiles &&
+      options.tiles !== this.prevTiles
     ) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       source.setTiles(options.tiles);
+      this.prevTiles = options.tiles;
     }
   };
 

@@ -96,6 +96,11 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
   }
 
   private prevBefore?: MapLibreGLLayerSignature['Args']['before'];
+  private prevLayout?: LayerOptions['layout'];
+  private prevPaint?: LayerOptions['paint'];
+  private prevFilter?: FilterSpecification;
+  private prevMinzoom?: number;
+  private prevMaxzoom?: number;
 
   /** @internal */
   upsertLayer = (options?: MapLibreGLLayerSignature['Args']['options']) => {
@@ -113,27 +118,41 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
       // TypeScript can't narrow a spread of the full union to a single variant.
       this.args.map.addLayer(layerOptions, this.args.before);
       this.prevBefore = this.args.before;
+      this.prevLayout = options.layout;
+      this.prevPaint = options.paint;
+      this.prevFilter =
+        'filter' in options
+          ? (options.filter as FilterSpecification | undefined)
+          : undefined;
+      this.prevMinzoom =
+        'minzoom' in options && options.minzoom != null ? options.minzoom : 0;
+      this.prevMaxzoom =
+        'maxzoom' in options && options.maxzoom != null ? options.maxzoom : 24;
       return;
     }
 
-    if (options.layout) {
+    if (options.layout && options.layout !== this.prevLayout) {
+      const prev = this.prevLayout;
       for (const k in options.layout) {
-        this.args.map.setLayoutProperty(
-          this.layerId,
-          k,
-          options.layout[k as keyof typeof options.layout],
-        );
+        const key = k as keyof typeof options.layout;
+        const next = options.layout[key];
+        if (next !== prev?.[key]) {
+          this.args.map.setLayoutProperty(this.layerId, k, next);
+        }
       }
+      this.prevLayout = options.layout;
     }
 
-    if (options.paint) {
+    if (options.paint && options.paint !== this.prevPaint) {
+      const prev = this.prevPaint;
       for (const k in options.paint) {
-        this.args.map.setPaintProperty(
-          this.layerId,
-          k,
-          options.paint[k as keyof typeof options.paint],
-        );
+        const key = k as keyof typeof options.paint;
+        const next = options.paint[key];
+        if (next !== prev?.[key]) {
+          this.args.map.setPaintProperty(this.layerId, k, next);
+        }
       }
+      this.prevPaint = options.paint;
     }
 
     if ('minzoom' in options || 'maxzoom' in options) {
@@ -141,14 +160,17 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
         'minzoom' in options && options.minzoom != null ? options.minzoom : 0;
       const maxzoom =
         'maxzoom' in options && options.maxzoom != null ? options.maxzoom : 24;
-      this.args.map.setLayerZoomRange(this.layerId, minzoom, maxzoom);
+      if (minzoom !== this.prevMinzoom || maxzoom !== this.prevMaxzoom) {
+        this.args.map.setLayerZoomRange(this.layerId, minzoom, maxzoom);
+        this.prevMinzoom = minzoom;
+        this.prevMaxzoom = maxzoom;
+      }
     }
 
-    if ('filter' in options) {
-      this.args.map.setFilter(
-        this.layerId,
-        options.filter as FilterSpecification,
-      );
+    if ('filter' in options && options.filter !== this.prevFilter) {
+      const filter = options.filter as FilterSpecification | undefined;
+      this.args.map.setFilter(this.layerId, filter);
+      this.prevFilter = filter;
     }
 
     if (this.args.before !== this.prevBefore) {
