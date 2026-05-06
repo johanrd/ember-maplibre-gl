@@ -1,5 +1,16 @@
 # Changelog
 
+## Release (2026-05-06)
+
+* ember-maplibre-gl 0.6.0 (minor)
+
+#### :rocket: Enhancement
+* `ember-maplibre-gl`
+  * [#40](https://github.com/johanrd/ember-maplibre-gl/pull/40) perf: equality-guard layer/source upserts and harden reuse pool ([@johanrd](https://github.com/johanrd))
+
+#### Committers: 1
+- Johan Røed ([@johanrd](https://github.com/johanrd))
+
 ## Release (2026-03-23)
 
 * ember-maplibre-gl 0.5.0 (minor)
