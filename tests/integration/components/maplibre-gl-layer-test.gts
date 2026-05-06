@@ -573,6 +573,151 @@ module('Integration | Component | maplibre-gl-layer', function (hooks) {
     );
   });
 
+  test('rerender with structurally equivalent layout/paint does not call setLayoutProperty/setPaintProperty/setLayerZoomRange', async function (assert) {
+    let map: Map | undefined;
+    const setMap = (m: Map) => {
+      map = m;
+    };
+    const state = new State();
+    const filterRef: ['==', '$type', 'Point'] = ['==', '$type', 'Point'];
+    state.layerOptions = {
+      id: 'stable-test',
+      type: 'circle',
+      layout: { visibility: 'none' },
+      paint: { 'circle-color': 'red', 'circle-radius': 6 },
+      filter: filterRef,
+      minzoom: 5,
+      maxzoom: 10,
+    };
+
+    await render(
+      <template>
+        <MapLibreGL
+          @initOptions={{hash style=STYLE}}
+          @mapLoaded={{setMap}}
+          style="height:100px;"
+          as |m|
+        >
+          <m.source
+            @sourceId="src"
+            @options={{hash type="geojson" data=GEOJSON}}
+            as |source|
+          >
+            <source.layer @options={{state.layerOptions}}>
+              <span data-test-loaded />
+            </source.layer>
+          </m.source>
+        </MapLibreGL>
+      </template>,
+    );
+
+    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
+
+    const setLayoutSpy = sinon.spy(map!, 'setLayoutProperty');
+    const setPaintSpy = sinon.spy(map!, 'setPaintProperty');
+    const setFilterSpy = sinon.spy(map!, 'setFilter');
+    const setZoomSpy = sinon.spy(map!, 'setLayerZoomRange');
+
+    // Reassign with a fresh outer object and fresh inner layout/paint objects,
+    // but structurally equivalent values (and the same filter array ref).
+    state.layerOptions = {
+      id: 'stable-test',
+      type: 'circle',
+      layout: { visibility: 'none' },
+      paint: { 'circle-color': 'red', 'circle-radius': 6 },
+      filter: filterRef,
+      minzoom: 5,
+      maxzoom: 10,
+    };
+    await settled();
+
+    assert.strictEqual(
+      setLayoutSpy.callCount,
+      0,
+      'setLayoutProperty not called when values unchanged',
+    );
+    assert.strictEqual(
+      setPaintSpy.callCount,
+      0,
+      'setPaintProperty not called when values unchanged',
+    );
+    assert.strictEqual(
+      setFilterSpy.callCount,
+      0,
+      'setFilter not called when filter ref unchanged',
+    );
+    assert.strictEqual(
+      setZoomSpy.callCount,
+      0,
+      'setLayerZoomRange not called when minzoom/maxzoom unchanged',
+    );
+  });
+
+  test('changing one paint key only re-fires setPaintProperty for that key', async function (assert) {
+    let map: Map | undefined;
+    const setMap = (m: Map) => {
+      map = m;
+    };
+    const state = new State();
+    state.layerOptions = {
+      id: 'per-key-test',
+      type: 'circle',
+      paint: {
+        'circle-color': 'red',
+        'circle-radius': 6,
+        'circle-stroke-width': 2,
+      },
+    };
+
+    await render(
+      <template>
+        <MapLibreGL
+          @initOptions={{hash style=STYLE}}
+          @mapLoaded={{setMap}}
+          style="height:100px;"
+          as |m|
+        >
+          <m.source
+            @sourceId="src"
+            @options={{hash type="geojson" data=GEOJSON}}
+            as |source|
+          >
+            <source.layer @options={{state.layerOptions}}>
+              <span data-test-loaded />
+            </source.layer>
+          </m.source>
+        </MapLibreGL>
+      </template>,
+    );
+
+    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
+
+    const setPaintSpy = sinon.spy(map!, 'setPaintProperty');
+
+    // Change only circle-color; other two keys keep their primitive values.
+    state.layerOptions = {
+      id: 'per-key-test',
+      type: 'circle',
+      paint: {
+        'circle-color': 'blue',
+        'circle-radius': 6,
+        'circle-stroke-width': 2,
+      },
+    };
+    await settled();
+
+    assert.strictEqual(
+      setPaintSpy.callCount,
+      1,
+      'setPaintProperty called exactly once',
+    );
+    assert.strictEqual(
+      setPaintSpy.firstCall.args[1],
+      'circle-color',
+      'setPaintProperty called for the changed key only',
+    );
+  });
+
   test('it yields the layer id', async function (assert) {
     await render(
       <template>

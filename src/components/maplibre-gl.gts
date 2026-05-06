@@ -307,6 +307,20 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
               /* ignore */
             }
           }
+
+          // Pool hygiene: halt in-flight camera animations and stop observing
+          // the about-to-be-detached container. Without this, an unfinished
+          // fitBounds(…, {duration}) keeps rendering frames after pooling, and
+          // a parent CSS layout transition keeps the ResizeObserver firing on
+          // the orphan container (each tick reallocates the canvas backing store).
+          // The reuse path at lines 222-225 reconnects the observer on remount.
+          try {
+            this.map.stop();
+          } catch {
+            /* ignore */
+          }
+          (this.map as unknown as MapInternals)._resizeObserver?.disconnect();
+
           savedMaps.set(styleUrl, {
             map: this.map,
             container: this.map.getContainer(),

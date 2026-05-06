@@ -6,6 +6,7 @@ import { hash, array } from '@ember/helper';
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
 import type { Map } from 'maplibre-gl';
 import mapboxgl from 'mapbox-gl';
+import sinon from 'sinon';
 
 const STYLE = { version: 8 as const, sources: {}, layers: [] };
 const STYLE_URL = 'https://demotiles.maplibre.org/style.json';
@@ -214,6 +215,58 @@ module('Integration | Component | maplibre-gl', function (hooks) {
       secondMap!.getCanvas(),
       firstCanvas,
       'same WebGL canvas reused across remounts',
+    );
+  });
+
+  test('pooling on destroy halts animations and disconnects the ResizeObserver', async function (assert) {
+    class ShowState {
+      @tracked show = true;
+    }
+
+    let firstMap: Map | undefined;
+    const state = new ShowState();
+    const captureMap = (m: Map) => {
+      if (!firstMap) firstMap = m;
+    };
+
+    await render(
+      <template>
+        {{#if state.show}}
+          <MapLibreGL
+            @initOptions={{hash style=STYLE_URL center=(array 0 0) zoom=1}}
+            @reuseMaps={{true}}
+            @mapLoaded={{captureMap}}
+            style="height:200px;"
+          >
+            <span data-test-pool-loaded>loaded</span>
+          </MapLibreGL>
+        {{/if}}
+      </template>,
+    );
+
+    await waitUntil(() => find('[data-test-pool-loaded]'), { timeout: 10000 });
+    assert.ok(firstMap, 'map instance captured');
+
+    type MapInternals = { _resizeObserver?: ResizeObserver };
+    const resizeObserver = (firstMap as unknown as MapInternals)
+      ._resizeObserver;
+    assert.ok(resizeObserver, 'map has a _resizeObserver private');
+
+    const stopSpy = sinon.spy(firstMap!, 'stop');
+    const disconnectSpy = sinon.spy(resizeObserver!, 'disconnect');
+
+    state.show = false;
+    await settled();
+
+    assert.strictEqual(
+      stopSpy.callCount,
+      1,
+      'map.stop() called once before pooling',
+    );
+    assert.strictEqual(
+      disconnectSpy.callCount,
+      1,
+      'ResizeObserver.disconnect() called once before pooling',
     );
   });
 });

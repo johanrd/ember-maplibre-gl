@@ -440,6 +440,57 @@ module('Integration | Component | maplibre-gl-source', function (hooks) {
     );
   });
 
+  test('rerender with new @options but stable data ref does not call setData', async function (assert) {
+    let map: Map | undefined;
+    const setMap = (m: Map) => {
+      map = m;
+    };
+    const state = new State();
+    const stableData: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: {},
+          geometry: { type: 'Point', coordinates: [0, 0] },
+        },
+      ],
+    };
+    state.options = { type: 'geojson', data: stableData };
+
+    await render(
+      <template>
+        <MapLibreGL
+          @initOptions={{hash style=STYLE}}
+          @mapLoaded={{setMap}}
+          style="height:100px;"
+          as |m|
+        >
+          <m.source @sourceId="stable-data" @options={{state.options}}>
+            <span data-test-loaded />
+          </m.source>
+        </MapLibreGL>
+      </template>,
+    );
+
+    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
+
+    const source = map?.getSource('stable-data');
+    assert.ok(source, 'source exists');
+
+    const setDataSpy = sinon.spy(source as GeoJSONSource, 'setData');
+
+    // Fresh outer @options, but the same `data` reference.
+    state.options = { type: 'geojson', data: stableData };
+    await settled();
+
+    assert.strictEqual(
+      setDataSpy.callCount,
+      0,
+      'setData not called when data reference is unchanged',
+    );
+  });
+
   test('it handles full source data replacement', async function (assert) {
     let map: Map | undefined;
     const setMap = (m: Map) => {
