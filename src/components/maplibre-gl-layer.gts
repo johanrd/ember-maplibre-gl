@@ -106,6 +106,14 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
   upsertLayer = (options?: MapLibreGLLayerSignature['Args']['options']) => {
     if (typeof options !== 'object') return;
 
+    // MapLibre sets `map.style = null` on WebGL context loss (then fires
+    // 'webglcontextlost') and on remove(), even though it types `style` as non-null.
+    // getLayer/addLayer dereference it, so a render against a context-lost map throws
+    // "Cannot read properties of null (reading 'getLayer')". The destructor above
+    // already guards for this; the render-time upsert must too. Self-healing: once the
+    // context is restored MapLibre rebuilds the style and a later render re-runs this.
+    if (!this.args.map.style) return;
+
     if (!this.args.map.getLayer(this.layerId)) {
       const layerOptions = {
         ...options,
