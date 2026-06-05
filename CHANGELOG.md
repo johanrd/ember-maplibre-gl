@@ -2,6 +2,17 @@
 
 ## Release (2026-06-05)
 
+* ember-maplibre-gl 0.6.2 (patch)
+
+#### :house: Internal
+* `ember-maplibre-gl`
+  * [#43](https://github.com/johanrd/ember-maplibre-gl/pull/43) update release plan settings ([@johanrd](https://github.com/johanrd))
+
+#### Committers: 1
+- Johan Røed ([@johanrd](https://github.com/johanrd))
+
+## Release (2026-06-05)
+
 * ember-maplibre-gl 0.6.1 (patch)
 
 #### :bug: Bug Fix
