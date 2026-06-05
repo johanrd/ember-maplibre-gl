@@ -106,6 +106,14 @@ export default class MapLibreGLSource extends Component<MapLibreGLSourceSignatur
 
   /** @internal */
   upsertSource = (options: MapLibreGLSource['args']['options']) => {
+    // MapLibre sets `map.style = null` on WebGL context loss (then fires
+    // 'webglcontextlost') and on remove(), even though it types `style` as non-null.
+    // getSource/addSource dereference it, so a render against a context-lost map throws
+    // "Cannot read properties of null (reading 'getSource')". The destructor above
+    // already guards for this; the render-time upsert must too. Self-healing: once the
+    // context is restored MapLibre rebuilds the style and a later render re-runs this.
+    if (!this.args.map.style) return;
+
     const source = this.args.map.getSource(this.sourceId);
 
     if (!source) {
