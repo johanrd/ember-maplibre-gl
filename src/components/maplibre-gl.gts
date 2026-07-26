@@ -14,9 +14,9 @@ import { hash } from '@ember/helper';
 import type { WithBoundArgs } from '@glint/template';
 import { modifier } from 'ember-modifier';
 
-import maplibregl, {
+import {
+  Map as MaplibreMap,
   type MapOptions,
-  type Map as MaplibreMap,
   type MapContextEvent,
   type ErrorEvent as MapErrorEvent,
 } from 'maplibre-gl';
@@ -122,7 +122,7 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
   /** @internal */
   mapLibrary =
     this.args.mapLib ||
-    (maplibregl.Map as new (...args: unknown[]) => MaplibreMap);
+    (MaplibreMap as new (...args: unknown[]) => MaplibreMap);
   /** @internal */
   @tracked mapLoaded = false;
 

@@ -7,7 +7,7 @@ import {
   isDestroying,
   registerDestructor,
 } from '@ember/destroyable';
-import type maplibregl from 'maplibre-gl';
+import type { Map as MaplibreMap } from 'maplibre-gl';
 import type Owner from '@ember/owner';
 
 /**
@@ -16,17 +16,17 @@ import type Owner from '@ember/owner';
  * Supports `pixelRatio` (for HiDPI images) and `sdf` (to enable runtime recoloring).
  *
  */
-export type ImageOptions = Parameters<maplibregl.Map['addImage']>['2'];
+export type ImageOptions = Parameters<MaplibreMap['addImage']>['2'];
 
 /** Signature for {@link MapLibreGLImage}. */
 export interface MapLibreGLImageSignature {
   Args: {
     /** The MapLibre map instance (pre-bound by parent). */
-    map: maplibregl.Map;
+    map: MaplibreMap;
     /** URL of the image to load. Supports PNG, JPEG, and SVG formats. */
-    url?: Parameters<maplibregl.Map['loadImage']>['0'];
+    url?: Parameters<MaplibreMap['loadImage']>['0'];
     /** Name to register the image under. Use this name in symbol layer `icon-image`. */
-    name: Parameters<maplibregl.Map['addImage']>['0'];
+    name: Parameters<MaplibreMap['addImage']>['0'];
     /** Image options (pixelRatio, sdf) passed to `map.addImage`. */
     options?: ImageOptions;
     /** Explicit width for SVG images (ignored for raster formats). */
@@ -177,7 +177,7 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
     url: MapLibreGLImageSignature['Args']['url'],
     name: MapLibreGLImageSignature['Args']['name'],
     options?: MapLibreGLImageSignature['Args']['options'],
-    image?: Parameters<maplibregl.Map['addImage']>[1],
+    image?: Parameters<MaplibreMap['addImage']>[1],
   ) => {
     if (isDestroying(this) || isDestroyed(this)) {
       return;

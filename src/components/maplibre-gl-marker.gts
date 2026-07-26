@@ -1,7 +1,12 @@
 import Component from '@glimmer/component';
 import { assert } from '@ember/debug';
 
-import { Marker, type MarkerOptions, type LngLatLike } from 'maplibre-gl';
+import {
+  Marker,
+  type MarkerOptions,
+  type LngLatLike,
+  type Map as MaplibreMap,
+} from 'maplibre-gl';
 
 import MapLibreGLOn from './maplibre-gl-on.gts';
 import MapLibreGLPopup from './maplibre-gl-popup.gts';
@@ -13,13 +18,12 @@ import {
   registerDestructor,
 } from '@ember/destroyable';
 import type Owner from '@ember/owner';
-import type maplibregl from 'maplibre-gl';
 
 /** Signature for {@link MapLibreGLMarker}. */
 export interface MapLibreGLMarkerSignature {
   Args: {
     /** The MapLibre map instance (pre-bound by parent). */
-    map: maplibregl.Map;
+    map: MaplibreMap;
     /** Geographic position of the marker. Reactively updates when changed. */
     lngLat: LngLatLike;
     /** Marker configuration passed once at construction (draggable, color, anchor, etc.). */
