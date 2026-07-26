@@ -8,8 +8,7 @@ import { hash } from '@ember/helper';
 import MapLibreGLOn from './maplibre-gl-on.gts';
 import type MapLibreGL from './maplibre-gl.gts';
 import type { WithBoundArgs } from '@glint/template';
-import type { Evented, IControl } from 'maplibre-gl';
-import type maplibregl from 'maplibre-gl';
+import type { Evented, IControl, Map as MaplibreMap } from 'maplibre-gl';
 import type Owner from '@ember/owner';
 
 /**
@@ -17,13 +16,13 @@ import type Owner from '@ember/owner';
  *
  * One of `"top-left"`, `"top-right"`, `"bottom-left"`, or `"bottom-right"`.
  */
-export type ControlPosition = Parameters<maplibregl.Map['addControl']>['1'];
+export type ControlPosition = Parameters<MaplibreMap['addControl']>['1'];
 
 /** Signature for {@link MapLibreGLControl}. */
 export interface MapLibreGLControlSignature {
   Args: {
     /** The MapLibre map instance (pre-bound by parent). */
-    map: maplibregl.Map;
+    map: MaplibreMap;
     /** A MapLibre IControl instance. Controls that extend Evented (e.g. `GeolocateControl`) support event binding via the yielded `on` component. */
     control: IControl;
     /** Corner placement: "top-left", "top-right", "bottom-left", or "bottom-right". */

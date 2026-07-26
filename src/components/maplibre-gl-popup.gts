@@ -1,18 +1,23 @@
 import Component from '@glimmer/component';
 import { assert } from '@ember/debug';
-import { Marker, Popup, type PopupOptions, type LngLatLike } from 'maplibre-gl';
+import {
+  Marker,
+  Popup,
+  type PopupOptions,
+  type LngLatLike,
+  type Map as MaplibreMap,
+} from 'maplibre-gl';
 import MapLibreGLOn from './maplibre-gl-on.gts';
 import type { WithBoundArgs } from '@glint/template';
 import { hash } from '@ember/helper';
 import { registerDestructor } from '@ember/destroyable';
 import type Owner from '@ember/owner';
-import type maplibregl from 'maplibre-gl';
 
 /** Signature for {@link MapLibreGLPopup}. */
 export interface MapLibreGLPopupSignature {
   Args: {
     /** The MapLibre map instance (pre-bound by parent). */
-    map: maplibregl.Map;
+    map: MaplibreMap;
     /** Marker to attach this popup to. When set, the popup opens on marker interaction. */
     marker?: Marker;
     /** Geographic position for standalone popups (not attached to a marker). Reactively updates. Note: changing `lngLat` will reopen a user-closed popup. */

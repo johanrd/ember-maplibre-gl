@@ -5,6 +5,14 @@ import { setApplication } from '@ember/test-helpers';
 import { setup } from 'qunit-dom';
 import { start as qunitStart, setupEmberOnerrorValidation } from 'ember-qunit';
 import { setTesting } from '@embroider/macros';
+import { setWorkerUrl } from 'maplibre-gl';
+// Consumer-side worker setup for MapLibre v6+, per the MapLibre installation
+// docs (Vite variant) — the addon itself deliberately does not configure the
+// worker, since the right incantation depends on the consumer's bundler.
+// https://maplibre.org/maplibre-gl-js/docs/
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+
+setWorkerUrl(maplibreWorkerUrl);
 
 class Router extends EmberRouter {
   location = 'none';

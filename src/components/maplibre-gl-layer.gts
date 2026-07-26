@@ -1,8 +1,11 @@
 import Component from '@glimmer/component';
 import { guidFor } from '@ember/object/internals';
 import { assert } from '@ember/debug';
-import type maplibregl from 'maplibre-gl';
-import type { FilterSpecification, LayerSpecification } from 'maplibre-gl';
+import type {
+  Map as MaplibreMap,
+  FilterSpecification,
+  LayerSpecification,
+} from 'maplibre-gl';
 import { hash } from '@ember/helper';
 import {
   associateDestroyableChild,
@@ -27,13 +30,13 @@ export type LayerOptions = Omit<LayerSpecification, 'id'> & {
 export interface MapLibreGLLayerSignature {
   Args: {
     /** The MapLibre map instance (pre-bound by parent). */
-    map: maplibregl.Map;
+    map: MaplibreMap;
     /** Source ID to render data from (pre-bound when used via `source.layer`). */
     sourceId: string;
     /** Layer specification (type, paint, layout, filter, etc.). The `id` and `source` are optional and auto-filled. */
     options: LayerOptions;
     /** Layer ID or position to insert this layer before in the stack. */
-    before?: Parameters<maplibregl.Map['addLayer']>[1];
+    before?: Parameters<MaplibreMap['addLayer']>[1];
     /** Parent component for destroyable association (pre-bound by parent). */
     parent?: MapLibreGLSource | MapLibreGL;
   };
@@ -145,7 +148,7 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
         const key = k as keyof typeof options.layout;
         const next = options.layout[key];
         if (next !== prev?.[key]) {
-          this.args.map.setLayoutProperty(this.layerId, k, next);
+          this.args.map.setLayoutProperty(this.layerId, key, next);
         }
       }
       this.prevLayout = options.layout;
@@ -157,7 +160,7 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
         const key = k as keyof typeof options.paint;
         const next = options.paint[key];
         if (next !== prev?.[key]) {
-          this.args.map.setPaintProperty(this.layerId, k, next);
+          this.args.map.setPaintProperty(this.layerId, key, next);
         }
       }
       this.prevPaint = options.paint;

@@ -14,9 +14,9 @@ import { hash } from '@ember/helper';
 import type { WithBoundArgs } from '@glint/template';
 import { modifier } from 'ember-modifier';
 
-import maplibregl, {
+import {
+  Map as MaplibreMap,
   type MapOptions,
-  type Map as MaplibreMap,
   type MapContextEvent,
   type ErrorEvent as MapErrorEvent,
 } from 'maplibre-gl';
@@ -122,7 +122,7 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
   /** @internal */
   mapLibrary =
     this.args.mapLib ||
-    (maplibregl.Map as new (...args: unknown[]) => MaplibreMap);
+    (MaplibreMap as new (...args: unknown[]) => MaplibreMap);
   /** @internal */
   @tracked mapLoaded = false;
 
@@ -179,22 +179,18 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
       // Uses on() instead of once() so that off() in the destructor can match the handler.
       const onStyleLoad = () => {
         this.map?.off('style.load', onStyleLoad);
-        this.map?.fire('load');
+        onLoad();
       };
 
       // Type for MapLibre private internals we depend on for reuse.
       type MapInternals = {
         _container: HTMLElement;
         _resizeObserver?: ResizeObserver;
-        _update: () => void;
       };
 
-      // Guard: reuse relies on MapLibre private internals (_container, _update).
+      // Guard: reuse relies on MapLibre private internals (_container).
       // If a future MapLibre version removes them, fall through to fresh creation.
-      const canReuse =
-        reused &&
-        '_container' in reused.map &&
-        typeof (reused.map as unknown as MapInternals)._update === 'function';
+      const canReuse = reused && '_container' in reused.map;
 
       if (reused && canReuse && styleUrl) {
         savedMaps.delete(styleUrl);
@@ -233,16 +229,17 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
           this.map.jumpTo({ center: options.center, zoom: options.zoom });
         }
 
-        // Step 5: register load listener BEFORE firing, then simulate load event
-        this.map.on('load', onLoad);
+        // Step 5: signal load directly instead of simulating a 'load' event
+        // via fire() — the component is the only intended listener, and this
+        // avoids depending on fire()'s string-event behavior across versions.
         if (this.map.isStyleLoaded()) {
-          this.map.fire('load');
+          onLoad();
         } else {
           this.map.on('style.load', onStyleLoad);
         }
 
         // Force redraw
-        mapInternals._update();
+        this.map.triggerRepaint();
       } else {
         if (reused) {
           // Internals missing — can't reuse, destroy the cached map.

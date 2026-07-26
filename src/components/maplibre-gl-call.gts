@@ -1,6 +1,6 @@
 import Component from '@glimmer/component';
 import { assert } from '@ember/debug';
-import type maplibregl from 'maplibre-gl';
+import type { Map as MaplibreMap } from 'maplibre-gl';
 
 type PublicMethodKeys<T> = {
   [K in keyof T]: K extends `_${string}`
@@ -19,10 +19,7 @@ type PublicMethodKeys<T> = {
  * auto-completes callable public methods.
  */
 
-export type MapInstance = Pick<
-  maplibregl.Map,
-  PublicMethodKeys<maplibregl.Map>
->;
+export type MapInstance = Pick<MaplibreMap, PublicMethodKeys<MaplibreMap>>;
 
 /** Signature for {@link MapLibreGLCall}. */
 export interface MapLibreGLCallSignature {
