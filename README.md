@@ -54,7 +54,11 @@ import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
 ## Compatibility
 - Ember.js v3.28 or above
 - Embroider v2 addon
-- MapLibre GL JS v5
+- MapLibre GL JS v5 and above (v6 supported)
+- Requires a Vite-based build (e.g. Embroider + Vite). MapLibre v6 ships as ESM
+  with a separate worker file that bundlers can't resolve automatically; this
+  addon imports it with Vite's `?worker&url` query and calls `setWorkerUrl()`
+  for you, so apps need no worker configuration of their own.
 
 
 ## Acknowledgements
