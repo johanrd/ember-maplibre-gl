@@ -1,5 +1,16 @@
 # Changelog
 
+## Release (2026-07-26)
+
+* ember-maplibre-gl 0.7.0 (minor)
+
+#### :rocket: Enhancement
+* `ember-maplibre-gl`
+  * [#45](https://github.com/johanrd/ember-maplibre-gl/pull/45) Support MapLibre GL JS v6 — v6 apps must configure the map worker (see README) ([@johanrd](https://github.com/johanrd))
+
+#### Committers: 1
+- Johan Røed ([@johanrd](https://github.com/johanrd))
+
 ## Release (2026-06-05)
 
 * ember-maplibre-gl 0.6.2 (patch)
