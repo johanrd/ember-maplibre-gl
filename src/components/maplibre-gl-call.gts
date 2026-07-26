@@ -19,10 +19,7 @@ type PublicMethodKeys<T> = {
  * auto-completes callable public methods.
  */
 
-export type MapInstance = Pick<
-  MaplibreMap,
-  PublicMethodKeys<MaplibreMap>
->;
+export type MapInstance = Pick<MaplibreMap, PublicMethodKeys<MaplibreMap>>;
 
 /** Signature for {@link MapLibreGLCall}. */
 export interface MapLibreGLCallSignature {
