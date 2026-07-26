@@ -16,18 +16,10 @@ import { modifier } from 'ember-modifier';
 
 import {
   Map as MaplibreMap,
-  setWorkerUrl,
   type MapOptions,
   type MapContextEvent,
   type ErrorEvent as MapErrorEvent,
 } from 'maplibre-gl';
-// MapLibre v6+ ships ESM-only and resolves its worker via import.meta.url,
-// which bundlers can't rewrite — each bundled app must call setWorkerUrl()
-// once. Doing it here spares every consuming app the boilerplate. The
-// `?worker&url` query requires a Vite-based build (Embroider + Vite).
-import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
-
-setWorkerUrl(maplibreWorkerUrl);
 
 import { registerDestructor } from '@ember/destroyable';
 
