@@ -3,12 +3,28 @@ import { resource, resourceFactory } from 'ember-resources';
 import { assert } from '@ember/debug';
 
 import type {
-  Evented,
   Listener,
   Map as MaplibreMap,
   MapLayerEventType,
 } from 'maplibre-gl';
 import type { TOC } from '@ember/component/template-only';
+
+/**
+ * The part of an evented object this component uses.
+ *
+ * Structural on purpose. MapLibre's `Evented` is generic, and its published
+ * types declare the internal `_listeners` field in terms of that type
+ * parameter, so `Evented<MapEventType>` — what `Map` extends — is not
+ * assignable to a bare `Evented`. Naming `Evented` here therefore broke every
+ * `(component MapLibreGLOn eventSource=…)` call site, and reported it as a
+ * misleading "missing @event and @action". The peer range spans MapLibre 5 and
+ * 6, so this type must not depend on the shape of those internals. Matching
+ * `on` and `off` also lets callers pass any evented object of their own.
+ */
+interface EventSource {
+  on(type: string, listener: Listener): unknown;
+  off(type: string, listener: Listener): unknown;
+}
 
 /** Args for the `MapLibreGLOn` template-only component. */
 interface Args {
@@ -18,7 +34,7 @@ interface Args {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- event handlers receive library-specific event types
   action: (...args: any[]) => void;
   /** The object to listen on — map, marker, popup, or control (pre-bound by parent). */
-  eventSource?: Evented;
+  eventSource?: EventSource;
   /** Optional layer ID to scope map events to features in a specific layer. */
   layerId?: string;
 }
@@ -31,7 +47,7 @@ export function mapOn(
   event: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   action: (...args: any[]) => void,
-  eventSource?: Evented,
+  eventSource?: EventSource,
   layerId?: string,
 ) {
   assert(
