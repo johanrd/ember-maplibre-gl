@@ -1,18 +1,26 @@
 {
   "solution": {
     "ember-maplibre-gl": {
-      "impact": "minor",
-      "oldVersion": "0.6.2",
-      "newVersion": "0.7.0",
+      "impact": "patch",
+      "oldVersion": "0.7.0",
+      "newVersion": "0.7.1",
       "tagName": "latest",
       "constraints": [
         {
-          "impact": "minor",
-          "reason": "Appears in changelog section :rocket: Enhancement"
+          "impact": "patch",
+          "reason": "Appears in changelog section :bug: Bug Fix"
+        },
+        {
+          "impact": "patch",
+          "reason": "Appears in changelog section :memo: Documentation"
+        },
+        {
+          "impact": "patch",
+          "reason": "Appears in changelog section :house: Internal"
         }
       ],
       "pkgJSONPath": "./package.json"
     }
   },
-  "description": "## Release (2026-07-26)\n\n* ember-maplibre-gl 0.7.0 (minor)\n\n#### :rocket: Enhancement\n* `ember-maplibre-gl`\n  * [#45](https://github.com/johanrd/ember-maplibre-gl/pull/45) Support MapLibre GL JS v6 — v6 apps must configure the map worker (see README) ([@johanrd](https://github.com/johanrd))\n\n#### Committers: 1\n- Johan Røed ([@johanrd](https://github.com/johanrd))\n"
+  "description": "## Release (2026-08-25)\n\n* ember-maplibre-gl 0.7.1 (patch)\n\n#### :bug: Bug Fix\n* `ember-maplibre-gl`\n  * [#52](https://github.com/johanrd/ember-maplibre-gl/pull/52) fix: match an evented object structurally, not as MapLibre `Evented` ([@johanrd](https://github.com/johanrd))\n\n#### :memo: Documentation\n* `ember-maplibre-gl`\n  * [#49](https://github.com/johanrd/ember-maplibre-gl/pull/49) fix(docs): use the named MercatorCoordinate import for MapLibre v6 ([@johanrd](https://github.com/johanrd))\n  * [#50](https://github.com/johanrd/ember-maplibre-gl/pull/50) docs(call): correct the reactivity contract, and prove it with a test ([@johanrd](https://github.com/johanrd))\n  * [#47](https://github.com/johanrd/ember-maplibre-gl/pull/47) Recommend excluding maplibre-gl from Vite dep optimization ([@johanrd](https://github.com/johanrd))\n\n#### :house: Internal\n* `ember-maplibre-gl`\n  * [#55](https://github.com/johanrd/ember-maplibre-gl/pull/55) ci: add the trailing newline release-plan omits ([@johanrd](https://github.com/johanrd))\n  * [#54](https://github.com/johanrd/ember-maplibre-gl/pull/54) chore: update dev dependencies, modernise docs examples ([@johanrd](https://github.com/johanrd))\n  * [#51](https://github.com/johanrd/ember-maplibre-gl/pull/51) deps: update the docs app, declare maplibre-gl, move to TypeScript 6 ([@johanrd](https://github.com/johanrd))\n\n#### Committers: 1\n- Johan Røed ([@johanrd](https://github.com/johanrd))\n"
 }

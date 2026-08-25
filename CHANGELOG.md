@@ -1,5 +1,28 @@
 # Changelog
 
+## Release (2026-08-25)
+
+* ember-maplibre-gl 0.7.1 (patch)
+
+#### :bug: Bug Fix
+* `ember-maplibre-gl`
+  * [#52](https://github.com/johanrd/ember-maplibre-gl/pull/52) fix: match an evented object structurally, not as MapLibre `Evented` ([@johanrd](https://github.com/johanrd))
+
+#### :memo: Documentation
+* `ember-maplibre-gl`
+  * [#49](https://github.com/johanrd/ember-maplibre-gl/pull/49) fix(docs): use the named MercatorCoordinate import for MapLibre v6 ([@johanrd](https://github.com/johanrd))
+  * [#50](https://github.com/johanrd/ember-maplibre-gl/pull/50) docs(call): correct the reactivity contract, and prove it with a test ([@johanrd](https://github.com/johanrd))
+  * [#47](https://github.com/johanrd/ember-maplibre-gl/pull/47) Recommend excluding maplibre-gl from Vite dep optimization ([@johanrd](https://github.com/johanrd))
+
+#### :house: Internal
+* `ember-maplibre-gl`
+  * [#55](https://github.com/johanrd/ember-maplibre-gl/pull/55) ci: add the trailing newline release-plan omits ([@johanrd](https://github.com/johanrd))
+  * [#54](https://github.com/johanrd/ember-maplibre-gl/pull/54) chore: update dev dependencies, modernise docs examples ([@johanrd](https://github.com/johanrd))
+  * [#51](https://github.com/johanrd/ember-maplibre-gl/pull/51) deps: update the docs app, declare maplibre-gl, move to TypeScript 6 ([@johanrd](https://github.com/johanrd))
+
+#### Committers: 1
+- Johan Røed ([@johanrd](https://github.com/johanrd))
+
 ## Release (2026-07-26)
 
 * ember-maplibre-gl 0.7.0 (minor)
