@@ -132,9 +132,9 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
     const setMap = (m: Map) => {
       loadImageStub = sinon.stub(m, 'loadImage');
       // Default: return a never-resolving promise (so calls don't crash)
-      loadImageStub.returns(new Promise(() => {}) as never);
+      loadImageStub.returns(new Promise(() => {}));
       // Second call resolves immediately
-      loadImageStub.onSecondCall().resolves({ data: new Image() } as never);
+      loadImageStub.onSecondCall().resolves({ data: new Image() });
       addImageStub = sinon.stub(m, 'addImage');
     };
 
@@ -294,9 +294,9 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
     const setMap = (m: Map) => {
       loadImageStub = sinon.stub(m, 'loadImage');
       // First call: never resolves (simulates slow load)
-      loadImageStub.onFirstCall().returns(new Promise(() => {}) as never);
+      loadImageStub.onFirstCall().returns(new Promise(() => {}));
       // Second call: resolves immediately
-      loadImageStub.onSecondCall().resolves({ data: new Image() } as never);
+      loadImageStub.onSecondCall().resolves({ data: new Image() });
       addImageStub = sinon.stub(m, 'addImage');
     };
 

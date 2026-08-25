@@ -106,7 +106,7 @@
     "eslint-plugin-n": "^17.15.1",
     "globals": "^17.4.0",
     "mapbox-gl": "^1.13.3",
-    "maplibre-gl": "^6.0.0",
+    "maplibre-gl": "^6.6.0",
     "prettier": "^3.4.2",
     "prettier-plugin-ember-template-tag": "^2.0.4",
     "publint": "^0.3.16",
