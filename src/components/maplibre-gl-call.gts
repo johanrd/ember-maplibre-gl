@@ -36,10 +36,16 @@ export interface MapLibreGLCallSignature {
 }
 
 /**
- * Declaratively invokes a method on the map instance. Re-invokes reactively
- * when `@func` or `@positionalArguments` reference changes — Glimmer's
- * `(array)`/`(hash)` helpers memoize references, so the method only fires
- * when inputs actually change.
+ * Declaratively invokes a method on the map instance.
+ *
+ * The method runs again on each revalidation in which consumed tracked state
+ * changed, even when the argument values are the same. Glimmer propagates by
+ * tag, not by value, so `(array)` and `(hash)` build a new object after any
+ * upstream change. A stable reference does not prevent this, and neither does
+ * `@cached`.
+ *
+ * A repeat call restarts an animation. For `fitBounds`, `flyTo` and `easeTo`,
+ * keep the last arguments. If they do not change, return early.
  *
  * @access `<MapLibreGL>` as `map.call`
  * @example
