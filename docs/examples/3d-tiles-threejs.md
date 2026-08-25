@@ -9,7 +9,7 @@ import { TilesRenderer } from '3d-tiles-renderer';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
-import maplibregl from 'maplibre-gl';
+import { MercatorCoordinate } from 'maplibre-gl';
 
 const mapOptions = {
   style: 'https://tiles.openfreemap.org/styles/bright',
@@ -42,7 +42,7 @@ export default class ThreeJSTilesDemo extends Component {
     let scene, camera, renderer, tiles, tilesCamera, localTransform;
 
     function getModelTransform(coord) {
-      const mc = maplibregl.MercatorCoordinate.fromLngLat(
+      const mc = MercatorCoordinate.fromLngLat(
         [coord[0], coord[1]], coord[2],
       );
       return {
