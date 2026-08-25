@@ -43,6 +43,16 @@ jobs:
           GITHUB_AUTH: ${{ secrets.GITHUB_TOKEN }}
         id: explanation
 
+      # release-plan writes these two files without a trailing newline, which
+      # prettier rejects. Left alone, the release commit lands on main and every
+      # later pull request then fails lint:format.
+      - name: Add the trailing newline release-plan omits
+        if: steps.explanation.outputs.new-version && steps.explanation.outputs.new-version != 'null'
+        run: |
+          for file in package.json .release-plan.json; do
+            if [ -n "$(tail -c1 "$file")" ]; then printf '\n' >> "$file"; fi
+          done
+
       - uses: peter-evans/create-pull-request@v8
         if: steps.explanation.outputs.new-version && steps.explanation.outputs.new-version != 'null'
         with:
