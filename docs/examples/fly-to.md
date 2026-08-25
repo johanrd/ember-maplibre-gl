@@ -6,8 +6,6 @@ Smoothly animate the camera between world cities using MapLibre's `flyTo` method
 
 ```gts live preview
 import Component from '@glimmer/component';
-import { on } from '@ember/modifier';
-import { fn, array } from '@ember/helper';
 import type { Map } from 'maplibre-gl';
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
 

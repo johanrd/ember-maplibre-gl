@@ -4,7 +4,6 @@
 
 ```gts live
 import Component from '@glimmer/component';
-import { hash, array } from '@ember/helper';
 import type { Map } from 'maplibre-gl';
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
 
