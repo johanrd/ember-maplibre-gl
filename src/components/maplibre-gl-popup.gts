@@ -9,7 +9,6 @@ import {
 } from 'maplibre-gl';
 import MapLibreGLOn from './maplibre-gl-on.gts';
 import type { WithBoundArgs } from '@glint/template';
-import { hash } from '@ember/helper';
 import { registerDestructor } from '@ember/destroyable';
 import type Owner from '@ember/owner';
 

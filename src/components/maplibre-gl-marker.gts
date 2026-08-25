@@ -12,7 +12,6 @@ import MapLibreGLOn from './maplibre-gl-on.gts';
 import MapLibreGLPopup from './maplibre-gl-popup.gts';
 import type MapLibreGL from './maplibre-gl.gts';
 import type { WithBoundArgs } from '@glint/template';
-import { hash } from '@ember/helper';
 import {
   associateDestroyableChild,
   registerDestructor,

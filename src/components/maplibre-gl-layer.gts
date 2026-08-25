@@ -6,7 +6,6 @@ import type {
   FilterSpecification,
   LayerSpecification,
 } from 'maplibre-gl';
-import { hash } from '@ember/helper';
 import {
   associateDestroyableChild,
   registerDestructor,

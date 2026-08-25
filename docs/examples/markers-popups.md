@@ -4,7 +4,6 @@ Place custom markers at world landmarks with rich popup content.
 
 ```gts live preview
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
-import { array, hash } from '@ember/helper';
 
 const cities = [
   { name: 'Paris',     emoji: '🗼', lngLat: [2.3522, 48.8566],   desc: 'City of Light' },
