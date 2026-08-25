@@ -5,7 +5,6 @@ Overlay a video on a satellite map. Click the map to toggle playback.
 ```gts live preview
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
-import { hash, array } from '@ember/helper';
 import type { MapMouseEvent } from 'maplibre-gl';
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
 

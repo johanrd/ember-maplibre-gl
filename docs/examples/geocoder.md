@@ -5,8 +5,6 @@ Search for places using [OpenStreetMap Nominatim](https://nominatim.openstreetma
 ```gts live preview
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
-import { on } from '@ember/modifier';
-import { fn } from '@ember/helper';
 import type { Map } from 'maplibre-gl';
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
 import { LngLatBounds } from 'maplibre-gl';

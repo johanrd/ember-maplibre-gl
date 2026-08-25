@@ -5,7 +5,6 @@ Track the user's location on the map using MapLibre's built-in `GeolocateControl
 ```gts live preview
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
-import { hash, array } from '@ember/helper';
 import { GeolocateControl } from 'maplibre-gl';
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
 

@@ -50,7 +50,6 @@ export default transformRequest;
 
 ```gts
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
-import { hash } from '@ember/helper';
 import transformRequest from 'your-app/utils/transform-request';
 
 <template>

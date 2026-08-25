@@ -86,7 +86,6 @@ interface MapLibreGLMarkerSignature {
 
 ```gts live preview
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
-import { array, hash } from '@ember/helper';
 
 const options = {
   style: 'https://tiles.openfreemap.org/styles/bright',
