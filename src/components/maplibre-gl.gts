@@ -10,6 +10,7 @@ import MapLibreGLSource from './maplibre-gl-source.gts';
 import MapLibreGLLayer from './maplibre-gl-layer.gts';
 import MapLibreGLMarker from './maplibre-gl-marker.gts';
 
+import { hash } from '@ember/helper';
 import type { WithBoundArgs } from '@glint/template';
 import { modifier } from 'ember-modifier';
 

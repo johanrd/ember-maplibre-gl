@@ -2,6 +2,7 @@ import { module, test } from 'qunit';
 import { setupRenderingTest } from 'ember-qunit';
 import { render, settled, waitUntil, find } from '@ember/test-helpers';
 import { tracked } from '@glimmer/tracking';
+import { hash } from '@ember/helper';
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
 import type { Map, LayerSpecification } from 'maplibre-gl';
 import sinon from 'sinon';

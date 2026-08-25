@@ -5,6 +5,7 @@ import { assert } from '@ember/debug';
 import MapLibreGLLayer from './maplibre-gl-layer.gts';
 import type MapLibreGL from './maplibre-gl.gts';
 
+import { hash } from '@ember/helper';
 import type { WithBoundArgs } from '@glint/template';
 import {
   associateDestroyableChild,

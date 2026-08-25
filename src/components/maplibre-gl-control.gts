@@ -4,6 +4,7 @@ import {
 } from '@ember/destroyable';
 import Component from '@glimmer/component';
 import { assert } from '@ember/debug';
+import { hash } from '@ember/helper';
 import MapLibreGLOn from './maplibre-gl-on.gts';
 import type MapLibreGL from './maplibre-gl.gts';
 import type { WithBoundArgs } from '@glint/template';
