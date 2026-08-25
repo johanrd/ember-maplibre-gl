@@ -36,6 +36,17 @@ for webpack and other bundlers, and the
 [v5 → v6 migration guide](https://maplibre.org/maplibre-gl-js/docs/guides/v5-to-v6-migration-guide/)
 for the other v6 changes. MapLibre v5 needs no worker setup.
 
+Also add to your `vite.config`:
+
+```js
+optimizeDeps: {
+  // maplibre-gl is a single pre-bundled ESM file; prebundling it only breaks
+  // its sourcemap paths (a wall of "source file outside its package" warnings
+  // at dev startup). Served directly, the maps resolve to the package's src/.
+  exclude: ['maplibre-gl'],
+},
+```
+
 ## Usage
 
 ```gts
