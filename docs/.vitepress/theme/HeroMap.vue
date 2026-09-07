@@ -136,14 +136,6 @@ onMounted(async () => {
     maxPitch: 0,
   });
 
-  // Zoom about the centre, not the pointer. The head dot is drawn at the
-  // container centre, so anything that shifts the centre off the head leaves the
-  // dot on the wrong spot until the next leg re-centres. scrollZoom is enabled by
-  // default and its enable() ignores options while enabled, hence the reset.
-  map.scrollZoom.disable();
-  map.scrollZoom.enable({ around: 'center' });
-  map.touchZoomRotate.enable({ around: 'center' });
-
   map.on('load', () => {
     map.addSource('cities', {
       type: 'geojson',
@@ -178,40 +170,44 @@ onMounted(async () => {
     let currentLeg = 0;
     let legStart = -1;
     let pauseUntil = 0;
+    let head = cities[0];
 
     function animateTrail(now: number) {
       if (!map) return;
       arcAnimationId = requestAnimationFrame(animateTrail);
 
-      if (now < pauseUntil) return;
-      if (legStart < 0) legStart = now;
+      if (now >= pauseUntil) {
+        if (legStart < 0) legStart = now;
 
-      const leg = legs[currentLeg];
-      const progress = Math.min((now - legStart) / LEG_MS, 1);
+        const leg = legs[currentLeg];
+        const progress = Math.min((now - legStart) / LEG_MS, 1);
 
-      // Interpolate between arc vertices. Snapping to whole vertices pans the
-      // camera 0, 1 or 2 steps per frame, which reads as jitter.
-      const exact = easeInOut(progress) * POINTS_PER_LEG;
-      const vertex = Math.min(Math.floor(exact), POINTS_PER_LEG - 1);
-      const f = exact - vertex;
-      const [aLon, aLat] = leg[vertex];
-      const [bLon, bLat] = leg[vertex + 1];
+        // Interpolate between arc vertices. Snapping to whole vertices pans the
+        // camera 0, 1 or 2 steps per frame, which reads as jitter.
+        const exact = easeInOut(progress) * POINTS_PER_LEG;
+        const vertex = Math.min(Math.floor(exact), POINTS_PER_LEG - 1);
+        const f = exact - vertex;
+        const [aLon, aLat] = leg[vertex];
+        const [bLon, bLat] = leg[vertex + 1];
+        head = [aLon + (bLon - aLon) * f, aLat + (bLat - aLat) * f];
 
-      // The head is the map centre by construction, drawn as a fixed dot in the
-      // template, so it can never drift out of step with the globe.
-      map.setCenter([aLon + (bLon - aLon) * f, aLat + (bLat - aLat) * f]);
+        const i = currentLeg * POINTS_PER_LEG + vertex;
+        const along = routeLength[i] + (routeLength[i + 1] - routeLength[i]) * f;
+        map.setPaintProperty('route-line', 'line-gradient', trailGradient(along / TOTAL_LENGTH), {
+          validate: false,
+        });
 
-      const i = currentLeg * POINTS_PER_LEG + vertex;
-      const along = routeLength[i] + (routeLength[i + 1] - routeLength[i]) * f;
-      map.setPaintProperty('route-line', 'line-gradient', trailGradient(along / TOTAL_LENGTH), {
-        validate: false,
-      });
-
-      if (progress >= 1) {
-        currentLeg = (currentLeg + 1) % legs.length;
-        legStart = -1;
-        pauseUntil = now + PAUSE_MS;
+        if (progress >= 1) {
+          currentLeg = (currentLeg + 1) % legs.length;
+          legStart = -1;
+          pauseUntil = now + PAUSE_MS;
+        }
       }
+
+      // Re-assert the centre every frame, flying or paused. Scroll zoom anchors on
+      // the pointer and drags the centre with it; the head dot is drawn at the
+      // container centre, so without this it would sit off the route between legs.
+      map.setCenter(head);
     }
 
     // Hand the globe over the moment the reader grabs it, and drop the head dot
