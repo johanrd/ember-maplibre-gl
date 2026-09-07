@@ -136,6 +136,14 @@ onMounted(async () => {
     maxPitch: 0,
   });
 
+  // Zoom about the centre, not the pointer. The head dot is drawn at the
+  // container centre, so anything that shifts the centre off the head leaves the
+  // dot on the wrong spot until the next leg re-centres. scrollZoom is enabled by
+  // default and its enable() ignores options while enabled, hence the reset.
+  map.scrollZoom.disable();
+  map.scrollZoom.enable({ around: 'center' });
+  map.touchZoomRotate.enable({ around: 'center' });
+
   map.on('load', () => {
     map.addSource('cities', {
       type: 'geojson',
