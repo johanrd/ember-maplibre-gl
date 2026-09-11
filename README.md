@@ -10,7 +10,7 @@ Declarative [MapLibre GL JS](https://maplibre.org/maplibre-gl-js/docs/) componen
 pnpm add ember-maplibre-gl
 ```
 
-Import the MapLibre CSS in your app:
+Import the MapLibre CSS in your app CSS, or in the module below:
 
 ```css
 @import 'maplibre-gl/dist/maplibre-gl.css';
@@ -18,20 +18,24 @@ Import the MapLibre CSS in your app:
 
 ### MapLibre v6+: configure the worker
 
-MapLibre v6 ships as ESM with a separate worker file that bundlers can't
-resolve automatically, so each app must point MapLibre at the worker once at
-startup. The right incantation depends on your bundler — this addon
-deliberately leaves it to the app. With Vite (Embroider + Vite), add to your
-`app.ts`:
+In a bundled app, MapLibre v6 cannot find its worker file. Call `setWorkerUrl`
+before the first map is created. With Vite, you can wrap the component in a module:
 
 ```ts
+// app/components/maplibre-gl.ts
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { setWorkerUrl } from 'maplibre-gl';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 
 setWorkerUrl(maplibreWorkerUrl);
+
+export { default } from 'ember-maplibre-gl/components/maplibre-gl';
 ```
 
-See the [MapLibre installation docs](https://maplibre.org/maplibre-gl-js/docs/)
+Import `MapLibreGL` from this module, not from `ember-maplibre-gl`. Then
+MapLibre loads only with the code that shows a map.
+
+See the [MapLibre installation docs](https://maplibre.org/maplibre-gl-js/docs/#installation)
 for webpack and other bundlers, and the
 [v5 → v6 migration guide](https://maplibre.org/maplibre-gl-js/docs/guides/v5-to-v6-migration-guide/)
 for the other v6 changes. MapLibre v5 needs no worker setup.
