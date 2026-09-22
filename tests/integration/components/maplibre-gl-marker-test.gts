@@ -29,7 +29,6 @@ module('Integration | Component | maplibre-gl-marker', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('.maplibregl-marker'), { timeout: 10000 });
     assert.dom('.maplibregl-marker').exists('marker element is in the DOM');
   });
 
@@ -48,7 +47,6 @@ module('Integration | Component | maplibre-gl-marker', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('.maplibregl-marker'), { timeout: 10000 });
     // Content is rendered inside the marker via in-element
     const markerEl = document.querySelector('.maplibregl-marker')!;
     const popup = markerEl.querySelector('[data-test-has-popup]');
@@ -70,7 +68,6 @@ module('Integration | Component | maplibre-gl-marker', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('.maplibregl-marker'), { timeout: 10000 });
     const markerEl = document.querySelector('.maplibregl-marker')!;
     const on = markerEl.querySelector('[data-test-has-on]');
     assert.strictEqual(on?.textContent, 'yes', 'on component is yielded');
@@ -93,7 +90,6 @@ module('Integration | Component | maplibre-gl-marker', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('.maplibregl-marker'), { timeout: 10000 });
     assert.dom('.maplibregl-marker').exists('marker in DOM');
 
     state.show = false;
@@ -131,7 +127,6 @@ module('Integration | Component | maplibre-gl-marker', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('.maplibregl-marker'), { timeout: 10000 });
     const markerEl = document.querySelector('.maplibregl-marker')!;
     assert.ok(
       markerEl.querySelector('[data-test-marker]'),
@@ -162,13 +157,6 @@ module('Integration | Component | maplibre-gl-marker', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-markers-loaded]'), {
-      timeout: 10000,
-    });
-    await waitUntil(
-      () => document.querySelectorAll('.maplibregl-marker').length === 3,
-      { timeout: 10000 },
-    );
     assert.strictEqual(
       document.querySelectorAll('.maplibregl-marker').length,
       3,
@@ -204,8 +192,6 @@ module('Integration | Component | maplibre-gl-marker', function (hooks) {
         </MapLibreGL>
       </template>,
     );
-
-    await waitUntil(() => find('.maplibregl-marker'), { timeout: 10000 });
 
     // Find the marker instance via the map's internal marker tracking
     const markerEl = document.querySelector(
@@ -244,7 +230,6 @@ module('Integration | Component | maplibre-gl-marker', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('.maplibregl-marker'), { timeout: 10000 });
     assert.dom('.maplibregl-marker').exists('marker rendered');
 
     // Click the marker to open the popup
@@ -254,7 +239,10 @@ module('Integration | Component | maplibre-gl-marker', function (hooks) {
     markerEl.click();
     await settled();
 
+    // Not covered by the map-load waiter: this waits for MapLibre's own
+    // marker-click -> popup.addTo(map) path.
     await waitUntil(() => find('.maplibregl-popup-content'), { timeout: 5000 });
+
     assert
       .dom('.maplibregl-popup-content')
       .containsText(
@@ -276,7 +264,6 @@ module('Integration | Component | maplibre-gl-marker', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('.maplibregl-marker'), { timeout: 10000 });
     const container = find('.maplibregl-canvas-container')?.parentElement;
     assert.ok(
       container?.querySelector('.maplibregl-marker'),

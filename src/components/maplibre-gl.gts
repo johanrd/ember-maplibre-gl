@@ -22,6 +22,12 @@ import {
 } from 'maplibre-gl';
 
 import { registerDestructor } from '@ember/destroyable';
+import { buildWaiter } from '@ember/test-waiters';
+import { beginWait } from '../-private/wait.ts';
+
+// Holds settled() open from map construction until the map has loaded or
+// failed, so `await render()` and `await visit()` see the yielded block.
+const loadWaiter = buildWaiter('ember-maplibre-gl:map-load');
 
 // Map instance reuse, following react-map-gl's reuseMaps pattern.
 // See reuse: https://github.com/visgl/react-map-gl/blob/c41e00c/modules/react-maplibre/src/maplibre/maplibre.ts#L217-L269
@@ -137,9 +143,12 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
     (element: HTMLElement, [options]: [Omit<MapOptions, 'container'>]) => {
       if (this.map) return;
 
+      const endWait = beginWait(loadWaiter, 'the map load');
+
       const onLoad = () => {
         this.mapLoaded = true;
         this.args.mapLoaded?.(this.map as MaplibreMap);
+        endWait();
       };
 
       const onError = (event: MapErrorEvent) => {
@@ -150,7 +159,19 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
         this.error =
           event.error instanceof Error
             ? event.error
-            : new Error(event.error.message);
+            : new Error(event.error?.message ?? 'MapLibre GL error');
+
+        // A style that fails to fetch or validate never loads, and getStyle()
+        // stays undefined until it has. Later errors (a tile, a sprite) don't
+        // prevent 'load'. getStyle() throws on a dead map, which counts as
+        // "no style" rather than stalling the wait.
+        let styleLoaded = false;
+        try {
+          styleLoaded = Boolean(this.map?.getStyle());
+        } catch {
+          // Map is in a broken state (e.g. WebGL context lost)
+        }
+        if (!this.mapLoaded && !styleLoaded) endWait();
       };
 
       const onContextLost = (event: MapContextEvent) => {
@@ -173,14 +194,6 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
         typeof options.style === 'string' ? options.style : undefined;
       const reused =
         this.args.reuseMaps && styleUrl ? savedMaps.get(styleUrl) : undefined;
-
-      // Defined here so the destructor can clean it up if the component is
-      // destroyed before 'style.load' fires on a reused map.
-      // Uses on() instead of once() so that off() in the destructor can match the handler.
-      const onStyleLoad = () => {
-        this.map?.off('style.load', onStyleLoad);
-        onLoad();
-      };
 
       // Type for MapLibre private internals we depend on for reuse.
       type MapInternals = {
@@ -232,11 +245,11 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
         // Step 5: signal load directly instead of simulating a 'load' event
         // via fire() — the component is the only intended listener, and this
         // avoids depending on fire()'s string-event behavior across versions.
-        if (this.map.isStyleLoaded()) {
-          onLoad();
-        } else {
-          this.map.on('style.load', onStyleLoad);
-        }
+        // The pool only accepts maps whose style has loaded, and 'style.load'
+        // does not fire again for a style MapLibre has already parsed, so
+        // waiting on it here would wait forever. Pending tiles keep rendering
+        // after the block appears, which is what a fresh map does too.
+        onLoad();
 
         // Force redraw
         this.map.triggerRepaint();
@@ -264,6 +277,7 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
           );
           this.error =
             error instanceof Error ? error : new Error(String(error));
+          endWait();
           return;
         }
       }
@@ -273,8 +287,8 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
       this.map.on('webglcontextrestored', onContextRestored);
 
       registerDestructor(this, () => {
+        endWait();
         this.map?.off('load', onLoad);
-        this.map?.off('style.load', onStyleLoad);
         this.map?.off('error', onError);
         this.map?.off('webglcontextlost', onContextLost);
         this.map?.off('webglcontextrestored', onContextRestored);

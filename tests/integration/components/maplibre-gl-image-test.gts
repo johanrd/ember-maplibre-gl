@@ -1,6 +1,6 @@
 import { module, test } from 'qunit';
 import { setupRenderingTest } from 'ember-qunit';
-import { render, settled, waitUntil, find } from '@ember/test-helpers';
+import { render, settled, waitUntil } from '@ember/test-helpers';
 import { tracked } from '@glimmer/tracking';
 import { hash } from '@ember/helper';
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
@@ -9,12 +9,20 @@ import sinon from 'sinon';
 
 const STYLE = { version: 8 as const, sources: {}, layers: [] };
 
+const PNG_DATA_URL =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgqNn/HwAD9gI71V1GUAAAAABJRU5ErkJggg==';
+const SVG_DATA_URL = `data:image/svg+xml,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"></svg>',
+)}`;
+
 class State {
   @tracked show = true;
 }
 
 module('Integration | Component | maplibre-gl-image', function (hooks) {
   setupRenderingTest(hooks);
+
+  hooks.afterEach(() => sinon.restore());
 
   test('it ignores undefined url', async function (assert) {
     let map: Map | undefined;
@@ -36,7 +44,6 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
     assert.false(
       map?.hasImage('test') ?? false,
       'no image added when url is undefined',
@@ -65,9 +72,6 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
         </MapLibreGL>
       </template>,
     );
-
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
-    await waitUntil(() => loadImageSpy?.called, { timeout: 5000 });
 
     assert.true(loadImageSpy!.called, 'loadImage was called');
     assert.strictEqual(
@@ -99,8 +103,6 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
         </MapLibreGL>
       </template>,
     );
-
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
 
     // Manually register the image so the destructor has something to clean up
     // (loadImage fails in test env since URL is fake)
@@ -143,7 +145,9 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
     }
     const urlState = new UrlState();
 
-    await render(
+    // Not awaited: the first load never resolves, so render() settles only
+    // once the URL change below replaces it.
+    const rendered = render(
       <template>
         <MapLibreGL
           @initOptions={{hash style=STYLE}}
@@ -152,26 +156,21 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
           as |m|
         >
           <m.image @name="stale-test" @url={{urlState.url}} />
-          <span data-test-loaded />
         </MapLibreGL>
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
-    await waitUntil(() => loadImageStub?.called, { timeout: 5000 });
+    await waitUntil(() => loadImageStub?.called, { timeout: 10000 });
+
+    // Change URL while first load is still pending
+    urlState.url = '/second.png';
+    await rendered;
 
     assert.strictEqual(
       loadImageStub!.firstCall.args[0],
       '/first.png',
       'first loadImage called with first URL',
     );
-
-    // Change URL while first load is still pending
-    urlState.url = '/second.png';
-    await settled();
-
-    await waitUntil(() => loadImageStub!.callCount >= 2, { timeout: 5000 });
-
     assert.strictEqual(
       loadImageStub!.secondCall.args[0],
       '/second.png',
@@ -179,70 +178,60 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
     );
 
     // Second load resolves immediately; addImage should be called once
-    await waitUntil(() => addImageStub!.called, { timeout: 5000 });
     assert.true(
       addImageStub!.calledOnce,
       'addImage called only once (stale first result discarded)',
     );
-
-    loadImageStub!.restore();
-    addImageStub!.restore();
   });
 
   test('it does not add the image if component is destroyed before load completes', async function (assert) {
-    let map: Map | undefined;
+    type LoadImageResult = Awaited<ReturnType<Map['loadImage']>>;
+
+    let loadImageStub: sinon.SinonStub | undefined;
+    let addImageSpy: sinon.SinonSpy | undefined;
+    let finishLoad: ((result: LoadImageResult) => void) | undefined;
+
     const setMap = (m: Map) => {
-      map = m;
+      // Hold the load open so it can be finished after the component is gone.
+      loadImageStub = sinon.stub(m, 'loadImage').callsFake(
+        () =>
+          new Promise<LoadImageResult>((resolve) => {
+            finishLoad = resolve;
+          }),
+      );
+      addImageSpy = sinon.spy(m, 'addImage');
     };
+
     const state = new State();
 
-    await render(
+    // Not awaited: the load is still open, so render() settles only once the
+    // image component below is destroyed.
+    const rendered = render(
       <template>
         <MapLibreGL
           @initOptions={{hash style=STYLE}}
           @mapLoaded={{setMap}}
-          style="height:100px;"
-        >
-          <span data-test-loaded />
-        </MapLibreGL>
-      </template>,
-    );
-
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
-
-    // Stub loadImage to never resolve
-    const loadImageStub = sinon
-      .stub(map!, 'loadImage')
-      .callsFake(() => new Promise(() => {}));
-    const addImageSpy = sinon.spy(map!, 'addImage');
-
-    await import('ember-maplibre-gl/components/maplibre-gl-image');
-
-    // Render image component, then immediately destroy it
-    state.show = true;
-    await render(
-      <template>
-        <MapLibreGL
-          @initOptions={{hash style=STYLE}}
           style="height:100px;"
           as |m|
         >
           {{#if state.show}}
             <m.image @name="destroy-before-load" @url="/slow-image.png" />
           {{/if}}
-          <span data-test-loaded2 />
         </MapLibreGL>
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-loaded2]'), { timeout: 10000 });
+    await waitUntil(() => loadImageStub?.called, { timeout: 10000 });
 
     state.show = false;
+    await rendered;
+
+    // The load finishes after the component is destroyed.
+    finishLoad!({ data: new Image() });
     await settled();
 
-    assert.false(addImageSpy.called, 'addImage not called after destroy');
-    loadImageStub.restore();
-    addImageSpy.restore();
+    assert.true(loadImageStub!.called, 'the load was started');
+    assert.false(addImageSpy!.called, 'addImage not called after destroy');
   });
 
   test('it handles SVG images via Image element, not loadImage', async function (assert) {
@@ -270,10 +259,6 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
         </MapLibreGL>
       </template>,
     );
-
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
-    // SVG uses Image() constructor which triggers onerror for missing file
-    await waitUntil(() => receivedError !== undefined, { timeout: 5000 });
 
     assert.false(
       loadImageSpy!.called,
@@ -305,7 +290,9 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
     }
     const nameState = new NameState();
 
-    await render(
+    // Not awaited: the first load never resolves, so render() settles only
+    // once the name change below replaces it.
+    const rendered = render(
       <template>
         <MapLibreGL
           @initOptions={{hash style=STYLE}}
@@ -314,20 +301,15 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
           as |m|
         >
           <m.image @name={{nameState.name}} @url="/same-icon.png" />
-          <span data-test-loaded />
         </MapLibreGL>
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
-    await waitUntil(() => loadImageStub?.called, { timeout: 5000 });
+    await waitUntil(() => loadImageStub?.called, { timeout: 10000 });
 
     // Change name while first load is still pending
     nameState.name = 'icon-b';
-    await settled();
-
-    await waitUntil(() => loadImageStub!.callCount >= 2, { timeout: 5000 });
-    await waitUntil(() => addImageStub!.called, { timeout: 5000 });
+    await rendered;
 
     assert.true(
       addImageStub!.calledOnce,
@@ -338,9 +320,6 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
       'icon-b',
       'addImage called with the new name, not the stale one',
     );
-
-    loadImageStub!.restore();
-    addImageStub!.restore();
   });
 
   test('it calls onError when image loading fails', async function (assert) {
@@ -366,9 +345,39 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
-    await waitUntil(() => receivedError !== undefined, { timeout: 5000 });
-
     assert.ok(receivedError, 'onError was called with an error');
+  });
+
+  test('render() waits for raster and SVG images to be added', async function (assert) {
+    let map: Map | undefined;
+    const setMap = (m: Map) => {
+      map = m;
+    };
+    const errors: unknown[] = [];
+    const onError = (error: unknown) => errors.push(error);
+
+    await render(
+      <template>
+        <MapLibreGL
+          @initOptions={{hash style=STYLE}}
+          @mapLoaded={{setMap}}
+          style="height:100px;"
+          as |m|
+        >
+          <m.image @name="png" @url={{PNG_DATA_URL}} @onError={{onError}} />
+          <m.image
+            @name="svg"
+            @url={{SVG_DATA_URL}}
+            @width={{10}}
+            @height={{10}}
+            @onError={{onError}}
+          />
+        </MapLibreGL>
+      </template>,
+    );
+
+    assert.deepEqual(errors.map(String), [], 'no load errors');
+    assert.true(map?.hasImage('png'), 'raster image added');
+    assert.true(map?.hasImage('svg'), 'SVG image added');
   });
 });
