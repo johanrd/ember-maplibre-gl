@@ -1,6 +1,6 @@
 import { module, test } from 'qunit';
 import { setupRenderingTest } from 'ember-qunit';
-import { render, settled, waitUntil, find } from '@ember/test-helpers';
+import { render, settled, find } from '@ember/test-helpers';
 import { tracked } from '@glimmer/tracking';
 import { hash } from '@ember/helper';
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
@@ -42,6 +42,8 @@ class State {
 module('Integration | Component | maplibre-gl-layer', function (hooks) {
   setupRenderingTest(hooks);
 
+  hooks.afterEach(() => sinon.restore());
+
   test('it adds a layer to the map', async function (assert) {
     let map: Map | undefined;
     const setMap = (m: Map) => {
@@ -75,7 +77,6 @@ module('Integration | Component | maplibre-gl-layer', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-layer-id]'), { timeout: 10000 });
     const layerId = find('[data-test-layer-id]')!.textContent.trim();
     const layer = map?.getLayer(layerId);
     assert.ok(layer, 'layer exists on map');
@@ -112,7 +113,6 @@ module('Integration | Component | maplibre-gl-layer', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-layer-id]'), { timeout: 10000 });
     const layerId = find('[data-test-layer-id]')!.textContent.trim();
     assert.ok(layerId, 'layer id was auto-generated');
     assert.ok(map?.getLayer(layerId), 'layer exists');
@@ -150,7 +150,6 @@ module('Integration | Component | maplibre-gl-layer', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-layer-id]'), { timeout: 10000 });
     const layerId = find('[data-test-layer-id]')!.textContent.trim();
     assert.strictEqual(
       map?.getLayer(layerId)?.type,
@@ -189,8 +188,6 @@ module('Integration | Component | maplibre-gl-layer', function (hooks) {
         </MapLibreGL>
       </template>,
     );
-
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
 
     // Both layers should exist
     assert.ok(map?.getLayer('first-layer'), 'first layer exists');
@@ -239,7 +236,6 @@ module('Integration | Component | maplibre-gl-layer', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
     assert.strictEqual(
       map?.getLayoutProperty('layout-test', 'visibility'),
       'none',
@@ -292,7 +288,6 @@ module('Integration | Component | maplibre-gl-layer', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
     assert.deepEqual(
       map?.getPaintProperty('paint-test', 'circle-color'),
       'white',
@@ -345,7 +340,6 @@ module('Integration | Component | maplibre-gl-layer', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
     assert.deepEqual(
       map?.getFilter('filter-test'),
       ['==', '$type', 'Point'],
@@ -412,8 +406,6 @@ module('Integration | Component | maplibre-gl-layer', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
-
     // Verify initial minzoom/maxzoom were passed through
     const layer = map?.getLayer('zoom-test');
     assert.strictEqual(layer?.minzoom, 5, 'initial minzoom is 5');
@@ -464,7 +456,6 @@ module('Integration | Component | maplibre-gl-layer', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-layer-id]'), { timeout: 10000 });
     assert.dom('[data-test-layer-id]').hasText('my-custom-id');
     assert.ok(map?.getLayer('my-custom-id'), 'layer exists with provided id');
   });
@@ -501,8 +492,6 @@ module('Integration | Component | maplibre-gl-layer', function (hooks) {
         </MapLibreGL>
       </template>,
     );
-
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
 
     const layer = map?.getLayer('passthrough-test');
     assert.ok(layer, 'layer exists');
@@ -548,8 +537,6 @@ module('Integration | Component | maplibre-gl-layer', function (hooks) {
         </MapLibreGL>
       </template>,
     );
-
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
 
     // Initially movable-layer should be after anchor-layer (added second)
     let layers = map?.getStyle().layers ?? [];
@@ -610,8 +597,6 @@ module('Integration | Component | maplibre-gl-layer', function (hooks) {
         </MapLibreGL>
       </template>,
     );
-
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
 
     const setLayoutSpy = sinon.spy(map!, 'setLayoutProperty');
     const setPaintSpy = sinon.spy(map!, 'setPaintProperty');
@@ -690,8 +675,6 @@ module('Integration | Component | maplibre-gl-layer', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
-
     const setPaintSpy = sinon.spy(map!, 'setPaintProperty');
 
     // Change only circle-color; other two keys keep their primitive values.
@@ -742,7 +725,6 @@ module('Integration | Component | maplibre-gl-layer', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-id]'), { timeout: 10000 });
     assert.dom('[data-test-id]').hasText('yielded-id');
   });
 });

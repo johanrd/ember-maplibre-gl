@@ -7,6 +7,8 @@ import {
   isDestroying,
   registerDestructor,
 } from '@ember/destroyable';
+import { buildWaiter } from '@ember/test-waiters';
+import { beginWait } from '../-private/wait.ts';
 import type { Map as MaplibreMap } from 'maplibre-gl';
 import type Owner from '@ember/owner';
 
@@ -44,6 +46,10 @@ export interface MapLibreGLImageSignature {
 
 function noop() {}
 
+// Holds settled() open while an image loads, so it is on the map once
+// `await render()` returns.
+const imageWaiter = buildWaiter('ember-maplibre-gl:image-load');
+
 /** Error thrown when an SVG image fails to load. Contains the original load event. */
 export class SvgLoadError extends Error {
   event: Event | string;
@@ -75,6 +81,7 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
   private _lastLoadWidth?: typeof this.args.width;
   private _lastLoadHeight?: typeof this.args.height;
   private _lastLoadOptions?: typeof this.args.options;
+  private _endLoadWait?: () => void;
 
   /** @internal */
   get onError() {
@@ -109,6 +116,7 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
 
     if (args.parent) associateDestroyableChild(args.parent, this);
     registerDestructor(this, () => {
+      this._endLoadWait?.();
       try {
         if (this.args.name && this.args.map?.hasImage(this.args.name)) {
           this.args.map.removeImage(this.args.name);
@@ -142,6 +150,9 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
     this._lastLoadHeight = height;
     this._lastLoadOptions = options;
 
+    // A newer load replaces any in-flight one, whose result _onImage discards.
+    this._endLoadWait?.();
+
     // If the component already has added an image to the map, remove it
     if (this._lastName && this.args.map.hasImage(this._lastName)) {
       this.args.map.removeImage(this._lastName);
@@ -150,6 +161,9 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
     if (!url) {
       return;
     }
+
+    const endWait = beginWait(imageWaiter, `the image "${name}"`);
+    this._endLoadWait = endWait;
 
     if (this.isSvg) {
       const image = new Image();
@@ -161,14 +175,24 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
         image.height = height;
       }
 
-      image.onload = () => this._onImage(url, name, options, image);
-      image.onerror = (event) => this._onSvgErr(url, event);
-      image.src = url;
+      const loaded = new Promise<void>((resolve, reject) => {
+        image.onload = () => resolve();
+        image.onerror = reject;
+        image.src = url;
+      });
+      void loaded
+        .then(
+          () => this._onImage(url, name, options, image),
+          (event: Event | string) => this._onSvgErr(url, event),
+        )
+        .catch((error) => this.onError(error))
+        .finally(endWait);
     } else {
       this.args.map
         .loadImage(url)
         .then(({ data }) => this._onImage(url, name, options, data))
-        .catch((error) => this.onError(error));
+        .catch((error) => this.onError(error))
+        .finally(endWait);
     }
   };
 

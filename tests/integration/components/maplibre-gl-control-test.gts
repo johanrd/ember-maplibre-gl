@@ -1,6 +1,6 @@
 import { module, test } from 'qunit';
 import { setupRenderingTest } from 'ember-qunit';
-import { render, settled, waitUntil, find } from '@ember/test-helpers';
+import { render, settled } from '@ember/test-helpers';
 import { tracked } from '@glimmer/tracking';
 import { hash } from '@ember/helper';
 import { NavigationControl, ScaleControl } from 'maplibre-gl';
@@ -31,7 +31,6 @@ module('Integration | Component | maplibre-gl-control', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
     assert
       .dom('.maplibregl-ctrl-zoom-in')
       .exists('navigation control rendered in DOM');
@@ -57,7 +56,6 @@ module('Integration | Component | maplibre-gl-control', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
     assert
       .dom('.maplibregl-ctrl-zoom-in')
       .exists('navigation control rendered initially');
@@ -93,7 +91,6 @@ module('Integration | Component | maplibre-gl-control', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
     assert.dom('.maplibregl-ctrl-zoom-in').exists('control rendered');
 
     state.show = false;

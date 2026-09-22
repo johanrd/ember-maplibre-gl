@@ -1,6 +1,6 @@
 import { module, test } from 'qunit';
 import { setupRenderingTest } from 'ember-qunit';
-import { render, settled, waitUntil, find } from '@ember/test-helpers';
+import { render, settled, find } from '@ember/test-helpers';
 import { tracked } from '@glimmer/tracking';
 import { hash, array } from '@ember/helper';
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
@@ -17,6 +17,8 @@ class State {
 
 module('Integration | Component | maplibre-gl-source', function (hooks) {
   setupRenderingTest(hooks);
+
+  hooks.afterEach(() => sinon.restore());
 
   test('it creates a sourceId if one is not provided', async function (assert) {
     let map: Map | undefined;
@@ -45,7 +47,6 @@ module('Integration | Component | maplibre-gl-source', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-id]'), { timeout: 10000 });
     const sourceId = find('[data-test-id]')!.textContent.trim();
     assert.ok(sourceId, 'a sourceId was generated');
     assert.ok(map?.getSource(sourceId), 'source exists on map');
@@ -87,7 +88,6 @@ module('Integration | Component | maplibre-gl-source', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-id]'), { timeout: 10000 });
     assert.dom('[data-test-id]').hasText('my-source');
     assert.ok(map?.getSource('my-source'), 'source exists with provided id');
   });
@@ -117,8 +117,6 @@ module('Integration | Component | maplibre-gl-source', function (hooks) {
         </MapLibreGL>
       </template>,
     );
-
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
 
     const source = map?.getSource('data-test');
     assert.ok(source, 'source exists');
@@ -186,8 +184,6 @@ module('Integration | Component | maplibre-gl-source', function (hooks) {
         </MapLibreGL>
       </template>,
     );
-
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
 
     const source = map?.getSource('video-test');
     assert.ok(source, 'video source exists');
@@ -264,8 +260,6 @@ module('Integration | Component | maplibre-gl-source', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-layer-id]'), { timeout: 10000 });
-
     const layerId = find('[data-test-layer-id]')!.textContent.trim();
     const layer = map?.getLayer(layerId);
     assert.ok(layer, 'layer exists on real map');
@@ -314,7 +308,6 @@ module('Integration | Component | maplibre-gl-source', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
     assert.ok(map?.getSource('remove-test'), 'source exists');
 
     state.show = false;
@@ -347,7 +340,6 @@ module('Integration | Component | maplibre-gl-source', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-id]'), { timeout: 10000 });
     assert.dom('[data-test-id]').hasText('yield-test');
   });
 
@@ -371,7 +363,6 @@ module('Integration | Component | maplibre-gl-source', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('[data-test-has-layer]'), { timeout: 10000 });
     assert.dom('[data-test-has-layer]').hasText('yes');
   });
 
@@ -400,8 +391,6 @@ module('Integration | Component | maplibre-gl-source', function (hooks) {
         </MapLibreGL>
       </template>,
     );
-
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
 
     const source = map?.getSource('wrap-test');
     assert.ok(source, 'source exists');
@@ -472,8 +461,6 @@ module('Integration | Component | maplibre-gl-source', function (hooks) {
         </MapLibreGL>
       </template>,
     );
-
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
 
     const source = map?.getSource('stable-data');
     assert.ok(source, 'source exists');
@@ -551,8 +538,6 @@ module('Integration | Component | maplibre-gl-source', function (hooks) {
         </MapLibreGL>
       </template>,
     );
-
-    await waitUntil(() => find('[data-test-loaded]'), { timeout: 10000 });
 
     const source = map?.getSource('replace-test');
     assert.ok(source, 'source exists');

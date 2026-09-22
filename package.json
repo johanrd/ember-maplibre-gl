@@ -53,7 +53,9 @@
     "test": "vite build --mode=development --out-dir dist-tests && testem --file testem.cjs ci --port 0"
   },
   "dependencies": {
+    "@ember/test-waiters": "^4.1.2",
     "@embroider/addon-shim": "^1.8.9",
+    "@embroider/macros": "^1.20.6",
     "decorator-transforms": "^2.2.2",
     "ember-modifier": "^4.3.0",
     "ember-resources": "^7.1.0"
@@ -76,11 +78,9 @@
     "@ember/app-tsconfig": "^2.0.0",
     "@ember/library-tsconfig": "^2.0.0",
     "@ember/test-helpers": "^5.4.3",
-    "@ember/test-waiters": "^4.1.2",
     "@embroider/addon-dev": "^8.3.1",
     "@embroider/compat": "^4.1.22",
     "@embroider/core": "^4.6.3",
-    "@embroider/macros": "^1.20.6",
     "@embroider/vite": "^1.7.10",
     "@eslint/js": "^10.0.1",
     "@glimmer/component": "^2.1.1",

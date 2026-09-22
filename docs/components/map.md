@@ -162,6 +162,22 @@ The component supports an `error` named block. The yielded value is an `Error` o
 </MapLibreGL>
 ```
 
+## Testing
+
+`await render()` and `await visit()` wait for the map's `load` event, and for images that `<map.image>` loads. Assertions about those need no `waitUntil`.
+
+Sources, layers, markers and popups need no waiting either, but for a different reason: they act on the map while the block renders, so `await render()` already covers them. What is still yours to wait for is anything that happens after that — a popup opened by a marker click, `setStyle`, or tile loading.
+
+A wait ends when:
+
+- the map loads, or the image is added
+- the map cannot load: its constructor throws (no WebGL), or an `error` arrives before the style has loaded. The `error` block then renders.
+- a newer image load replaces one still in flight
+- the component is destroyed
+- 10 seconds pass, which prints a console warning. This covers a request that never answers.
+
+A stub constructor passed to `@mapLib` must fire `load`, or each test waits 10 seconds. The waiters and their timers live in development builds, which includes test builds. A production build has neither.
+
 ## Custom Map Constructor
 
 The `@mapLib` arg lets you swap in a different map constructor. This is useful for:

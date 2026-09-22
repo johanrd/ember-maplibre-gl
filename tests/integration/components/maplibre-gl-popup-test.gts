@@ -1,6 +1,6 @@
 import { module, test } from 'qunit';
 import { setupRenderingTest } from 'ember-qunit';
-import { render, settled, waitUntil, find } from '@ember/test-helpers';
+import { render, settled } from '@ember/test-helpers';
 import { tracked } from '@glimmer/tracking';
 import { hash, array } from '@ember/helper';
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
@@ -56,9 +56,6 @@ module('Integration | Component | maplibre-gl-popup', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('.maplibregl-popup-content'), {
-      timeout: 10000,
-    });
     assert
       .dom('.maplibregl-popup-content')
       .containsText('Hi', 'popup content rendered');
@@ -90,9 +87,6 @@ module('Integration | Component | maplibre-gl-popup', function (hooks) {
       </template>,
     );
 
-    await waitUntil(() => find('.maplibregl-popup-content'), {
-      timeout: 10000,
-    });
     assert
       .dom('.maplibregl-popup-content')
       .containsText('Hi', 'popup content rendered');
@@ -137,10 +131,6 @@ module('Integration | Component | maplibre-gl-popup', function (hooks) {
         </MapLibreGL>
       </template>,
     );
-
-    await waitUntil(() => find('.maplibregl-popup-content'), {
-      timeout: 10000,
-    });
 
     // Verify popup and marker both exist
     assert

@@ -12,9 +12,15 @@ importers:
 
   .:
     dependencies:
+      '@ember/test-waiters':
+        specifier: ^4.1.2
+        version: 4.1.2
       '@embroider/addon-shim':
         specifier: ^1.8.9
         version: 1.10.3
+      '@embroider/macros':
+        specifier: ^1.20.6
+        version: 1.20.6(@babel/core@7.29.0)(@glint/template@1.8.0)
       decorator-transforms:
         specifier: ^2.2.2
         version: 2.4.0(@babel/core@7.29.0)
@@ -46,9 +52,6 @@ importers:
       '@ember/test-helpers':
         specifier: ^5.4.3
         version: 5.4.3(@babel/core@7.29.0)
-      '@ember/test-waiters':
-        specifier: ^4.1.2
-        version: 4.1.2
       '@embroider/addon-dev':
         specifier: ^8.3.1
         version: 8.3.1(@glint/template@1.8.0)(rollup@4.62.5)
@@ -58,9 +61,6 @@ importers:
       '@embroider/core':
         specifier: ^4.6.3
         version: 4.6.3(@glint/template@1.8.0)
-      '@embroider/macros':
-        specifier: ^1.20.6
-        version: 1.20.6(@babel/core@7.29.0)(@glint/template@1.8.0)
       '@embroider/vite':
         specifier: ^1.7.10
         version: 1.7.10(@embroider/core@4.6.3(@glint/template@1.8.0))(@glint/template@1.8.0)(vite@8.2.2(@types/node@26.3.0)(jiti@2.7.0)(terser@5.50.0)(yaml@2.9.0))
