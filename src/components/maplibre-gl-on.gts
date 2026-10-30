@@ -1,4 +1,3 @@
-import { isPresent } from '@ember/utils';
 import { resource, resourceFactory } from 'ember-resources';
 import { assert } from '@ember/debug';
 
@@ -54,8 +53,8 @@ export function mapOn(
     'maplibre-gl-event requires event to be a string',
     typeof event === 'string',
   );
-  assert('maplibre-gl-event requires an eventSource', isPresent(eventSource));
-  assert('maplibre-gl-event requires an action', isPresent(action));
+  assert('maplibre-gl-event requires an eventSource', eventSource != null);
+  assert('maplibre-gl-event requires an action', typeof action === 'function');
 
   return resource(({ on }) => {
     const boundHandler: Listener = (...args: unknown[]) => {
