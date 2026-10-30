@@ -1,18 +1,18 @@
 {
   "solution": {
     "ember-maplibre-gl": {
-      "impact": "patch",
-      "oldVersion": "0.7.0",
-      "newVersion": "0.7.1",
+      "impact": "minor",
+      "oldVersion": "0.7.1",
+      "newVersion": "0.8.0",
       "tagName": "latest",
       "constraints": [
         {
-          "impact": "patch",
-          "reason": "Appears in changelog section :bug: Bug Fix"
+          "impact": "minor",
+          "reason": "Appears in changelog section :rocket: Enhancement"
         },
         {
           "impact": "patch",
-          "reason": "Appears in changelog section :memo: Documentation"
+          "reason": "Appears in changelog section :bug: Bug Fix"
         },
         {
           "impact": "patch",
@@ -22,5 +22,5 @@
       "pkgJSONPath": "./package.json"
     }
   },
-  "description": "## Release (2026-08-25)\n\n* ember-maplibre-gl 0.7.1 (patch)\n\n#### :bug: Bug Fix\n* `ember-maplibre-gl`\n  * [#52](https://github.com/johanrd/ember-maplibre-gl/pull/52) fix: match an evented object structurally, not as MapLibre `Evented` ([@johanrd](https://github.com/johanrd))\n\n#### :memo: Documentation\n* `ember-maplibre-gl`\n  * [#49](https://github.com/johanrd/ember-maplibre-gl/pull/49) fix(docs): use the named MercatorCoordinate import for MapLibre v6 ([@johanrd](https://github.com/johanrd))\n  * [#50](https://github.com/johanrd/ember-maplibre-gl/pull/50) docs(call): correct the reactivity contract, and prove it with a test ([@johanrd](https://github.com/johanrd))\n  * [#47](https://github.com/johanrd/ember-maplibre-gl/pull/47) Recommend excluding maplibre-gl from Vite dep optimization ([@johanrd](https://github.com/johanrd))\n\n#### :house: Internal\n* `ember-maplibre-gl`\n  * [#55](https://github.com/johanrd/ember-maplibre-gl/pull/55) ci: add the trailing newline release-plan omits ([@johanrd](https://github.com/johanrd))\n  * [#54](https://github.com/johanrd/ember-maplibre-gl/pull/54) chore: update dev dependencies, modernise docs examples ([@johanrd](https://github.com/johanrd))\n  * [#51](https://github.com/johanrd/ember-maplibre-gl/pull/51) deps: update the docs app, declare maplibre-gl, move to TypeScript 6 ([@johanrd](https://github.com/johanrd))\n\n#### Committers: 1\n- Johan Røed ([@johanrd](https://github.com/johanrd))\n"
+  "description": "## Release (2026-10-30)\n\n* ember-maplibre-gl 0.8.0 (minor)\n\n#### :rocket: Enhancement\n* `ember-maplibre-gl`\n  * [#58](https://github.com/johanrd/ember-maplibre-gl/pull/58) Wait for map and image loads in tests ([@johanrd](https://github.com/johanrd))\n\n#### :bug: Bug Fix\n* `ember-maplibre-gl`\n  * [#59](https://github.com/johanrd/ember-maplibre-gl/pull/59) Replace isPresent from @ember/utils with native checks ([@johanrd](https://github.com/johanrd))\n\n#### :house: Internal\n* `ember-maplibre-gl`\n  * [#57](https://github.com/johanrd/ember-maplibre-gl/pull/57) docs: better perf and precision in hero example ([@johanrd](https://github.com/johanrd))\n  * [#56](https://github.com/johanrd/ember-maplibre-gl/pull/56) fix(docs): configure the MapLibre v6 worker so the examples render ([@johanrd](https://github.com/johanrd))\n\n#### Committers: 1\n- Johan Røed ([@johanrd](https://github.com/johanrd))\n"
 }

@@ -1,5 +1,25 @@
 # Changelog
 
+## Release (2026-10-30)
+
+* ember-maplibre-gl 0.8.0 (minor)
+
+#### :rocket: Enhancement
+* `ember-maplibre-gl`
+  * [#58](https://github.com/johanrd/ember-maplibre-gl/pull/58) Wait for map and image loads in tests ([@johanrd](https://github.com/johanrd))
+
+#### :bug: Bug Fix
+* `ember-maplibre-gl`
+  * [#59](https://github.com/johanrd/ember-maplibre-gl/pull/59) Replace isPresent from @ember/utils with native checks ([@johanrd](https://github.com/johanrd))
+
+#### :house: Internal
+* `ember-maplibre-gl`
+  * [#57](https://github.com/johanrd/ember-maplibre-gl/pull/57) docs: better perf and precision in hero example ([@johanrd](https://github.com/johanrd))
+  * [#56](https://github.com/johanrd/ember-maplibre-gl/pull/56) fix(docs): configure the MapLibre v6 worker so the examples render ([@johanrd](https://github.com/johanrd))
+
+#### Committers: 1
+- Johan Røed ([@johanrd](https://github.com/johanrd))
+
 ## Release (2026-08-25)
 
 * ember-maplibre-gl 0.7.1 (patch)
