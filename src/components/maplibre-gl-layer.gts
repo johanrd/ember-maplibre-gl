@@ -14,6 +14,7 @@ import {
 import type MapLibreGLSource from './maplibre-gl-source.gts';
 import type MapLibreGL from './maplibre-gl.gts';
 import type Owner from '@ember/owner';
+import { consumeStyleRevision } from '../-private/style-revision.ts';
 
 /**
  * Layer options with optional `id` and `source` (auto-filled by the component).
@@ -25,6 +26,21 @@ export type LayerOptions = Omit<LayerSpecification, 'id'> & {
   id?: LayerSpecification['id'];
   source?: string;
 };
+
+/**
+ * The paint or layout properties that differ between two renders. A property
+ * the new object no longer has comes back as `undefined`, which resets it to
+ * the style-spec default.
+ */
+function changedProperties<T extends object>(prev?: T, next?: T) {
+  const keys = new Set([
+    ...Object.keys(prev ?? {}),
+    ...Object.keys(next ?? {}),
+  ]) as Set<keyof T>;
+  return [...keys]
+    .filter((key) => next?.[key] !== prev?.[key])
+    .map((key) => [key, next?.[key] as T[keyof T]] as const);
+}
 
 /** Signature for {@link MapLibreGLLayer}. */
 export interface MapLibreGLLayerSignature {
@@ -56,7 +72,8 @@ export interface MapLibreGLLayerSignature {
  *
  * Usually used via `source.layer` (pre-bound to the source), but can also be used
  * directly via `map.layer` with an explicit source reference. Reactively updates
- * paint, layout, filter, zoom range, and position when args change.
+ * paint, layout, filter, zoom range, and position when args change. A paint or
+ * layout property that is no longer passed goes back to its default.
  *
  * @access `<map.source>` as `source.layer`, or `<MapLibreGL>` as `map.layer`
  * @example
@@ -117,6 +134,8 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
     // context is restored MapLibre rebuilds the style and a later render re-runs this.
     if (!this.args.map.style) return;
 
+    consumeStyleRevision(this.args.map);
+
     if (!this.args.map.getLayer(this.layerId)) {
       const layerOptions = {
         ...options,
@@ -142,26 +161,22 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
       return;
     }
 
-    if (options.layout && options.layout !== this.prevLayout) {
-      const prev = this.prevLayout;
-      for (const k in options.layout) {
-        const key = k as keyof typeof options.layout;
-        const next = options.layout[key];
-        if (next !== prev?.[key]) {
-          this.args.map.setLayoutProperty(this.layerId, key, next);
-        }
+    if (options.layout !== this.prevLayout) {
+      for (const [key, value] of changedProperties(
+        this.prevLayout,
+        options.layout,
+      )) {
+        this.args.map.setLayoutProperty(this.layerId, key, value);
       }
       this.prevLayout = options.layout;
     }
 
-    if (options.paint && options.paint !== this.prevPaint) {
-      const prev = this.prevPaint;
-      for (const k in options.paint) {
-        const key = k as keyof typeof options.paint;
-        const next = options.paint[key];
-        if (next !== prev?.[key]) {
-          this.args.map.setPaintProperty(this.layerId, key, next);
-        }
+    if (options.paint !== this.prevPaint) {
+      for (const [key, value] of changedProperties(
+        this.prevPaint,
+        options.paint,
+      )) {
+        this.args.map.setPaintProperty(this.layerId, key, value);
       }
       this.prevPaint = options.paint;
     }

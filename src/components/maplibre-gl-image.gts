@@ -11,6 +11,7 @@ import { buildWaiter } from '@ember/test-waiters';
 import { beginWait } from '../-private/wait.ts';
 import type { Map as MaplibreMap } from 'maplibre-gl';
 import type Owner from '@ember/owner';
+import { consumeStyleRevision } from '../-private/style-revision.ts';
 
 /**
  * Options passed to MapLibre's [map.addImage ↗](https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#addimage).
@@ -102,6 +103,13 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
   }
 
   /** @internal */
+  get imageWasDropped(): boolean {
+    // `map.style` is null on a context-lost map, where hasImage() throws.
+    if (!this._lastName || !this.args.map.style) return false;
+    return !this.args.map.hasImage(this._lastName);
+  }
+
+  /** @internal */
   constructor(owner: Owner, args: MapLibreGLImageSignature['Args']) {
     super(owner, args);
 
@@ -135,13 +143,17 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
     width?: MapLibreGLImageSignature['Args']['width'],
     height?: MapLibreGLImageSignature['Args']['height'],
   ) => {
-    // Skip if nothing has changed (avoids redundant loads on re-render)
+    consumeStyleRevision(this.args.map);
+
+    // Skip if nothing has changed (avoids redundant loads on re-render), unless
+    // the image this component added is gone: a replaced style starts without it.
     if (
       url === this._lastLoadUrl &&
       name === this._lastLoadName &&
       width === this._lastLoadWidth &&
       height === this._lastLoadHeight &&
-      options === this._lastLoadOptions
+      options === this._lastLoadOptions &&
+      !this.imageWasDropped
     )
       return;
     this._lastLoadUrl = url;
@@ -157,6 +169,7 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
     if (this._lastName && this.args.map.hasImage(this._lastName)) {
       this.args.map.removeImage(this._lastName);
     }
+    this._lastName = undefined;
 
     if (!url) {
       return;

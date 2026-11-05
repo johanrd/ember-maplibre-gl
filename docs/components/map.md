@@ -162,11 +162,32 @@ The component supports an `error` named block. The yielded value is an `Error` o
 </MapLibreGL>
 ```
 
+## Changing the style
+
+`@initOptions` is read once, so a new `style` there does nothing. Call `setStyle` on the instance:
+
+```gts
+<MapLibreGL @initOptions={{this.mapOptions}} as |map|>
+  <map.source @options={{this.points}} as |source|>
+    <source.layer @options={{this.circles}} />
+  </map.source>
+  <button type="button" {{on "click" (fn this.useStyle map.instance this.darkStyle)}}>Dark</button>
+</MapLibreGL>
+```
+
+```ts
+useStyle = (map: Map, style: string) => map.setStyle(style);
+```
+
+MapLibre drops the sources, layers and images that were added at runtime when the style changes. `<map.source>`, `<source.layer>`, `<map.layer>` and `<map.image>` add theirs again once the new style has loaded, in template order, so `@before` works as on the first render. Markers, popups and controls are not part of the style and stay where they are.
+
+With `@reuseMaps`, a map whose style was changed is destroyed on teardown, not pooled: the pool is keyed by the style the map was built with.
+
 ## Testing
 
 `await render()` and `await visit()` wait for the map's `load` event, and for images that `<map.image>` loads. Assertions about those need no `waitUntil`.
 
-Sources, layers, markers and popups need no waiting either, but for a different reason: they act on the map while the block renders, so `await render()` already covers them. What is still yours to wait for is anything that happens after that — a popup opened by a marker click, `setStyle`, or tile loading.
+Sources, layers, markers and popups need no waiting either, but for a different reason: they act on the map while the block renders, so `await render()` already covers them. What is still yours to wait for is anything that happens after that — a popup opened by a marker click, `setStyle` (wait for `style.load`, then `settled()`), or tile loading.
 
 A wait ends when:
 

@@ -21,9 +21,14 @@ import {
   type ErrorEvent as MapErrorEvent,
 } from 'maplibre-gl';
 
-import { registerDestructor } from '@ember/destroyable';
+import {
+  isDestroyed,
+  isDestroying,
+  registerDestructor,
+} from '@ember/destroyable';
 import { buildWaiter } from '@ember/test-waiters';
 import { beginWait } from '../-private/wait.ts';
+import { bumpStyleRevision } from '../-private/style-revision.ts';
 
 // Holds settled() open from map construction until the map has loaded or
 // failed, so `await render()` and `await visit()` see the yielded block.
@@ -51,6 +56,9 @@ export interface MapLibreGLSignature {
     /**
      * MapLibre map options (style, center, zoom, etc.). Passed once at construction; later changes are ignored.
      * The `container` property is managed internally and should be omitted.
+     *
+     * To change the style later, call `map.setStyle()` on the instance. The sources, layers and
+     * images declared in the block are added again when the new style has loaded.
      *
      * @see https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/MapOptions/
      */
@@ -174,6 +182,21 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
         if (!this.mapLoaded && !styleLoaded) endWait();
       };
 
+      // Every style after the first: setStyle(), and the style MapLibre rebuilds
+      // after a restored WebGL context. Both fire 'style.load' with the runtime
+      // sources, layers and images gone or about to be diffed away.
+      let styleReplaced = false;
+      const onStyleLoad = () => {
+        if (!this.mapLoaded) return;
+        styleReplaced = true;
+        // A diffed setStyle() fires this synchronously, possibly inside a render
+        // that has already read the revision.
+        queueMicrotask(() => {
+          if (isDestroying(this) || isDestroyed(this) || !this.map) return;
+          bumpStyleRevision(this.map);
+        });
+      };
+
       const onContextLost = (event: MapContextEvent) => {
         console.warn('WebGL context lost', event);
         event.originalEvent.preventDefault();
@@ -283,6 +306,7 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
       }
 
       this.map.on('error', onError);
+      this.map.on('style.load', onStyleLoad);
       this.map.on('webglcontextlost', onContextLost);
       this.map.on('webglcontextrestored', onContextRestored);
 
@@ -290,10 +314,13 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
         endWait();
         this.map?.off('load', onLoad);
         this.map?.off('error', onError);
+        this.map?.off('style.load', onStyleLoad);
         this.map?.off('webglcontextlost', onContextLost);
         this.map?.off('webglcontextrestored', onContextRestored);
 
-        if (this.args.reuseMaps && this.map && styleUrl) {
+        // The pool is keyed by the style the map was built with, so a map that
+        // now shows another style would be handed to the wrong consumer.
+        if (this.args.reuseMaps && this.map && styleUrl && !styleReplaced) {
           // Don't pool broken maps. getStyle() returns null when the style hasn't loaded,
           // and throws when the map is dead (e.g. WebGL context lost). Either way, the map
           // is unusable — destroy it instead of caching. react-map-gl doesn't do this check;
