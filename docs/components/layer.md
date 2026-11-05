@@ -5,7 +5,8 @@ Adds a rendering layer to the map. Layers define how source data is styled and d
 
 Usually used via `source.layer` (pre-bound to the source), but can also be used
 directly via `map.layer` with an explicit source reference. Reactively updates
-paint, layout, filter, zoom range, and position when args change.
+paint, layout, filter, zoom range, and position when args change. A paint or
+layout property that is no longer passed goes back to its default.
 <!-- /DESCRIPTION -->
 
 <!-- EXAMPLE -->

@@ -9,8 +9,12 @@ import {
 } from '@ember/destroyable';
 import { buildWaiter } from '@ember/test-waiters';
 import { beginWait } from '../-private/wait.ts';
-import type { Map as MaplibreMap } from 'maplibre-gl';
+import type { Map as MaplibreMap, StyleImage } from 'maplibre-gl';
 import type Owner from '@ember/owner';
+import {
+  consumeStyleRevision,
+  isStyleLoaded,
+} from '../-private/style-revision.ts';
 
 /**
  * Options passed to MapLibre's [map.addImage ↗](https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#addimage).
@@ -74,7 +78,7 @@ export class SvgLoadError extends Error {
  * ```
  */
 export default class MapLibreGLImage extends Component<MapLibreGLImageSignature> {
-  /** @internal */
+  /** @internal The name this component's image is on the map under. */
   _lastName?: string;
   private _lastLoadUrl?: typeof this.args.url;
   private _lastLoadName?: string;
@@ -82,6 +86,9 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
   private _lastLoadHeight?: typeof this.args.height;
   private _lastLoadOptions?: typeof this.args.options;
   private _endLoadWait?: () => void;
+  // Kept to add the image again, without a new load, after the style changes.
+  private _image?: Parameters<MaplibreMap['addImage']>[1];
+  private _added?: StyleImage;
 
   /** @internal */
   get onError() {
@@ -118,9 +125,7 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
     registerDestructor(this, () => {
       this._endLoadWait?.();
       try {
-        if (this.args.name && this.args.map?.hasImage(this.args.name)) {
-          this.args.map.removeImage(this.args.name);
-        }
+        this.removeFromStyle();
       } catch {
         // Map may be in a broken state (e.g. WebGL context lost)
       }
@@ -135,15 +140,18 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
     width?: MapLibreGLImageSignature['Args']['width'],
     height?: MapLibreGLImageSignature['Args']['height'],
   ) => {
-    // Skip if nothing has changed (avoids redundant loads on re-render)
+    consumeStyleRevision(this.args.map);
+
     if (
       url === this._lastLoadUrl &&
       name === this._lastLoadName &&
       width === this._lastLoadWidth &&
       height === this._lastLoadHeight &&
       options === this._lastLoadOptions
-    )
+    ) {
+      this.addToStyle();
       return;
+    }
     this._lastLoadUrl = url;
     this._lastLoadName = name;
     this._lastLoadWidth = width;
@@ -152,11 +160,8 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
 
     // A newer load replaces any in-flight one, whose result _onImage discards.
     this._endLoadWait?.();
-
-    // If the component already has added an image to the map, remove it
-    if (this._lastName && this.args.map.hasImage(this._lastName)) {
-      this.args.map.removeImage(this._lastName);
-    }
+    this.removeFromStyle();
+    this._image = undefined;
 
     if (!url) {
       return;
@@ -182,7 +187,7 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
       });
       void loaded
         .then(
-          () => this._onImage(url, name, options, image),
+          () => this._onImage(url, name, image),
           (event: Event | string) => this._onSvgErr(url, event),
         )
         .catch((error) => this.onError(error))
@@ -190,7 +195,7 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
     } else {
       this.args.map
         .loadImage(url)
-        .then(({ data }) => this._onImage(url, name, options, data))
+        .then(({ data }) => this._onImage(url, name, data))
         .catch((error) => this.onError(error))
         .finally(endWait);
     }
@@ -200,8 +205,7 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
   _onImage = (
     url: MapLibreGLImageSignature['Args']['url'],
     name: MapLibreGLImageSignature['Args']['name'],
-    options?: MapLibreGLImageSignature['Args']['options'],
-    image?: Parameters<MaplibreMap['addImage']>[1],
+    image: Parameters<MaplibreMap['addImage']>[1],
   ) => {
     if (isDestroying(this) || isDestroyed(this)) {
       return;
@@ -212,12 +216,41 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
       return;
     }
 
-    this.args.map.addImage(name, image!, options);
-
-    this._lastName = name;
-
+    this._image = image;
+    this.addToStyle();
     this.onLoad();
   };
+
+  // Does nothing while the style loads; the revision bump on 'style.load' calls it again.
+  // An image the style's sprite already has under this name is left in place.
+  private addToStyle() {
+    const { map, name, options } = this.args;
+    if (!this._image || !isStyleLoaded(map) || map.hasImage(name)) return;
+    map.addImage(name, this._image, options);
+    this._lastName = name;
+    this._added = map.getImage(name);
+  }
+
+  private removeFromStyle() {
+    const { map } = this.args;
+    const name = this._lastName;
+    this._lastName = undefined;
+    if (!name || !map.style) return;
+    const image = map.getImage(name);
+    if (image && this.isOurs(image)) map.removeImage(name);
+  }
+
+  // A context restore puts back a copy of the image; a sprite can replace it with its own.
+  private isOurs(image: StyleImage) {
+    const added = this._added?.data;
+    if (!added) return false;
+    return (
+      image.data === added ||
+      (image.data.width === added.width &&
+        image.data.height === added.height &&
+        image.data.data.every((byte, i) => byte === added.data[i]))
+    );
+  }
 
   /** @internal */
   _onSvgErr = (_url: string, event: Event | string) => {

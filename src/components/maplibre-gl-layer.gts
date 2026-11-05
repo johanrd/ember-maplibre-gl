@@ -14,6 +14,10 @@ import {
 import type MapLibreGLSource from './maplibre-gl-source.gts';
 import type MapLibreGL from './maplibre-gl.gts';
 import type Owner from '@ember/owner';
+import {
+  consumeStyleRevision,
+  isStyleLoaded,
+} from '../-private/style-revision.ts';
 
 /**
  * Layer options with optional `id` and `source` (auto-filled by the component).
@@ -25,6 +29,21 @@ export type LayerOptions = Omit<LayerSpecification, 'id'> & {
   id?: LayerSpecification['id'];
   source?: string;
 };
+
+/**
+ * The paint or layout properties that differ between two renders. A property
+ * the new object no longer has comes back as `undefined`, which resets it to
+ * the style-spec default.
+ */
+function changedProperties<T extends object>(prev?: T, next?: T) {
+  const keys = new Set([
+    ...Object.keys(prev ?? {}),
+    ...Object.keys(next ?? {}),
+  ]) as Set<keyof T>;
+  return [...keys]
+    .filter((key) => next?.[key] !== prev?.[key])
+    .map((key) => [key, next?.[key] as T[keyof T]] as const);
+}
 
 /** Signature for {@link MapLibreGLLayer}. */
 export interface MapLibreGLLayerSignature {
@@ -56,7 +75,8 @@ export interface MapLibreGLLayerSignature {
  *
  * Usually used via `source.layer` (pre-bound to the source), but can also be used
  * directly via `map.layer` with an explicit source reference. Reactively updates
- * paint, layout, filter, zoom range, and position when args change.
+ * paint, layout, filter, zoom range, and position when args change. A paint or
+ * layout property that is no longer passed goes back to its default.
  *
  * @access `<map.source>` as `source.layer`, or `<MapLibreGL>` as `map.layer`
  * @example
@@ -105,17 +125,22 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
   private prevMinzoom?: number;
   private prevMaxzoom?: number;
 
+  // A style switched to with setStyle() may lack the layer @before names.
+  private existingBefore() {
+    const { before, map } = this.args;
+    if (!before || map.getLayer(before)) return before;
+    console.warn(
+      `ember-maplibre-gl: layer "${this.layerId}" is added on top, because @before layer "${before}" is not in the style.`,
+    );
+    return undefined;
+  }
+
   /** @internal */
   upsertLayer = (options?: MapLibreGLLayerSignature['Args']['options']) => {
     if (typeof options !== 'object') return;
 
-    // MapLibre sets `map.style = null` on WebGL context loss (then fires
-    // 'webglcontextlost') and on remove(), even though it types `style` as non-null.
-    // getLayer/addLayer dereference it, so a render against a context-lost map throws
-    // "Cannot read properties of null (reading 'getLayer')". The destructor above
-    // already guards for this; the render-time upsert must too. Self-healing: once the
-    // context is restored MapLibre rebuilds the style and a later render re-runs this.
-    if (!this.args.map.style) return;
+    consumeStyleRevision(this.args.map);
+    if (!isStyleLoaded(this.args.map)) return;
 
     if (!this.args.map.getLayer(this.layerId)) {
       const layerOptions = {
@@ -127,7 +152,7 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
 
       // @ts-expect-error — LayerSpecification is a discriminated union on `type`;
       // TypeScript can't narrow a spread of the full union to a single variant.
-      this.args.map.addLayer(layerOptions, this.args.before);
+      this.args.map.addLayer(layerOptions, this.existingBefore());
       this.prevBefore = this.args.before;
       this.prevLayout = options.layout;
       this.prevPaint = options.paint;
@@ -142,26 +167,22 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
       return;
     }
 
-    if (options.layout && options.layout !== this.prevLayout) {
-      const prev = this.prevLayout;
-      for (const k in options.layout) {
-        const key = k as keyof typeof options.layout;
-        const next = options.layout[key];
-        if (next !== prev?.[key]) {
-          this.args.map.setLayoutProperty(this.layerId, key, next);
-        }
+    if (options.layout !== this.prevLayout) {
+      for (const [key, value] of changedProperties(
+        this.prevLayout,
+        options.layout,
+      )) {
+        this.args.map.setLayoutProperty(this.layerId, key, value);
       }
       this.prevLayout = options.layout;
     }
 
-    if (options.paint && options.paint !== this.prevPaint) {
-      const prev = this.prevPaint;
-      for (const k in options.paint) {
-        const key = k as keyof typeof options.paint;
-        const next = options.paint[key];
-        if (next !== prev?.[key]) {
-          this.args.map.setPaintProperty(this.layerId, key, next);
-        }
+    if (options.paint !== this.prevPaint) {
+      for (const [key, value] of changedProperties(
+        this.prevPaint,
+        options.paint,
+      )) {
+        this.args.map.setPaintProperty(this.layerId, key, value);
       }
       this.prevPaint = options.paint;
     }
@@ -186,7 +207,7 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
 
     if (this.args.before !== this.prevBefore) {
       this.prevBefore = this.args.before;
-      this.args.map.moveLayer(this.layerId, this.args.before);
+      this.args.map.moveLayer(this.layerId, this.existingBefore());
     }
   };
 

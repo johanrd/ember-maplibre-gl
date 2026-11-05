@@ -97,34 +97,59 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
           as |m|
         >
           {{#if state.show}}
-            <m.image @name="cleanup-test" @url="/fake-image.png" />
+            <m.image @name="cleanup-test" @url={{PNG_DATA_URL}} />
           {{/if}}
-          <span data-test-loaded />
         </MapLibreGL>
       </template>,
     );
-
-    // Manually register the image so the destructor has something to clean up
-    // (loadImage fails in test env since URL is fake)
-    if (!map!.hasImage('cleanup-test')) {
-      map!.addImage('cleanup-test', {
-        width: 1,
-        height: 1,
-        data: new Uint8Array(4),
-      });
-    }
-
-    const removeImageSpy = sinon.spy(map!, 'removeImage');
+    assert.true(map!.hasImage('cleanup-test'), 'the image was added');
 
     state.show = false;
     await settled();
 
-    assert.true(removeImageSpy.called, 'removeImage was called on destroy');
-    assert.strictEqual(
-      removeImageSpy.firstCall.args[0],
-      'cleanup-test',
-      'removes correct image name',
+    assert.false(map!.hasImage('cleanup-test'), 'the image was removed');
+  });
+
+  test('it keeps an image with its name that it did not add', async function (assert) {
+    let map: Map | undefined;
+    const setMap = (m: Map) => {
+      map = m;
+    };
+    const state = new State();
+    const addFirst = (m: Map) => {
+      setMap(m);
+      // Stands in for an image from the style's sprite.
+      m.addImage('taken', {
+        width: 2,
+        height: 2,
+        data: new Uint8Array(16).fill(255),
+      });
+    };
+
+    await render(
+      <template>
+        <MapLibreGL
+          @initOptions={{hash style=STYLE}}
+          @mapLoaded={{addFirst}}
+          style="height:100px;"
+          as |m|
+        >
+          {{#if state.show}}
+            <m.image @name="taken" @url={{PNG_DATA_URL}} />
+          {{/if}}
+        </MapLibreGL>
+      </template>,
     );
+    assert.strictEqual(
+      map!.getImage('taken')?.data.width,
+      2,
+      'the image that was there first is used',
+    );
+
+    state.show = false;
+    await settled();
+
+    assert.true(map!.hasImage('taken'), 'that image is not removed');
   });
 
   test('it discards stale loads when url changes mid-flight', async function (assert) {
