@@ -4,6 +4,7 @@ import { render, settled, waitUntil } from '@ember/test-helpers';
 import { tracked } from '@glimmer/tracking';
 import { hash } from '@ember/helper';
 import MapLibreGL from 'ember-maplibre-gl/components/maplibre-gl';
+import { addProtocol, removeProtocol } from 'maplibre-gl';
 import type { Map, StyleSpecification } from 'maplibre-gl';
 import type { FeatureCollection } from 'geojson';
 
@@ -137,11 +138,134 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
     );
   });
 
-  test('a map whose style was replaced is not pooled under its first style', async function (assert) {
+  test('a render while the new style loads does not throw, and catches up once it has loaded', async function (assert) {
+    class State {
+      @tracked data: FeatureCollection = GEOJSON;
+      @tracked showLayer = false;
+    }
+    const state = new State();
+    let map: Map | undefined;
+    const setMap = (m: Map) => {
+      map = m;
+    };
+
+    await render(
+      <template>
+        <MapLibreGL
+          @initOptions={{hash style=STYLE}}
+          @mapLoaded={{setMap}}
+          style="height:100px;"
+          as |m|
+        >
+          <m.source
+            @sourceId="points"
+            @options={{hash type="geojson" data=state.data}}
+            as |source|
+          >
+            {{#if state.showLayer}}
+              <source.layer @options={{hash id="circles" type="circle"}} />
+            {{/if}}
+          </m.source>
+        </MapLibreGL>
+      </template>,
+    );
+
+    // Holds the style response back, so the renders below run while it loads.
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    addProtocol('held', async () => {
+      await held;
+      return { data: OTHER_STYLE };
+    });
+
+    try {
+      const loaded = new Promise((resolve) => map!.once('style.load', resolve));
+      map!.setStyle('held://style', { diff: false });
+
+      const updated: FeatureCollection = {
+        type: 'FeatureCollection',
+        features: [],
+      };
+      state.data = updated;
+      state.showLayer = true;
+      await settled();
+      assert.false(
+        map!.style._loaded,
+        'that render ran while the style loaded',
+      );
+
+      release();
+      await loaded;
+      await settled();
+
+      const source = map!.getStyle().sources['points'];
+      assert.deepEqual(
+        source?.type === 'geojson' ? source.data : undefined,
+        updated,
+        'the source has the data set while the style loaded',
+      );
+      assert.ok(
+        map!.getLayer('circles'),
+        'the layer mounted while the style loaded is added',
+      );
+    } finally {
+      removeProtocol('held');
+    }
+  });
+
+  test('a layer whose @before is missing from the new style is added on top', async function (assert) {
+    let map: Map | undefined;
+    const setMap = (m: Map) => {
+      map = m;
+    };
+    const warn = console.warn;
+    const warnings: unknown[] = [];
+    console.warn = (...args: unknown[]) => warnings.push(args[0]);
+
+    try {
+      await render(
+        <template>
+          <MapLibreGL
+            @initOptions={{hash style=OTHER_STYLE}}
+            @mapLoaded={{setMap}}
+            style="height:100px;"
+            as |m|
+          >
+            <m.source
+              @sourceId="points"
+              @options={{hash type="geojson" data=GEOJSON}}
+              as |source|
+            >
+              <source.layer
+                @options={{hash id="circles" type="circle"}}
+                @before="background"
+              />
+            </m.source>
+          </MapLibreGL>
+        </template>,
+      );
+
+      assert.deepEqual(map!.getLayersOrder(), ['circles', 'background']);
+
+      await setStyle(map!, STYLE, { diff: false });
+
+      assert.deepEqual(map!.getLayersOrder(), ['circles'], 'the layer is back');
+      assert.true(
+        warnings.some((w) => String(w).includes('"background"')),
+        'the missing @before layer is reported',
+      );
+    } finally {
+      console.warn = warn;
+    }
+  });
+
+  module('pooling', function () {
     class FakeMap {
       static instances: FakeMap[] = [];
       listeners: Record<string, () => void> = {};
       _container: HTMLElement;
+      _diffStyleRequest: AbortController | null = null;
+      style = {};
       removed = false;
 
       constructor(options: { container: HTMLElement }) {
@@ -166,6 +290,7 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
         return this._container;
       }
       resize() {}
+      redraw() {}
       jumpTo() {}
       stop() {}
       triggerRepaint() {}
@@ -175,46 +300,66 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
     }
 
     const MapLib = FakeMap as unknown as new (...args: unknown[]) => Map;
-    const FIRST_STYLE = '/first-style.json';
 
     class ShowState {
       @tracked show = true;
     }
-    const state = new ShowState();
 
-    const rendered = render(
-      <template>
-        {{#if state.show}}
-          <MapLibreGL
-            @initOptions={{hash style=FIRST_STYLE}}
-            @reuseMaps={{true}}
-            @mapLib={{MapLib}}
-            style="height:100px;"
-          />
-        {{/if}}
-      </template>,
-    );
+    // Renders a pooled map, lets `act` change it, then unmounts it.
+    async function renderAndUnmount(
+      styleUrl: string,
+      act: (map: FakeMap) => void,
+    ) {
+      FakeMap.instances = [];
+      const state = new ShowState();
+      const rendered = render(
+        <template>
+          {{#if state.show}}
+            <MapLibreGL
+              @initOptions={{hash style=styleUrl}}
+              @reuseMaps={{true}}
+              @mapLib={{MapLib}}
+              style="height:100px;"
+            />
+          {{/if}}
+        </template>,
+      );
+      await waitUntil(() => FakeMap.instances[0], { timeout: 10000 });
+      const map = FakeMap.instances[0]!;
+      map.fire('load');
+      await rendered;
 
-    await waitUntil(() => FakeMap.instances[0], { timeout: 10000 });
-    FakeMap.instances[0]!.fire('load');
-    await rendered;
+      act(map);
+      await settled();
 
-    // What MapLibre fires once setStyle() has loaded another style.
-    FakeMap.instances[0]!.fire('style.load');
-    await settled();
+      state.show = false;
+      await settled();
+      return map;
+    }
 
-    state.show = false;
-    await settled();
-    assert.true(FakeMap.instances[0]!.removed, 'the map was destroyed');
+    test('a map whose style was replaced is not pooled', async function (assert) {
+      const map = await renderAndUnmount('/replaced.json', (m) => {
+        // What MapLibre fires once setStyle() has loaded another style.
+        m.style = {};
+        m.fire('style.load');
+      });
+      assert.true(map.removed, 'the map was destroyed');
+    });
 
-    state.show = true;
-    await waitUntil(() => FakeMap.instances[1], { timeout: 10000 });
-    FakeMap.instances[1]!.fire('load');
-    await settled();
+    test('a map still fetching a diffed style is not pooled', async function (assert) {
+      const map = await renderAndUnmount('/fetching.json', (m) => {
+        m._diffStyleRequest = new AbortController();
+      });
+      assert.true(map.removed, 'the map was destroyed');
+    });
 
-    assert.strictEqual(FakeMap.instances.length, 2, 'a new map was built');
-
-    state.show = false;
-    await settled();
+    test('a map that rebuilt its own style after a context restore is pooled', async function (assert) {
+      const map = await renderAndUnmount('/restored.json', (m) => {
+        m.style = {};
+        m.fire('webglcontextrestored');
+        m.fire('style.load');
+      });
+      assert.false(map.removed, 'the map was pooled');
+    });
   });
 });

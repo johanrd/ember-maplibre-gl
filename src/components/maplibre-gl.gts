@@ -182,15 +182,14 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
         if (!this.mapLoaded && !styleLoaded) endWait();
       };
 
-      // Every style after the first: setStyle(), and the style MapLibre rebuilds
-      // after a restored WebGL context. Both fire 'style.load' with the runtime
-      // sources, layers and images gone or about to be diffed away.
       let styleReplaced = false;
+      // The style MapLibre rebuilds from the old one after a WebGL context restore.
+      let restoredStyle: MaplibreMap['style'] | undefined;
       const onStyleLoad = () => {
         if (!this.mapLoaded) return;
-        styleReplaced = true;
-        // A diffed setStyle() fires this synchronously, possibly inside a render
-        // that has already read the revision.
+        if (this.map?.style === restoredStyle) restoredStyle = undefined;
+        else styleReplaced = true;
+        // A diffed setStyle() fires this inside a render that may have read the revision.
         queueMicrotask(() => {
           if (isDestroying(this) || isDestroyed(this) || !this.map) return;
           bumpStyleRevision(this.map);
@@ -204,6 +203,7 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
 
       const onContextRestored = () => {
         console.log('WebGL context restored');
+        restoredStyle = this.map?.style;
         this.map?.resize();
         this.map?.redraw();
       };
@@ -318,9 +318,14 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
         this.map?.off('webglcontextlost', onContextLost);
         this.map?.off('webglcontextrestored', onContextRestored);
 
-        // The pool is keyed by the style the map was built with, so a map that
-        // now shows another style would be handed to the wrong consumer.
-        if (this.args.reuseMaps && this.map && styleUrl && !styleReplaced) {
+        // The pool is keyed by the first style: skip a map that shows, or is fetching, another.
+        if (
+          this.args.reuseMaps &&
+          this.map &&
+          styleUrl &&
+          !styleReplaced &&
+          !this.map._diffStyleRequest
+        ) {
           // Don't pool broken maps. getStyle() returns null when the style hasn't loaded,
           // and throws when the map is dead (e.g. WebGL context lost). Either way, the map
           // is unusable — destroy it instead of caching. react-map-gl doesn't do this check;

@@ -13,17 +13,19 @@ function revisionOf(map: MaplibreMap) {
   return revision;
 }
 
-/**
- * Read by every component that adds something to the style (a source, a
- * layer, an image), so its upsert runs again after `map.setStyle()`. MapLibre
- * drops what was added at runtime when the style changes: a rebuilt style
- * starts empty, and a diffed one removes whatever the new style lacks.
- */
+/** Read before any early return, so the upsert runs again after `map.setStyle()`. */
 export function consumeStyleRevision(map: MaplibreMap) {
   return revisionOf(map).value;
 }
 
-/** Call when the map has loaded a style after its first one. */
 export function bumpStyleRevision(map: MaplibreMap) {
   revisionOf(map).value++;
+}
+
+/**
+ * False on a context-lost map (`style` is null) and while a style from
+ * `setStyle()` loads, where adding a source or layer throws.
+ */
+export function isStyleLoaded(map: MaplibreMap) {
+  return Boolean(map.style?._loaded);
 }
