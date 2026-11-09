@@ -187,13 +187,13 @@ With `@reuseMaps`, a map whose style was changed, or is still loading a new styl
 
 ## Testing
 
-`await render()` and `await visit()` wait for the map's `load` event, and for images that `<map.image>` loads. Assertions about those need no `waitUntil`.
+`await render()` and `await visit()` wait for the map's `load` event, and for images that `<map.image>` loads. `await settled()` after `map.setStyle()` waits until the new style has loaded and the sources, layers and images are back. Assertions about those need no `waitUntil`.
 
-Sources, layers, markers and popups need no waiting either, but for a different reason: they act on the map while the block renders, so `await render()` already covers them. What is still yours to wait for is anything that happens after that — a popup opened by a marker click, `setStyle` (wait for `style.load`, then `settled()`), or tile loading.
+Sources, layers, markers and popups need no waiting either, but for a different reason: they act on the map while the block renders, so `await render()` already covers them. What is still yours to wait for is anything that happens after that — a popup opened by a marker click, or tile loading.
 
 A wait ends when:
 
-- the map loads, or the image is added
+- the map loads, the image is added, or the style from `setStyle()` has loaded (a `setStyle()` that changes nothing ends it at once)
 - the map cannot load: its constructor throws (no WebGL), or an `error` arrives before the style has loaded. The `error` block then renders.
 - a newer image load replaces one still in flight
 - the component is destroyed

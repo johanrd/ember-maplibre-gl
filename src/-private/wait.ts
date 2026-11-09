@@ -6,7 +6,7 @@ type Waiter = ReturnType<typeof buildWaiter>;
 // Upper bound for work that never finishes, fails, or gets torn down (e.g. a
 // request that never answers). Without it, settled() hangs until the test
 // itself times out, and every later test inherits the pending waiter.
-const WAIT_TIMEOUT_MS = 10_000;
+export const WAIT_TIMEOUT_MS = 10_000;
 
 const noop = () => {};
 

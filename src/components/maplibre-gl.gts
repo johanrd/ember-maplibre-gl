@@ -28,7 +28,12 @@ import {
 } from '@ember/destroyable';
 import { buildWaiter } from '@ember/test-waiters';
 import { beginWait } from '../-private/wait.ts';
-import { bumpStyleRevision } from '../-private/style-revision.ts';
+import {
+  bumpStyleRevision,
+  styleLoadEnded,
+  styleLoadStarted,
+  waitForStyleChanges,
+} from '../-private/style-revision.ts';
 
 // Holds settled() open from map construction until the map has loaded or
 // failed, so `await render()` and `await visit()` see the yielded block.
@@ -185,9 +190,13 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
       let styleReplaced = false;
       // The style MapLibre rebuilds from the old one after a WebGL context restore.
       let restoredStyle: MaplibreMap['style'] | undefined;
+      const onStyleDataLoading = () => {
+        if (this.mapLoaded && this.map) styleLoadStarted(this.map);
+      };
       const onStyleLoad = () => {
-        if (!this.mapLoaded) return;
-        if (this.map?.style === restoredStyle) restoredStyle = undefined;
+        if (!this.mapLoaded || !this.map) return;
+        styleLoadEnded(this.map);
+        if (this.map.style === restoredStyle) restoredStyle = undefined;
         else styleReplaced = true;
         // A diffed setStyle() fires this inside a render that may have read the revision.
         queueMicrotask(() => {
@@ -306,7 +315,9 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
       }
 
       this.map.on('error', onError);
+      this.map.on('styledataloading', onStyleDataLoading);
       this.map.on('style.load', onStyleLoad);
+      const stopWaitingForStyles = waitForStyleChanges(this.map);
       this.map.on('webglcontextlost', onContextLost);
       this.map.on('webglcontextrestored', onContextRestored);
 
@@ -314,7 +325,9 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
         endWait();
         this.map?.off('load', onLoad);
         this.map?.off('error', onError);
+        this.map?.off('styledataloading', onStyleDataLoading);
         this.map?.off('style.load', onStyleLoad);
+        stopWaitingForStyles();
         this.map?.off('webglcontextlost', onContextLost);
         this.map?.off('webglcontextrestored', onContextRestored);
 
