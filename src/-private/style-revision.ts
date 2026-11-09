@@ -1,13 +1,13 @@
 import { tracked } from '@glimmer/tracking';
 import { macroCondition, isDevelopingApp } from '@embroider/macros';
 import { register, type Waiter } from '@ember/test-waiters';
-import type { Map as MaplibreMap } from 'maplibre-gl';
+import type { Map as MaplibreMap, Style } from 'maplibre-gl';
 import { WAIT_TIMEOUT_MS } from './wait.ts';
 
 class StyleState {
   @tracked revision = 0;
-  // From 'styledataloading' to 'style.load': a style from setStyle() that is not loaded yet.
-  loading = false;
+  // A style that fired 'error' before it loaded: it never will, so the waiter stops on it.
+  failedStyle?: Style;
   busySince?: number;
   timedOut = false;
 }
@@ -26,17 +26,13 @@ export function consumeStyleRevision(map: MaplibreMap) {
   return stateOf(map).revision;
 }
 
-/** False on a context-lost map, and while a style from `setStyle()` loads. */
+/** False on a context-lost map, and while a style from `setStyle()` loads. Same check as react-map-gl. */
 export function isStyleLoaded(map: MaplibreMap) {
-  return Boolean(map.style) && !stateOf(map).loading;
+  return Boolean(map.style?._loaded);
 }
 
-export function styleLoadStarted(map: MaplibreMap) {
-  stateOf(map).loading = true;
-}
-
-export function styleLoadEnded(map: MaplibreMap) {
-  stateOf(map).loading = false;
+export function markStyleFailed(map: MaplibreMap) {
+  if (map.style && !map.style._loaded) stateOf(map).failedStyle = map.style;
 }
 
 export function bumpStyleRevision(map: MaplibreMap) {
@@ -45,7 +41,12 @@ export function bumpStyleRevision(map: MaplibreMap) {
 
 // A diffed setStyle(url) fires nothing until its fetch is done, so only the request shows it.
 function isBusy(map: MaplibreMap) {
-  return Boolean(map._diffStyleRequest) || stateOf(map).loading;
+  if (map._diffStyleRequest) return true;
+  return (
+    Boolean(map.style) &&
+    !map.style._loaded &&
+    map.style !== stateOf(map).failedStyle
+  );
 }
 
 // Polled by settled(): it ends with the style, and also after a diff that changes nothing.

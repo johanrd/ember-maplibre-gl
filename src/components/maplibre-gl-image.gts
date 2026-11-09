@@ -240,15 +240,16 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
     if (image && this.isOurs(image)) map.removeImage(name);
   }
 
-  // A context restore puts back a copy of the image; a sprite can replace it with its own.
+  // A context restore puts back a copy with the same version; a sprite image has none,
+  // and one that replaces ours gets a higher one.
   private isOurs(image: StyleImage) {
-    const added = this._added?.data;
+    const added = this._added;
     if (!added) return false;
     return (
-      image.data === added ||
-      (image.data.width === added.width &&
-        image.data.height === added.height &&
-        image.data.data.every((byte, i) => byte === added.data[i]))
+      image === added ||
+      (image.version === added.version &&
+        image.data.width === added.data.width &&
+        image.data.height === added.data.height)
     );
   }
 

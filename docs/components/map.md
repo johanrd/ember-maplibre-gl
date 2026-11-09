@@ -179,9 +179,9 @@ The component supports an `error` named block. The yielded value is an `Error` o
 useStyle = (map: Map, style: string) => map.setStyle(style);
 ```
 
-MapLibre drops the sources, layers and images that were added at runtime when the style changes. `<map.source>`, `<source.layer>`, `<map.layer>` and `<map.image>` add theirs again once the new style has loaded, in template order, so `@before` works as on the first render. If the new style does not have the layer that `@before` names, the layer is added on top and a warning is logged. Markers, popups and controls are not part of the style and stay where they are.
+MapLibre drops the sources, layers and images that were added at runtime when the style changes. `<map.source>`, `<source.layer>`, `<map.layer>` and `<map.image>` add theirs again once the new style has loaded, in template order, so `@before` works as on the first render. If the layer that `@before` names is not in the style once the render is done, the layer is added on top and a warning is logged. Markers, popups and controls are not part of the style and stay where they are.
 
-An image whose `@name` is also in the new style's sprite is not added: the sprite's image is used, as on the first render.
+If the new style's sprite has an image with the same `@name`, the sprite's image is shown, as on the first render. A later `@url` for that name has no effect until the style changes again.
 
 With `@reuseMaps`, a map whose style was changed, or is still loading a new style, is destroyed on teardown, not pooled: the pool is keyed by the style the map was built with.
 

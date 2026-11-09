@@ -30,8 +30,7 @@ import { buildWaiter } from '@ember/test-waiters';
 import { beginWait } from '../-private/wait.ts';
 import {
   bumpStyleRevision,
-  styleLoadEnded,
-  styleLoadStarted,
+  markStyleFailed,
   waitForStyleChanges,
 } from '../-private/style-revision.ts';
 
@@ -185,17 +184,14 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
           // Map is in a broken state (e.g. WebGL context lost)
         }
         if (!this.mapLoaded && !styleLoaded) endWait();
+        if (this.map) markStyleFailed(this.map);
       };
 
       let styleReplaced = false;
       // The style MapLibre rebuilds from the old one after a WebGL context restore.
       let restoredStyle: MaplibreMap['style'] | undefined;
-      const onStyleDataLoading = () => {
-        if (this.mapLoaded && this.map) styleLoadStarted(this.map);
-      };
       const onStyleLoad = () => {
         if (!this.mapLoaded || !this.map) return;
-        styleLoadEnded(this.map);
         if (this.map.style === restoredStyle) restoredStyle = undefined;
         else styleReplaced = true;
         // A diffed setStyle() fires this inside a render that may have read the revision.
@@ -315,7 +311,6 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
       }
 
       this.map.on('error', onError);
-      this.map.on('styledataloading', onStyleDataLoading);
       this.map.on('style.load', onStyleLoad);
       const stopWaitingForStyles = waitForStyleChanges(this.map);
       this.map.on('webglcontextlost', onContextLost);
@@ -325,7 +320,6 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
         endWait();
         this.map?.off('load', onLoad);
         this.map?.off('error', onError);
-        this.map?.off('styledataloading', onStyleDataLoading);
         this.map?.off('style.load', onStyleLoad);
         stopWaitingForStyles();
         this.map?.off('webglcontextlost', onContextLost);

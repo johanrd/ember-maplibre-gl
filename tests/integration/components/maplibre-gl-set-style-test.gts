@@ -275,6 +275,95 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
     assert.true(Date.now() - started < 1000, 'settled() did not time out');
   });
 
+  test('after a setStyle() that fails, settled() does not hang and the next style works', async function (assert) {
+    let map: Map | undefined;
+    const setMap = (m: Map) => {
+      map = m;
+    };
+    const error = console.error;
+    console.error = () => {};
+
+    try {
+      await render(
+        <template>
+          <MapLibreGL
+            @initOptions={{hash style=STYLE}}
+            @mapLoaded={{setMap}}
+            style="height:100px;"
+            as |m|
+          >
+            <m.source
+              @sourceId="points"
+              @options={{hash type="geojson" data=GEOJSON}}
+              as |source|
+            >
+              <source.layer @options={{hash id="circles" type="circle"}} />
+            </m.source>
+          </MapLibreGL>
+        </template>,
+      );
+
+      const started = Date.now();
+      map!.setStyle('/missing-style.json', { diff: false });
+      await settled();
+      assert.true(Date.now() - started < 5000, 'settled() did not time out');
+
+      map!.setStyle(OTHER_STYLE, { diff: false });
+      await settled();
+      assert.ok(map!.getLayer('background'), 'the next style is in place');
+      assert.ok(map!.getLayer('circles'), 'the layer is back');
+    } finally {
+      console.error = error;
+    }
+  });
+
+  test('@before can name a layer that comes later in the template', async function (assert) {
+    let map: Map | undefined;
+    const setMap = (m: Map) => {
+      map = m;
+    };
+    const warn = console.warn;
+    const warnings: unknown[] = [];
+    console.warn = (...args: unknown[]) => warnings.push(args[0]);
+
+    try {
+      await render(
+        <template>
+          <MapLibreGL
+            @initOptions={{hash style=STYLE}}
+            @mapLoaded={{setMap}}
+            style="height:100px;"
+            as |m|
+          >
+            <m.source
+              @sourceId="points"
+              @options={{hash type="geojson" data=GEOJSON}}
+              as |source|
+            >
+              <source.layer
+                @options={{hash id="below" type="circle"}}
+                @before="above"
+              />
+              <source.layer @options={{hash id="above" type="circle"}} />
+            </m.source>
+          </MapLibreGL>
+        </template>,
+      );
+      assert.deepEqual(map!.getLayersOrder(), ['below', 'above']);
+
+      map!.setStyle(OTHER_STYLE, { diff: false });
+      await settled();
+      assert.deepEqual(
+        map!.getLayersOrder(),
+        ['background', 'below', 'above'],
+        'the order holds after setStyle',
+      );
+      assert.strictEqual(warnings.length, 0, 'nothing is reported');
+    } finally {
+      console.warn = warn;
+    }
+  });
+
   test('a layer whose @before is missing from the new style is added on top', async function (assert) {
     let map: Map | undefined;
     const setMap = (m: Map) => {
@@ -328,7 +417,7 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
       listeners: Record<string, () => void> = {};
       _container: HTMLElement;
       _diffStyleRequest: AbortController | null = null;
-      style = {};
+      style = { _loaded: true };
       removed = false;
 
       constructor(options: { container: HTMLElement }) {
@@ -403,7 +492,7 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
     test('a map whose style was replaced is not pooled', async function (assert) {
       const map = await renderAndUnmount('/replaced.json', (m) => {
         // What MapLibre fires once setStyle() has loaded another style.
-        m.style = {};
+        m.style = { _loaded: true };
         m.fire('style.load');
       });
       assert.true(map.removed, 'the map was destroyed');
@@ -418,7 +507,7 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
 
     test('a map that rebuilt its own style after a context restore is pooled', async function (assert) {
       const map = await renderAndUnmount('/restored.json', (m) => {
-        m.style = {};
+        m.style = { _loaded: true };
         m.fire('webglcontextrestored');
         m.fire('style.load');
       });

@@ -9,6 +9,8 @@ import type {
 import { hash } from '@ember/helper';
 import {
   associateDestroyableChild,
+  isDestroyed,
+  isDestroying,
   registerDestructor,
 } from '@ember/destroyable';
 import type MapLibreGLSource from './maplibre-gl-source.gts';
@@ -125,14 +127,27 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
   private prevMinzoom?: number;
   private prevMaxzoom?: number;
 
-  // A style switched to with setStyle() may lack the layer @before names.
+  // @before may name a layer rendered later in the template, or one the new style lacks:
+  // add on top, then move once the render is done.
   private existingBefore() {
     const { before, map } = this.args;
     if (!before || map.getLayer(before)) return before;
-    console.warn(
-      `ember-maplibre-gl: layer "${this.layerId}" is added on top, because @before layer "${before}" is not in the style.`,
-    );
+    queueMicrotask(() => this.moveBefore(before));
     return undefined;
+  }
+
+  private moveBefore(before: string) {
+    const { map } = this.args;
+    if (isDestroying(this) || isDestroyed(this) || this.args.before !== before)
+      return;
+    if (!isStyleLoaded(map) || !map.getLayer(this.layerId)) return;
+    if (map.getLayer(before)) {
+      map.moveLayer(this.layerId, before);
+    } else {
+      console.warn(
+        `ember-maplibre-gl: layer "${this.layerId}" is on top, because @before layer "${before}" is not in the style.`,
+      );
+    }
   }
 
   /** @internal */
