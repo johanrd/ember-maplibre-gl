@@ -210,6 +210,41 @@ module('Integration | Component | maplibre-gl', function (hooks) {
     );
   });
 
+  test('a map with a style object is pooled', async function (assert) {
+    class ShowState {
+      @tracked show = true;
+    }
+
+    const state = new ShowState();
+    const canvasList: HTMLCanvasElement[] = [];
+    const capture = (m: Map) => canvasList.push(m.getCanvas());
+
+    await render(
+      <template>
+        {{#if state.show}}
+          <MapLibreGL
+            @initOptions={{hash style=STYLE center=(array 0 0) zoom=1}}
+            @reuseMaps={{true}}
+            @mapLoaded={{capture}}
+            style="height:200px;"
+          />
+        {{/if}}
+      </template>,
+    );
+
+    state.show = false;
+    await settled();
+    state.show = true;
+    await settled();
+
+    assert.strictEqual(canvasList.length, 2, 'the map loaded twice');
+    assert.strictEqual(
+      canvasList[0],
+      canvasList[1],
+      'the WebGL canvas was reused',
+    );
+  });
+
   test('a reused map renders the block while its tiles are still loading', async function (assert) {
     // A pooled map comes back with its style already parsed, so MapLibre never
     // fires 'style.load' for it again, and isStyleLoaded() stays false while
@@ -244,6 +279,7 @@ module('Integration | Component | maplibre-gl', function (hooks) {
       isStyleLoaded() {
         return this.styleLoaded;
       }
+      setStyle() {}
       resize() {}
       jumpTo() {}
       stop() {}

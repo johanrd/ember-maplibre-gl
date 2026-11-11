@@ -50,7 +50,7 @@ interface MapLibreGLSignature {
         /**
          * Cache the WebGL map instance on teardown and reuse it on remount.
          * Avoids expensive context creation on repeated route transitions.
-         * Only works when `initOptions.style` is a URL string.
+         * A reused map is diffed to `initOptions.style`, so it may have shown another style.
          */
         reuseMaps?: boolean;
         /** Override the map constructor (e.g. for testing or mapbox-gl compatibility). */
@@ -99,7 +99,7 @@ interface MapLibreGLSignature {
 |-----|------|----------|-------------|
 | `initOptions` | [MapInitOptions](#mapinitoptions) | Yes | MapLibre map options (style, center, zoom, etc.). Passed once at construction; later changes are ignored. The `container` property is managed internally and should be omitted. |
 | `mapLoaded` | `Function` | No | Called once the map's style and tiles have loaded. Receives the map instance. |
-| `reuseMaps` | `boolean` | No | Cache the WebGL map instance on teardown and reuse it on remount. Avoids expensive context creation on repeated route transitions. Only works when `initOptions.style` is a URL string. |
+| `reuseMaps` | `boolean` | No | Cache the WebGL map instance on teardown and reuse it on remount. Avoids expensive context creation on repeated route transitions. A reused map is diffed to `initOptions.style`, so it may have shown another style. |
 | `mapLib` | `MapConstructor` | No | Override the map constructor (e.g. for testing or mapbox-gl compatibility). |
 
 ### MapInitOptions
@@ -179,11 +179,11 @@ The component supports an `error` named block. The yielded value is an `Error` o
 useStyle = (map: Map, style: string) => map.setStyle(style);
 ```
 
-MapLibre drops the sources, layers and images that were added at runtime when the style changes. `<map.source>`, `<source.layer>`, `<map.layer>` and `<map.image>` add theirs again once the new style has loaded, in template order, so `@before` works as on the first render. If the layer that `@before` names is not in the style once the render is done, the layer is added on top and a warning is logged. Markers, popups and controls are not part of the style and stay where they are.
+MapLibre drops the sources, layers and images that were added at runtime when the style changes. `<map.source>`, `<source.layer>`, `<map.layer>` and `<map.image>` add theirs again once the new style has loaded, in template order, so `@before` works as on the first render. If the layer that `@before` names is not in the style once the render is done, the layer is added on top and a warning is logged. It moves under that layer once the layer is added. Markers, popups and controls are not part of the style and stay where they are.
 
 If the new style's sprite has an image with the same `@name`, the sprite's image is shown, as on the first render. A later `@url` for that name has no effect until the style changes again.
 
-With `@reuseMaps`, a map whose style was changed, or is still loading a new style, is destroyed on teardown, not pooled: the pool is keyed by the style the map was built with.
+With `@reuseMaps`, a reused map gets `setStyle(initOptions.style)`. MapLibre diffs it against the style the map shows, so the same style changes nothing, and a style changed with `setStyle` goes back to `initOptions.style`.
 
 ## Testing
 

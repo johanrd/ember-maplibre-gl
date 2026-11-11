@@ -127,27 +127,39 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
   private prevMinzoom?: number;
   private prevMaxzoom?: number;
 
-  // @before may name a layer rendered later in the template, or one the new style lacks:
-  // add on top, then move once the render is done.
-  private existingBefore() {
+  // The @before that MapLibre has: undefined while the named layer is missing.
+  private placedBefore?: string;
+
+  // @before may name a layer rendered later in the template, one the new style lacks, or one
+  // added later. The layer stays on top until then; each 'styledata' upserts it again.
+  private placeBefore() {
     const { before, map } = this.args;
-    if (!before || map.getLayer(before)) return before;
-    queueMicrotask(() => this.moveBefore(before));
-    return undefined;
+    const target = before && !map.getLayer(before) ? undefined : before;
+    if (target !== this.placedBefore) {
+      map.moveLayer(this.layerId, target);
+      this.placedBefore = target;
+    }
+    return target === before;
   }
 
-  private moveBefore(before: string) {
-    const { map } = this.args;
-    if (isDestroying(this) || isDestroyed(this) || this.args.before !== before)
-      return;
-    if (!isStyleLoaded(map) || !map.getLayer(this.layerId)) return;
-    if (map.getLayer(before)) {
-      map.moveLayer(this.layerId, before);
-    } else {
-      console.warn(
-        `ember-maplibre-gl: layer "${this.layerId}" is on top, because @before layer "${before}" is not in the style.`,
-      );
-    }
+  private warnUnlessPlaced() {
+    const { before } = this.args;
+    if (!before) return;
+    queueMicrotask(() => {
+      if (
+        isDestroying(this) ||
+        isDestroyed(this) ||
+        this.args.before !== before
+      )
+        return;
+      const { map } = this.args;
+      if (!isStyleLoaded(map) || !map.getLayer(this.layerId)) return;
+      if (!this.placeBefore()) {
+        console.warn(
+          `ember-maplibre-gl: layer "${this.layerId}" is on top until @before layer "${before}" is in the style.`,
+        );
+      }
+    });
   }
 
   /** @internal */
@@ -165,10 +177,14 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
         source: this.args.sourceId || options.source,
       };
 
+      const { before } = this.args;
+      this.placedBefore =
+        before && this.args.map.getLayer(before) ? before : undefined;
       // @ts-expect-error — LayerSpecification is a discriminated union on `type`;
       // TypeScript can't narrow a spread of the full union to a single variant.
-      this.args.map.addLayer(layerOptions, this.existingBefore());
-      this.prevBefore = this.args.before;
+      this.args.map.addLayer(layerOptions, this.placedBefore);
+      this.prevBefore = before;
+      if (this.placedBefore !== before) this.warnUnlessPlaced();
       this.prevLayout = options.layout;
       this.prevPaint = options.paint;
       this.prevFilter =
@@ -222,8 +238,9 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
 
     if (this.args.before !== this.prevBefore) {
       this.prevBefore = this.args.before;
-      this.args.map.moveLayer(this.layerId, this.existingBefore());
+      this.warnUnlessPlaced();
     }
+    if (this.args.before !== this.placedBefore) this.placeBefore();
   };
 
   <template>

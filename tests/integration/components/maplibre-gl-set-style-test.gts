@@ -364,7 +364,7 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
     }
   });
 
-  test('a layer whose @before is missing from the new style is added on top', async function (assert) {
+  test('a layer whose @before is missing is added on top, and moves once that layer is added', async function (assert) {
     let map: Map | undefined;
     const setMap = (m: Map) => {
       map = m;
@@ -406,6 +406,24 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
         warnings.some((w) => String(w).includes('"background"')),
         'the missing @before layer is reported',
       );
+
+      // Added under the layer, so only a move puts it back on top of it.
+      map!.addLayer(
+        {
+          id: 'background',
+          type: 'background',
+          paint: { 'background-color': '#000' },
+        },
+        'circles',
+      );
+      await waitUntil(() => map!.getLayersOrder()[0] === 'circles', {
+        timeout: 5000,
+      });
+      assert.deepEqual(
+        map!.getLayersOrder(),
+        ['circles', 'background'],
+        'the layer moves under @before once it is added',
+      );
     } finally {
       console.warn = warn;
     }
@@ -418,6 +436,7 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
       _container: HTMLElement;
       _diffStyleRequest: AbortController | null = null;
       style = { _loaded: true };
+      styleList: unknown[] = [];
       removed = false;
 
       constructor(options: { container: HTMLElement }) {
@@ -438,6 +457,9 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
       getStyle() {
         return {};
       }
+      setStyle(style: unknown) {
+        this.styleList.push(style);
+      }
       getContainer() {
         return this._container;
       }
@@ -457,18 +479,19 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
       @tracked show = true;
     }
 
-    // Renders a pooled map, lets `act` change it, then unmounts it.
-    async function renderAndUnmount(
-      styleUrl: string,
-      act: (map: FakeMap) => void,
-    ) {
+    class StyleState {
+      @tracked style = '/first.json';
+    }
+
+    test('a reused map is diffed to the requested style', async function (assert) {
       FakeMap.instances = [];
       const state = new ShowState();
+      const options = new StyleState();
       const rendered = render(
         <template>
           {{#if state.show}}
             <MapLibreGL
-              @initOptions={{hash style=styleUrl}}
+              @initOptions={{hash style=options.style}}
               @reuseMaps={{true}}
               @mapLib={{MapLib}}
               style="height:100px;"
@@ -481,37 +504,19 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
       map.fire('load');
       await rendered;
 
-      act(map);
-      await rerender();
-
       state.show = false;
       await settled();
-      return map;
-    }
-
-    test('a map whose style was replaced is not pooled', async function (assert) {
-      const map = await renderAndUnmount('/replaced.json', (m) => {
-        // What MapLibre fires once setStyle() has loaded another style.
-        m.style = { _loaded: true };
-        m.fire('style.load');
-      });
-      assert.true(map.removed, 'the map was destroyed');
-    });
-
-    test('a map still fetching a diffed style is not pooled', async function (assert) {
-      const map = await renderAndUnmount('/fetching.json', (m) => {
-        m._diffStyleRequest = new AbortController();
-      });
-      assert.true(map.removed, 'the map was destroyed');
-    });
-
-    test('a map that rebuilt its own style after a context restore is pooled', async function (assert) {
-      const map = await renderAndUnmount('/restored.json', (m) => {
-        m.style = { _loaded: true };
-        m.fire('webglcontextrestored');
-        m.fire('style.load');
-      });
       assert.false(map.removed, 'the map was pooled');
+
+      options.style = '/second.json';
+      state.show = true;
+      await settled();
+      assert.strictEqual(FakeMap.instances.length, 1, 'no new map was built');
+      assert.deepEqual(
+        map.styleList,
+        ['/second.json'],
+        'setStyle() got the new style',
+      );
     });
   });
 });

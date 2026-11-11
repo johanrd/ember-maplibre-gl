@@ -46,7 +46,7 @@ interface SavedMap {
   container: HTMLElement;
 }
 
-const savedMaps = new Map<string, SavedMap>();
+const savedMaps: SavedMap[] = [];
 
 /**
  * MapLibre [MapOptions ↗](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/MapOptions/) without `container`, which is managed internally.
@@ -74,7 +74,7 @@ export interface MapLibreGLSignature {
     /**
      * Cache the WebGL map instance on teardown and reuse it on remount.
      * Avoids expensive context creation on repeated route transitions.
-     * Only works when `initOptions.style` is a URL string.
+     * A reused map is diffed to `initOptions.style`, so it may have shown another style.
      */
     reuseMaps?: boolean;
 
@@ -187,13 +187,10 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
         if (this.map) markStyleFailed(this.map);
       };
 
-      let styleReplaced = false;
-      // The style MapLibre rebuilds from the old one after a WebGL context restore.
-      let restoredStyle: MaplibreMap['style'] | undefined;
-      const onStyleLoad = () => {
+      // Like react-map-gl's layers and sources: upsert again on each style change, so what is
+      // missing (a new style, a @before layer added later) is added or moved.
+      const onStyleChange = () => {
         if (!this.mapLoaded || !this.map) return;
-        if (this.map.style === restoredStyle) restoredStyle = undefined;
-        else styleReplaced = true;
         // A diffed setStyle() fires this inside a render that may have read the revision.
         queueMicrotask(() => {
           if (isDestroying(this) || isDestroyed(this) || !this.map) return;
@@ -208,20 +205,16 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
 
       const onContextRestored = () => {
         console.log('WebGL context restored');
-        restoredStyle = this.map?.style;
         this.map?.resize();
         this.map?.redraw();
       };
 
-      // Reuse is only enabled when style is a URL string — object styles can't be
-      // reliably compared, so we skip pooling for them.
       // Construction-only options (attributionControl, hash, interactive, etc.) are not
-      // reapplied on reuse — same limitation as react-map-gl. Callers sharing a style
-      // URL should use compatible initOptions.
-      const styleUrl =
-        typeof options.style === 'string' ? options.style : undefined;
-      const reused =
-        this.args.reuseMaps && styleUrl ? savedMaps.get(styleUrl) : undefined;
+      // reapplied on reuse — same limitation as react-map-gl.
+      const index = this.args.reuseMaps
+        ? savedMaps.findLastIndex(({ map }) => map instanceof this.mapLibrary)
+        : -1;
+      const reused = index === -1 ? undefined : savedMaps.splice(index, 1)[0];
 
       // Type for MapLibre private internals we depend on for reuse.
       type MapInternals = {
@@ -233,8 +226,7 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
       // If a future MapLibre version removes them, fall through to fresh creation.
       const canReuse = reused && '_container' in reused.map;
 
-      if (reused && canReuse && styleUrl) {
-        savedMaps.delete(styleUrl);
+      if (reused && canReuse) {
         this.map = reused.map;
         const mapInternals = this.map as unknown as MapInternals;
         const oldContainer = reused.container;
@@ -262,9 +254,11 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
         }
 
         // Step 4: apply new options.
-        // Note: react-map-gl calls setProps({styleDiffing: false}) here, which may change
-        // the style via setStyle(). We don't need that because savedMaps is keyed by style
-        // URL — we only reuse maps with a matching style.
+        // react-map-gl rebuilds the style (diff: false) when its mapStyle prop changed. Here
+        // the map may also have had map.setStyle(), so diff it to the requested style instead:
+        // the diff is empty for the same style, and the sources, layers and images in the
+        // block are added again on 'style.load' when it is not.
+        if (options.style) this.map.setStyle(options.style);
         this.map.resize();
         if (options.center !== undefined || options.zoom !== undefined) {
           this.map.jumpTo({ center: options.center, zoom: options.zoom });
@@ -288,7 +282,6 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
           console.warn(
             'MapLibre reuse failed: expected _container/_update internals missing',
           );
-          if (styleUrl) savedMaps.delete(styleUrl);
           reused.map.remove();
         }
         try {
@@ -311,7 +304,8 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
       }
 
       this.map.on('error', onError);
-      this.map.on('style.load', onStyleLoad);
+      this.map.on('style.load', onStyleChange);
+      this.map.on('styledata', onStyleChange);
       const stopWaitingForStyles = waitForStyleChanges(this.map);
       this.map.on('webglcontextlost', onContextLost);
       this.map.on('webglcontextrestored', onContextRestored);
@@ -320,19 +314,13 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
         endWait();
         this.map?.off('load', onLoad);
         this.map?.off('error', onError);
-        this.map?.off('style.load', onStyleLoad);
+        this.map?.off('style.load', onStyleChange);
+        this.map?.off('styledata', onStyleChange);
         stopWaitingForStyles();
         this.map?.off('webglcontextlost', onContextLost);
         this.map?.off('webglcontextrestored', onContextRestored);
 
-        // The pool is keyed by the first style: skip a map that shows, or is fetching, another.
-        if (
-          this.args.reuseMaps &&
-          this.map &&
-          styleUrl &&
-          !styleReplaced &&
-          !this.map._diffStyleRequest
-        ) {
+        if (this.args.reuseMaps && this.map) {
           // Don't pool broken maps. getStyle() returns null when the style hasn't loaded,
           // and throws when the map is dead (e.g. WebGL context lost). Either way, the map
           // is unusable — destroy it instead of caching. react-map-gl doesn't do this check;
@@ -349,21 +337,12 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
           }
 
           // Recycle: see https://github.com/visgl/react-map-gl/blob/c41e00c/modules/react-maplibre/src/maplibre/maplibre.ts#L342-L349
-          const existing = savedMaps.get(styleUrl);
-          if (existing) {
-            try {
-              existing.map.remove();
-            } catch {
-              /* ignore */
-            }
-          }
-
           // Pool hygiene: halt in-flight camera animations and stop observing
           // the about-to-be-detached container. Without this, an unfinished
           // fitBounds(…, {duration}) keeps rendering frames after pooling, and
           // a parent CSS layout transition keeps the ResizeObserver firing on
           // the orphan container (each tick reallocates the canvas backing store).
-          // The reuse path at lines 222-225 reconnects the observer on remount.
+          // The reuse path above reconnects the observer on remount.
           try {
             this.map.stop();
           } catch {
@@ -371,7 +350,7 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
           }
           (this.map as unknown as MapInternals)._resizeObserver?.disconnect();
 
-          savedMaps.set(styleUrl, {
+          savedMaps.push({
             map: this.map,
             container: this.map.getContainer(),
           });

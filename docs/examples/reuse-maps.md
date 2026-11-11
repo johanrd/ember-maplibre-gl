@@ -24,6 +24,10 @@ const options = {
 </template>
 ```
 
+## Different styles
+
+Maps that show different styles share one pool. A reused map gets `setStyle(initOptions.style)`, and MapLibre diffs it against the style the map shows: the same style changes nothing, and another style loads into the existing WebGL context. This works for style URLs and style objects.
+
 ## When to use it
 
 - **Multi-tab or wizard UIs** where the user switches between a map view and other views
