@@ -192,11 +192,13 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
           // Map is in a broken state (e.g. WebGL context lost)
         }
         if (!this.mapLoaded && !styleLoaded) endWait();
-        if (this.map) markStyleFailed(this.map);
+        // Source and layer errors carry their id; the others come from the style.
+        if (this.map && !('sourceId' in event) && !('layer' in event)) {
+          markStyleFailed(this.map);
+        }
       };
 
-      // Like react-map-gl's layers and sources: upsert again on each style change, so what is
-      // missing (a new style, a @before layer added later) is added or moved.
+      // Each new style drops what the components added, so they upsert again.
       let bumpQueued = false;
       const onStyleChange = () => {
         if (!this.mapLoaded || !this.map || bumpQueued) return;
@@ -268,7 +270,9 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
 
         // Step 4: apply new options. After a map.setStyle(), rebuild the pooled style, as
         // react-map-gl does (diff: false); a diff would drop the block's new layers too.
-        const restyle = this.map.style?.stylesheet !== reused.stylesheet;
+        const restyle =
+          this.map.style?.stylesheet !== reused.stylesheet ||
+          Boolean(this.map._diffStyleRequest);
         if (restyle) this.map.setStyle(poolKey, { diff: false });
         this.map.resize();
         if (options.center !== undefined || options.zoom !== undefined) {
@@ -312,7 +316,6 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
 
       this.map.on('error', onError);
       this.map.on('style.load', onStyleChange);
-      this.map.on('styledata', onStyleChange);
       const stopWaitingForStyles = waitForStyleChanges(this.map);
       this.map.on('webglcontextlost', onContextLost);
       this.map.on('webglcontextrestored', onContextRestored);
@@ -323,7 +326,6 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
         this.map?.off('style.load', onLoad);
         this.map?.off('error', onError);
         this.map?.off('style.load', onStyleChange);
-        this.map?.off('styledata', onStyleChange);
         stopWaitingForStyles();
         this.map?.off('webglcontextlost', onContextLost);
         this.map?.off('webglcontextrestored', onContextRestored);

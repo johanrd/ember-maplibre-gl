@@ -88,6 +88,7 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
   private _endLoadWait?: () => void;
   // Kept to add the image again, without a new load, after the style changes.
   private _image?: Parameters<MaplibreMap['addImage']>[1];
+  private _loadCount = 0;
   private _added?: StyleImage;
 
   /** @internal */
@@ -158,10 +159,10 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
     this._lastLoadHeight = height;
     this._lastLoadOptions = options;
 
-    // A newer load replaces any in-flight one, whose result _onImage discards.
     this._endLoadWait?.();
     this.removeFromStyle();
     this._image = undefined;
+    const load = ++this._loadCount;
 
     if (!url) {
       return;
@@ -187,7 +188,7 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
       });
       void loaded
         .then(
-          () => this._onImage(url, name, image),
+          () => this._onImage(load, image),
           (event: Event | string) => this._onSvgErr(url, event),
         )
         .catch((error) => this.onError(error))
@@ -195,24 +196,16 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
     } else {
       this.args.map
         .loadImage(url)
-        .then(({ data }) => this._onImage(url, name, data))
+        .then(({ data }) => this._onImage(load, data))
         .catch((error) => this.onError(error))
         .finally(endWait);
     }
   };
 
   /** @internal */
-  _onImage = (
-    url: MapLibreGLImageSignature['Args']['url'],
-    name: MapLibreGLImageSignature['Args']['name'],
-    image: Parameters<MaplibreMap['addImage']>[1],
-  ) => {
-    if (isDestroying(this) || isDestroyed(this)) {
-      return;
-    }
-
-    if (this.args.url !== url || this.args.name !== name) {
-      // url or name has changed since we started loading
+  _onImage = (load: number, image: Parameters<MaplibreMap['addImage']>[1]) => {
+    // Only the newest load counts: url, name, size or options changed since an older one.
+    if (isDestroying(this) || isDestroyed(this) || load !== this._loadCount) {
       return;
     }
 

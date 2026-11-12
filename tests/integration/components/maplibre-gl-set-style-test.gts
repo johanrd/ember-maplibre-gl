@@ -641,6 +641,13 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
       assert.false(map.removed, 'the pooled map stays pooled');
     });
 
+    test('a reused map still fetching a diffed style gets its initOptions.style back', async function (assert) {
+      const map = await remount('/first.json', (m) => {
+        m._diffStyleRequest = new AbortController();
+      });
+      assert.deepEqual(map.styleList, ['/first.json']);
+    });
+
     test('the pool keeps the newest four maps', async function (assert) {
       FakeMap.instances = [];
       const MapLib = class extends FakeMap {} as unknown as new (

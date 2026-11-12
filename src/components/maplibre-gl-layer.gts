@@ -106,7 +106,9 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
     this.layerId = args.options?.id ?? guidFor(this);
 
     if (args.parent) associateDestroyableChild(args.parent, this);
+    args.map.on('styledata', this.onStyleData);
     registerDestructor(this, () => {
+      this.args.map.off('styledata', this.onStyleData);
       try {
         if (this.args.map.getLayer(this.layerId))
           this.args.map?.removeLayer(this.layerId);
@@ -124,10 +126,12 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
 
   // The @before that MapLibre has: undefined while the named layer is missing.
   private placedBefore?: string;
+  // The source the layer waits for before it can be added.
+  private missingSource?: string;
   private lastWarning?: string;
 
   // @before may name a layer rendered later, one the style lacks, or one removed and added
-  // again. Until it is there the layer keeps its place; each 'styledata' upserts it again.
+  // again. Until it is there the layer keeps its place.
   private placeBefore() {
     const { before, map } = this.args;
     if (before && !map.getLayer(before)) {
@@ -138,16 +142,30 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
       map.moveLayer(this.layerId, before);
       this.placedBefore = before;
     }
+    this.lastWarning = undefined;
     return true;
   }
 
+  // As react-map-gl's layers, retry on a style change: a missing @before layer or source
+  // may be there now. Other layers do nothing.
+  private onStyleData = () => {
+    if (!this.args.before && !this.missingSource) return;
+    queueMicrotask(() => {
+      const { map } = this.args;
+      if (isDestroying(this) || isDestroyed(this) || !isStyleLoaded(map))
+        return;
+      if (map.getLayer(this.layerId)) this.placeBefore();
+      else if (this.missingSource && map.getSource(this.missingSource))
+        this.upsertLayer(this.args.options);
+    });
+  };
+
   // Once the render is done, since a later sibling may add what is missing.
-  private warnAfterRender(isMissing: () => boolean, warning: string) {
+  private warnAfterRender(warning: string, isMissing: () => boolean) {
     if (this.lastWarning === warning) return;
     queueMicrotask(() => {
       if (isDestroying(this) || isDestroyed(this)) return;
-      if (this.lastWarning === warning || !isStyleLoaded(this.args.map)) return;
-      if (!isMissing()) return;
+      if (!isStyleLoaded(this.args.map) || !isMissing()) return;
       this.lastWarning = warning;
       console.warn(`ember-maplibre-gl: ${warning}`);
     });
@@ -156,12 +174,18 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
   private warnUnlessPlaced() {
     const { before } = this.args;
     this.warnAfterRender(
-      () =>
-        this.args.before === before &&
-        Boolean(this.args.map.getLayer(this.layerId)) &&
-        !this.placeBefore(),
       `layer "${this.layerId}" is not under @before layer "${before}" until that layer is in the style.`,
+      () =>
+        before !== undefined &&
+        this.args.before === before &&
+        !this.args.map.getLayer(before),
     );
+    // A sibling later in the template may add the @before layer in this render.
+    queueMicrotask(() => {
+      if (isDestroying(this) || isDestroyed(this)) return;
+      if (isStyleLoaded(this.args.map) && this.args.map.getLayer(this.layerId))
+        this.placeBefore();
+    });
   }
 
   /** @internal */
@@ -180,10 +204,14 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
       };
       // As in react-map-gl: wait for the source. Adding it fires 'styledata', which retries.
       const { source } = layerOptions;
-      if (typeof source === 'string' && !this.args.map.getSource(source)) {
+      this.missingSource =
+        typeof source === 'string' && !this.args.map.getSource(source)
+          ? source
+          : undefined;
+      if (this.missingSource) {
         this.warnAfterRender(
-          () => !this.args.map.getSource(source),
           `layer "${this.layerId}" waits for source "${source}", which is not in the style.`,
+          () => this.missingSource === source,
         );
         return;
       }
