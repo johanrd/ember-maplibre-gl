@@ -122,7 +122,7 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
     registerDestructor(this, () => {
       this._endLoadWait?.();
       try {
-        // Only the image this component added: never one the style's sprite brought.
+        // Only the image this component added, by its @name.
         if (this._lastName && this.args.map?.hasImage(this._lastName)) {
           this.args.map.removeImage(this._lastName);
         }

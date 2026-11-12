@@ -27,7 +27,10 @@ export function consumeStyleRevision(map: MaplibreMap) {
 }
 
 export function bumpStyleRevision(map: MaplibreMap) {
-  stateOf(map).revision++;
+  const state = stateOf(map);
+  state.revision++;
+  state.busySince = undefined;
+  state.warned = false;
 }
 
 /** False on a context-lost map, and while a style from `setStyle()` loads. As in react-map-gl. */
