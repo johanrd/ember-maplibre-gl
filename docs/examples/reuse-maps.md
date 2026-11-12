@@ -26,7 +26,7 @@ const options = {
 
 ## Different styles
 
-Maps that show different styles share one pool. A reused map gets `setStyle(initOptions.style)`, and MapLibre diffs it against the style the map shows: the same style changes nothing, and another style loads into the existing WebGL context. This works for style URLs and style objects.
+One map per map library is pooled, as in react-map-gl. If the remounted map asks for another style, or the style was changed with `map.setStyle()`, the pooled map rebuilds its style in the same WebGL context, and the block renders once that style has loaded. Style objects are compared by reference, so keep one object per style.
 
 ## When to use it
 

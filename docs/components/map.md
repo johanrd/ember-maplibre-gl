@@ -50,7 +50,8 @@ interface MapLibreGLSignature {
         /**
          * Cache the WebGL map instance on teardown and reuse it on remount.
          * Avoids expensive context creation on repeated route transitions.
-         * A reused map is diffed to `initOptions.style`, so it may have shown another style.
+         * One map per `@mapLib` is pooled. A reused map gets `initOptions.style` again if it
+         * differs, or if `map.setStyle()` changed it.
          */
         reuseMaps?: boolean;
         /** Override the map constructor (e.g. for testing or mapbox-gl compatibility). */
@@ -99,7 +100,7 @@ interface MapLibreGLSignature {
 |-----|------|----------|-------------|
 | `initOptions` | [MapInitOptions](#mapinitoptions) | Yes | MapLibre map options (style, center, zoom, etc.). Passed once at construction; later changes are ignored. The `container` property is managed internally and should be omitted. |
 | `mapLoaded` | `Function` | No | Called once the map's style and tiles have loaded. Receives the map instance. |
-| `reuseMaps` | `boolean` | No | Cache the WebGL map instance on teardown and reuse it on remount. Avoids expensive context creation on repeated route transitions. A reused map is diffed to `initOptions.style`, so it may have shown another style. |
+| `reuseMaps` | `boolean` | No | Cache the WebGL map instance on teardown and reuse it on remount. Avoids expensive context creation on repeated route transitions. One map per `mapLib` is pooled. A reused map gets `initOptions.style` again if it differs, or if `map.setStyle()` changed it. |
 | `mapLib` | `MapConstructor` | No | Override the map constructor (e.g. for testing or mapbox-gl compatibility). |
 
 ### MapInitOptions
@@ -183,7 +184,7 @@ MapLibre drops the sources, layers and images that were added at runtime when th
 
 If the new style's sprite has an image with the same `@name`, the sprite's image is shown, as on the first render. A later `@url` for that name has no effect until the style changes again.
 
-With `@reuseMaps`, a reused map gets `setStyle(initOptions.style)`. MapLibre diffs it against the style the map shows, so the same style changes nothing, and a style changed with `setStyle` goes back to `initOptions.style`.
+With `@reuseMaps`, a map changed with `setStyle` gets `initOptions.style` again when it is reused.
 
 ## Testing
 

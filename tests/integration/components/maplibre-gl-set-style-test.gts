@@ -432,10 +432,10 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
   module('pooling', function () {
     class FakeMap {
       static instances: FakeMap[] = [];
-      listeners: Record<string, () => void> = {};
+      listeners: Record<string, (() => void)[]> = {};
       _container: HTMLElement;
       _diffStyleRequest: AbortController | null = null;
-      style = { _loaded: true };
+      style = { _loaded: true, stylesheet: {} };
       styleList: unknown[] = [];
       removed = false;
 
@@ -445,20 +445,24 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
       }
 
       on(type: string, listener: () => void) {
-        this.listeners[type] = listener;
+        (this.listeners[type] ??= []).push(listener);
         return this;
+      }
+      once(type: string, listener: () => void) {
+        return this.on(type, listener);
       }
       off() {
         return this;
       }
       fire(type: string) {
-        this.listeners[type]?.();
+        for (const listener of this.listeners[type] ?? []) listener();
       }
       getStyle() {
         return {};
       }
       setStyle(style: unknown) {
         this.styleList.push(style);
+        this.style = { _loaded: true, stylesheet: {} };
       }
       getContainer() {
         return this._container;
@@ -473,29 +477,33 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
       }
     }
 
-    const MapLib = FakeMap as unknown as new (...args: unknown[]) => Map;
-
-    class ShowState {
+    class State {
       @tracked show = true;
-    }
-
-    class StyleState {
       @tracked style = '/first.json';
     }
 
-    test('a reused map is diffed to the requested style', async function (assert) {
+    // Renders a pooled map, lets `act` change it, unmounts it and mounts it with `nextStyle`.
+    async function remount(
+      nextStyle: string,
+      act: (map: FakeMap) => void = () => {},
+    ) {
       FakeMap.instances = [];
-      const state = new ShowState();
-      const options = new StyleState();
+      // Its own class, so that it has its own pool.
+      const MapLib = class extends FakeMap {} as unknown as new (
+        ...args: unknown[]
+      ) => Map;
+      const state = new State();
       const rendered = render(
         <template>
           {{#if state.show}}
             <MapLibreGL
-              @initOptions={{hash style=options.style}}
+              @initOptions={{hash style=state.style}}
               @reuseMaps={{true}}
               @mapLib={{MapLib}}
               style="height:100px;"
-            />
+            >
+              <span data-test-block>loaded</span>
+            </MapLibreGL>
           {{/if}}
         </template>,
       );
@@ -503,20 +511,45 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
       const map = FakeMap.instances[0]!;
       map.fire('load');
       await rendered;
+      act(map);
 
       state.show = false;
       await settled();
-      assert.false(map.removed, 'the map was pooled');
-
-      options.style = '/second.json';
+      state.style = nextStyle;
       state.show = true;
+      await rerender();
+      return map;
+    }
+
+    test('a reused map with the same style keeps it', async function (assert) {
+      const map = await remount('/first.json');
       await settled();
       assert.strictEqual(FakeMap.instances.length, 1, 'no new map was built');
+      assert.deepEqual(map.styleList, [], 'setStyle() was not called');
+      assert.dom('[data-test-block]').exists();
+    });
+
+    test('a reused map gets another style, and renders once it has loaded', async function (assert) {
+      const map = await remount('/second.json');
       assert.deepEqual(
         map.styleList,
         ['/second.json'],
-        'setStyle() got the new style',
+        'the style was rebuilt',
       );
+      assert.dom('[data-test-block]').doesNotExist('waits for the style');
+      map.fire('style.load');
+      await settled();
+      assert.dom('[data-test-block]').exists();
+    });
+
+    test('a reused map that had map.setStyle() gets its initOptions.style back', async function (assert) {
+      const map = await remount('/first.json', (m) =>
+        m.setStyle('/other.json'),
+      );
+      assert.deepEqual(map.styleList, ['/other.json', '/first.json']);
+      map.fire('style.load');
+      await settled();
+      assert.dom('[data-test-block]').exists();
     });
   });
 });

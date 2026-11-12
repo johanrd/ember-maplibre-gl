@@ -44,9 +44,14 @@ const loadWaiter = buildWaiter('ember-maplibre-gl:map-load');
 interface SavedMap {
   map: MaplibreMap;
   container: HTMLElement;
+  /** The `initOptions.style` the map was built or restyled with. */
+  style: MapOptions['style'];
+  /** The style it had at load. map.setStyle() replaces this object. */
+  stylesheet?: MaplibreMap['style']['stylesheet'];
 }
 
-const savedMaps: SavedMap[] = [];
+// One map per map library, so a pool never holds many WebGL contexts.
+const savedMaps = new Map<unknown, SavedMap>();
 
 /**
  * MapLibre [MapOptions ↗](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/MapOptions/) without `container`, which is managed internally.
@@ -74,7 +79,8 @@ export interface MapLibreGLSignature {
     /**
      * Cache the WebGL map instance on teardown and reuse it on remount.
      * Avoids expensive context creation on repeated route transitions.
-     * A reused map is diffed to `initOptions.style`, so it may have shown another style.
+     * One map per `@mapLib` is pooled. A reused map gets `initOptions.style` again if it
+     * differs, or if `map.setStyle()` changed it.
      */
     reuseMaps?: boolean;
 
@@ -157,7 +163,9 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
 
       const endWait = beginWait(loadWaiter, 'the map load');
 
+      let stylesheet: SavedMap['stylesheet'];
       const onLoad = () => {
+        stylesheet = this.map?.style?.stylesheet;
         this.mapLoaded = true;
         this.args.mapLoaded?.(this.map as MaplibreMap);
         endWait();
@@ -189,10 +197,13 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
 
       // Like react-map-gl's layers and sources: upsert again on each style change, so what is
       // missing (a new style, a @before layer added later) is added or moved.
+      let bumpQueued = false;
       const onStyleChange = () => {
-        if (!this.mapLoaded || !this.map) return;
+        if (!this.mapLoaded || !this.map || bumpQueued) return;
+        bumpQueued = true;
         // A diffed setStyle() fires this inside a render that may have read the revision.
         queueMicrotask(() => {
+          bumpQueued = false;
           if (isDestroying(this) || isDestroyed(this) || !this.map) return;
           bumpStyleRevision(this.map);
         });
@@ -211,10 +222,10 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
 
       // Construction-only options (attributionControl, hash, interactive, etc.) are not
       // reapplied on reuse — same limitation as react-map-gl.
-      const index = this.args.reuseMaps
-        ? savedMaps.findLastIndex(({ map }) => map instanceof this.mapLibrary)
-        : -1;
-      const reused = index === -1 ? undefined : savedMaps.splice(index, 1)[0];
+      const reused = this.args.reuseMaps
+        ? savedMaps.get(this.mapLibrary)
+        : undefined;
+      savedMaps.delete(this.mapLibrary);
 
       // Type for MapLibre private internals we depend on for reuse.
       type MapInternals = {
@@ -253,25 +264,26 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
           mapInternals._resizeObserver.observe(element);
         }
 
-        // Step 4: apply new options.
-        // react-map-gl rebuilds the style (diff: false) when its mapStyle prop changed. Here
-        // the map may also have had map.setStyle(), so diff it to the requested style instead:
-        // the diff is empty for the same style, and the sources, layers and images in the
-        // block are added again on 'style.load' when it is not.
-        if (options.style) this.map.setStyle(options.style);
+        // Step 4: apply new options. Like react-map-gl, rebuild the style (diff: false) when
+        // it differs. A diff would also drop the block's layers, added while a URL fetches.
+        const restyle =
+          Boolean(options.style) &&
+          (options.style !== reused.style ||
+            this.map.style?.stylesheet !== reused.stylesheet);
+        if (restyle && options.style) {
+          this.map.setStyle(options.style, { diff: false });
+        }
         this.map.resize();
         if (options.center !== undefined || options.zoom !== undefined) {
           this.map.jumpTo({ center: options.center, zoom: options.zoom });
         }
 
         // Step 5: signal load directly instead of simulating a 'load' event
-        // via fire() — the component is the only intended listener, and this
-        // avoids depending on fire()'s string-event behavior across versions.
-        // The pool only accepts maps whose style has loaded, and 'style.load'
-        // does not fire again for a style MapLibre has already parsed, so
-        // waiting on it here would wait forever. Pending tiles keep rendering
-        // after the block appears, which is what a fresh map does too.
-        onLoad();
+        // via fire() — the component is the only intended listener. A kept style has
+        // loaded, and 'style.load' does not fire again for it; a rebuilt one fires it.
+        // Pending tiles keep rendering after the block appears, as on a fresh map.
+        if (restyle) this.map.once('style.load', onLoad);
+        else onLoad();
 
         // Force redraw
         this.map.triggerRepaint();
@@ -313,6 +325,7 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
       registerDestructor(this, () => {
         endWait();
         this.map?.off('load', onLoad);
+        this.map?.off('style.load', onLoad);
         this.map?.off('error', onError);
         this.map?.off('style.load', onStyleChange);
         this.map?.off('styledata', onStyleChange);
@@ -350,9 +363,16 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
           }
           (this.map as unknown as MapInternals)._resizeObserver?.disconnect();
 
-          savedMaps.push({
+          try {
+            savedMaps.get(this.mapLibrary)?.map.remove();
+          } catch {
+            /* already dead */
+          }
+          savedMaps.set(this.mapLibrary, {
             map: this.map,
             container: this.map.getContainer(),
+            style: options.style,
+            stylesheet,
           });
         } else {
           this.map?.remove();

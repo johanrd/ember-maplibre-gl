@@ -240,7 +240,7 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
       this.prevBefore = this.args.before;
       this.warnUnlessPlaced();
     }
-    if (this.args.before !== this.placedBefore) this.placeBefore();
+    this.placeBefore();
   };
 
   <template>
