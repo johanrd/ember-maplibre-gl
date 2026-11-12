@@ -48,8 +48,10 @@ interface SavedMap {
   stylesheet?: MaplibreMap['style']['stylesheet'];
 }
 
-// Keyed by `initOptions.style`: a URL, or a style object by reference.
+// Keyed by `initOptions.style`: a URL, or a style object by reference. Each map holds a
+// WebGL context, so the oldest is removed beyond MAX_SAVED_MAPS.
 const savedMaps = new Map<NonNullable<MapOptions['style']>, SavedMap>();
+const MAX_SAVED_MAPS = 4;
 
 /**
  * MapLibre [MapOptions ↗](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/MapOptions/) without `container`, which is managed internally.
@@ -78,7 +80,7 @@ export interface MapLibreGLSignature {
      * Cache the WebGL map instance on teardown and reuse it on remount.
      * Avoids expensive context creation on repeated route transitions.
      * Maps are pooled by `initOptions.style` (a URL, or a style object by reference). A map
-     * changed with `map.setStyle()` gets that style again when it is reused.
+     * changed with `map.setStyle()` gets that style again when it is reused. At most 4 are pooled.
      */
     reuseMaps?: boolean;
 
@@ -361,11 +363,21 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
           } catch {
             /* already dead */
           }
+          savedMaps.delete(poolKey);
           savedMaps.set(poolKey, {
             map: this.map,
             container: this.map.getContainer(),
             stylesheet,
           });
+          for (const [key, saved] of savedMaps) {
+            if (savedMaps.size <= MAX_SAVED_MAPS) break;
+            savedMaps.delete(key);
+            try {
+              saved.map.remove();
+            } catch {
+              /* already dead */
+            }
+          }
         } else {
           this.map?.remove();
         }

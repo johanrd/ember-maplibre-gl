@@ -116,7 +116,6 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
     });
   }
 
-  private prevBefore?: MapLibreGLLayerSignature['Args']['before'];
   private prevLayout?: LayerOptions['layout'];
   private prevPaint?: LayerOptions['paint'];
   private prevFilter?: FilterSpecification;
@@ -125,37 +124,44 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
 
   // The @before that MapLibre has: undefined while the named layer is missing.
   private placedBefore?: string;
+  private lastWarning?: string;
 
-  // @before may name a layer rendered later in the template, one the new style lacks, or one
-  // added later. The layer stays on top until then; each 'styledata' upserts it again.
+  // @before may name a layer rendered later, one the style lacks, or one removed and added
+  // again. Until it is there the layer keeps its place; each 'styledata' upserts it again.
   private placeBefore() {
     const { before, map } = this.args;
-    const target = before && !map.getLayer(before) ? undefined : before;
-    if (target !== this.placedBefore) {
-      map.moveLayer(this.layerId, target);
-      this.placedBefore = target;
+    if (before && !map.getLayer(before)) {
+      this.placedBefore = undefined;
+      return false;
     }
-    return target === before;
+    if (before !== this.placedBefore) {
+      map.moveLayer(this.layerId, before);
+      this.placedBefore = before;
+    }
+    return true;
+  }
+
+  // Once the render is done, since a later sibling may add what is missing.
+  private warnAfterRender(isMissing: () => boolean, warning: string) {
+    if (this.lastWarning === warning) return;
+    queueMicrotask(() => {
+      if (isDestroying(this) || isDestroyed(this)) return;
+      if (this.lastWarning === warning || !isStyleLoaded(this.args.map)) return;
+      if (!isMissing()) return;
+      this.lastWarning = warning;
+      console.warn(`ember-maplibre-gl: ${warning}`);
+    });
   }
 
   private warnUnlessPlaced() {
     const { before } = this.args;
-    if (!before) return;
-    queueMicrotask(() => {
-      if (
-        isDestroying(this) ||
-        isDestroyed(this) ||
-        this.args.before !== before
-      )
-        return;
-      const { map } = this.args;
-      if (!isStyleLoaded(map) || !map.getLayer(this.layerId)) return;
-      if (!this.placeBefore()) {
-        console.warn(
-          `ember-maplibre-gl: layer "${this.layerId}" is on top until @before layer "${before}" is in the style.`,
-        );
-      }
-    });
+    this.warnAfterRender(
+      () =>
+        this.args.before === before &&
+        Boolean(this.args.map.getLayer(this.layerId)) &&
+        !this.placeBefore(),
+      `layer "${this.layerId}" is not under @before layer "${before}" until that layer is in the style.`,
+    );
   }
 
   /** @internal */
@@ -174,8 +180,13 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
       };
       // As in react-map-gl: wait for the source. Adding it fires 'styledata', which retries.
       const { source } = layerOptions;
-      if (typeof source === 'string' && !this.args.map.getSource(source))
+      if (typeof source === 'string' && !this.args.map.getSource(source)) {
+        this.warnAfterRender(
+          () => !this.args.map.getSource(source),
+          `layer "${this.layerId}" waits for source "${source}", which is not in the style.`,
+        );
         return;
+      }
 
       const { before } = this.args;
       this.placedBefore =
@@ -183,7 +194,6 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
       // @ts-expect-error — LayerSpecification is a discriminated union on `type`;
       // TypeScript can't narrow a spread of the full union to a single variant.
       this.args.map.addLayer(layerOptions, this.placedBefore);
-      this.prevBefore = before;
       if (this.placedBefore !== before) this.warnUnlessPlaced();
       this.prevLayout = options.layout;
       this.prevPaint = options.paint;
@@ -236,11 +246,7 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
       this.prevFilter = filter;
     }
 
-    if (this.args.before !== this.prevBefore) {
-      this.prevBefore = this.args.before;
-      this.warnUnlessPlaced();
-    }
-    this.placeBefore();
+    if (!this.placeBefore()) this.warnUnlessPlaced();
   };
 
   <template>

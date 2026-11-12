@@ -26,7 +26,7 @@ const options = {
 
 ## Style objects
 
-Maps are pooled by `initOptions.style`: a URL, or a style object by reference. Keep one object per style, so that a remounted map finds its pooled map. A map whose style was changed with `map.setStyle()` rebuilds its style from `initOptions.style` when it is reused, and the block renders once that style has loaded.
+Maps are pooled by `initOptions.style`: a URL, or a style object by reference. Keep one object per style, so that a remounted map finds its pooled map. At most four maps are pooled, and the oldest is removed first, because each one holds a WebGL context. A map whose style was changed with `map.setStyle()` rebuilds its style from `initOptions.style` when it is reused, and the block renders once that style has loaded.
 
 ## When to use it
 
