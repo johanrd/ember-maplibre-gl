@@ -494,6 +494,42 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
     }
   });
 
+  test('a layer before its source in the template is added in the same render', async function (assert) {
+    let map: Map | undefined;
+    const setMap = (m: Map) => {
+      map = m;
+    };
+    const warn = console.warn;
+    const warnings: unknown[] = [];
+    console.warn = (...args: unknown[]) => warnings.push(args[0]);
+
+    try {
+      await render(
+        <template>
+          <MapLibreGL
+            @initOptions={{hash style=STYLE}}
+            @mapLoaded={{setMap}}
+            style="height:100px;"
+            as |m|
+          >
+            <m.layer
+              @sourceId="points"
+              @options={{hash id="dots" type="circle"}}
+            />
+            <m.source
+              @sourceId="points"
+              @options={{hash type="geojson" data=GEOJSON}}
+            />
+          </MapLibreGL>
+        </template>,
+      );
+      assert.deepEqual(map!.getLayersOrder(), ['dots']);
+      assert.strictEqual(warnings.length, 0, 'nothing is reported');
+    } finally {
+      console.warn = warn;
+    }
+  });
+
   test('a layer whose source is missing waits for it, with a warning', async function (assert) {
     let map: Map | undefined;
     const setMap = (m: Map) => {

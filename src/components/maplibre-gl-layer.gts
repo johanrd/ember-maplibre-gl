@@ -147,44 +147,53 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
   }
 
   // As react-map-gl's layers, retry on a style change: a missing @before layer or source
-  // may be there now. Other layers do nothing.
+  // may be there now. A placed layer only checks that its @before layer is still there.
   private onStyleData = () => {
-    if (!this.args.before && !this.missingSource) return;
+    const { before, map } = this.args;
+    if (this.missingSource) {
+      if (!map.getSource(this.missingSource)) return;
+    } else if (
+      !before ||
+      (before === this.placedBefore && map.getLayer(before))
+    ) {
+      return;
+    }
+    queueMicrotask(() => {
+      if (isDestroying(this) || isDestroyed(this) || !isStyleLoaded(map))
+        return;
+      // A layer that a new style dropped comes back with the 'style.load' upsert.
+      if (map.getLayer(this.layerId)) this.placeBefore();
+      else if (this.missingSource) this.upsertLayer(this.args.options);
+    });
+  };
+
+  private warnOnce(warning: string) {
+    if (this.lastWarning === warning) return;
+    this.lastWarning = warning;
+    console.warn(`ember-maplibre-gl: ${warning}`);
+  }
+
+  // Once the render is done, since a later sibling may add the @before layer or the source.
+  private retryAfterRender() {
+    const { before } = this.args;
+    const source = this.missingSource;
     queueMicrotask(() => {
       const { map } = this.args;
       if (isDestroying(this) || isDestroyed(this) || !isStyleLoaded(map))
         return;
-      if (map.getLayer(this.layerId)) this.placeBefore();
-      else if (this.missingSource && map.getSource(this.missingSource))
-        this.upsertLayer(this.args.options);
-    });
-  };
-
-  // Once the render is done, since a later sibling may add what is missing.
-  private warnAfterRender(warning: string, isMissing: () => boolean) {
-    if (this.lastWarning === warning) return;
-    queueMicrotask(() => {
-      if (isDestroying(this) || isDestroyed(this)) return;
-      if (!isStyleLoaded(this.args.map) || !isMissing()) return;
-      this.lastWarning = warning;
-      console.warn(`ember-maplibre-gl: ${warning}`);
-    });
-  }
-
-  private warnUnlessPlaced() {
-    const { before } = this.args;
-    this.warnAfterRender(
-      `layer "${this.layerId}" is not under @before layer "${before}" until that layer is in the style.`,
-      () =>
-        before !== undefined &&
-        this.args.before === before &&
-        !this.args.map.getLayer(before),
-    );
-    // A sibling later in the template may add the @before layer in this render.
-    queueMicrotask(() => {
-      if (isDestroying(this) || isDestroyed(this)) return;
-      if (isStyleLoaded(this.args.map) && this.args.map.getLayer(this.layerId))
-        this.placeBefore();
+      if (source) {
+        if (this.missingSource !== source) return;
+        if (map.getSource(source)) this.upsertLayer(this.args.options);
+        else
+          this.warnOnce(
+            `layer "${this.layerId}" waits for source "${source}", which is not in the style.`,
+          );
+      } else if (this.args.before === before && map.getLayer(this.layerId)) {
+        if (!this.placeBefore())
+          this.warnOnce(
+            `layer "${this.layerId}" is not under @before layer "${before}" until that layer is in the style.`,
+          );
+      }
     });
   }
 
@@ -209,10 +218,7 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
           ? source
           : undefined;
       if (this.missingSource) {
-        this.warnAfterRender(
-          `layer "${this.layerId}" waits for source "${source}", which is not in the style.`,
-          () => this.missingSource === source,
-        );
+        this.retryAfterRender();
         return;
       }
 
@@ -222,7 +228,8 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
       // @ts-expect-error — LayerSpecification is a discriminated union on `type`;
       // TypeScript can't narrow a spread of the full union to a single variant.
       this.args.map.addLayer(layerOptions, this.placedBefore);
-      if (this.placedBefore !== before) this.warnUnlessPlaced();
+      if (this.placedBefore === before) this.lastWarning = undefined;
+      else this.retryAfterRender();
       this.prevLayout = options.layout;
       this.prevPaint = options.paint;
       this.prevFilter =
@@ -274,7 +281,7 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
       this.prevFilter = filter;
     }
 
-    if (!this.placeBefore()) this.warnUnlessPlaced();
+    if (!this.placeBefore()) this.retryAfterRender();
   };
 
   <template>
