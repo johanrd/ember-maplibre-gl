@@ -35,7 +35,7 @@ const GEOJSON: FeatureCollection = {
   ],
 };
 
-// Holds the style response back until `release()` is called.
+// Serves `style` at held://style once `release()` is called.
 function holdStyle(style: StyleSpecification) {
   let release = () => {};
   const held = new Promise<void>((resolve) => (release = resolve));
@@ -48,9 +48,10 @@ function holdStyle(style: StyleSpecification) {
 
 module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
   setupRenderingTest(hooks);
+  hooks.afterEach(() => removeProtocol('held'));
 
   for (const diff of [false, true]) {
-    test(`sources, layers and images are added again after setStyle (diff: ${diff})`, async function (assert) {
+    test(`sources, layers and images are added again (diff: ${diff})`, async function (assert) {
       let map: Map | undefined;
       const setMap = (m: Map) => {
         map = m;
@@ -79,8 +80,6 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
           </MapLibreGL>
         </template>,
       );
-
-      assert.ok(map!.getLayer('circles'), 'layer is on the first style');
       assert.true(map!.hasImage('dot'), 'image is on the first style');
 
       map!.setStyle(OTHER_STYLE, { diff });
@@ -88,17 +87,16 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
 
       assert.ok(map!.getLayer('background'), 'the new style is in place');
       assert.ok(map!.getSource('points'), 'source was added again');
-      assert.ok(map!.getLayer('circles'), 'layer was added again');
       assert.deepEqual(
         map!.getLayersOrder(),
         ['background', 'below', 'circles'],
-        '@before is honoured when the layers come back',
+        'layers are back, @before included',
       );
       assert.true(map!.hasImage('dot'), 'image was added again');
     });
   }
 
-  test('a source keeps the data it had when the style is replaced', async function (assert) {
+  test('a source comes back with its current data', async function (assert) {
     class State {
       @tracked data: FeatureCollection = GEOJSON;
     }
@@ -138,14 +136,13 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
     assert.deepEqual(
       source?.type === 'geojson' ? source.data : undefined,
       updated,
-      'the re-added source has the current data, not the first',
     );
   });
 
-  test('a render while the new style loads does not throw, and catches up once it has loaded', async function (assert) {
+  test('a render while the new style loads does not throw, and catches up', async function (assert) {
     class State {
       @tracked data: FeatureCollection = GEOJSON;
-      @tracked showLayer = false;
+      @tracked show = false;
     }
     const state = new State();
     let map: Map | undefined;
@@ -166,8 +163,9 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
             @options={{hash type="geojson" data=state.data}}
             as |source|
           >
-            {{#if state.showLayer}}
+            {{#if state.show}}
               <source.layer @options={{hash id="circles" type="circle"}} />
+              <m.image @name="dot" @url={{PNG_DATA_URL}} />
             {{/if}}
           </m.source>
         </MapLibreGL>
@@ -175,196 +173,31 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
     );
 
     const release = holdStyle(OTHER_STYLE);
+    map!.setStyle('held://style', { diff: false });
 
-    try {
-      map!.setStyle('held://style', { diff: false });
-
-      const updated: FeatureCollection = {
-        type: 'FeatureCollection',
-        features: [],
-      };
-      state.data = updated;
-      state.showLayer = true;
-      await rerender();
-      assert.strictEqual(
-        map!.getStyle(),
-        undefined,
-        'that render ran while the style loaded',
-      );
-
-      release();
-      await settled();
-
-      const source = map!.getStyle().sources['points'];
-      assert.deepEqual(
-        source?.type === 'geojson' ? source.data : undefined,
-        updated,
-        'the source has the data set while the style loaded',
-      );
-      assert.ok(
-        map!.getLayer('circles'),
-        'the layer mounted while the style loaded is added',
-      );
-    } finally {
-      removeProtocol('held');
-    }
-  });
-
-  test('settled() waits for a diffed setStyle(url)', async function (assert) {
-    let map: Map | undefined;
-    const setMap = (m: Map) => {
-      map = m;
+    const updated: FeatureCollection = {
+      type: 'FeatureCollection',
+      features: [],
     };
+    state.data = updated;
+    state.show = true;
+    await rerender();
+    assert.strictEqual(map!.getStyle(), undefined, 'the style is loading');
 
-    await render(
-      <template>
-        <MapLibreGL
-          @initOptions={{hash style=STYLE}}
-          @mapLoaded={{setMap}}
-          style="height:100px;"
-          as |m|
-        >
-          <m.source
-            @sourceId="points"
-            @options={{hash type="geojson" data=GEOJSON}}
-            as |source|
-          >
-            <source.layer @options={{hash id="circles" type="circle"}} />
-          </m.source>
-        </MapLibreGL>
-      </template>,
-    );
-
-    const release = holdStyle(OTHER_STYLE);
-    try {
-      map!.setStyle('held://style');
-      let isSettled = false;
-      const settling = settled().then(() => (isSettled = true));
-
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      assert.false(isSettled, 'settled() waits while the style is fetched');
-
-      release();
-      await settling;
-      assert.ok(map!.getLayer('background'), 'the new style is in place');
-      assert.ok(map!.getLayer('circles'), 'the layer is back');
-    } finally {
-      removeProtocol('held');
-    }
-  });
-
-  test('settled() does not wait after a setStyle() that changes nothing', async function (assert) {
-    let map: Map | undefined;
-    const setMap = (m: Map) => {
-      map = m;
-    };
-
-    await render(
-      <template>
-        <MapLibreGL
-          @initOptions={{hash style=STYLE}}
-          @mapLoaded={{setMap}}
-          style="height:100px;"
-        />
-      </template>,
-    );
-
-    const started = Date.now();
-    map!.setStyle(STYLE);
+    release();
     await settled();
-    assert.true(Date.now() - started < 1000, 'settled() did not time out');
+
+    const source = map!.getStyle().sources['points'];
+    assert.deepEqual(
+      source?.type === 'geojson' ? source.data : undefined,
+      updated,
+      'the source has the data set while the style loaded',
+    );
+    assert.ok(map!.getLayer('circles'), 'the layer mounted meanwhile is added');
+    assert.true(map!.hasImage('dot'), 'the image mounted meanwhile is added');
   });
 
-  test('after a setStyle() that fails, settled() does not hang and the next style works', async function (assert) {
-    let map: Map | undefined;
-    const setMap = (m: Map) => {
-      map = m;
-    };
-    const error = console.error;
-    console.error = () => {};
-
-    try {
-      await render(
-        <template>
-          <MapLibreGL
-            @initOptions={{hash style=STYLE}}
-            @mapLoaded={{setMap}}
-            style="height:100px;"
-            as |m|
-          >
-            <m.source
-              @sourceId="points"
-              @options={{hash type="geojson" data=GEOJSON}}
-              as |source|
-            >
-              <source.layer @options={{hash id="circles" type="circle"}} />
-            </m.source>
-          </MapLibreGL>
-        </template>,
-      );
-
-      const started = Date.now();
-      map!.setStyle('/missing-style.json', { diff: false });
-      await settled();
-      assert.true(Date.now() - started < 5000, 'settled() did not time out');
-
-      map!.setStyle(OTHER_STYLE, { diff: false });
-      await settled();
-      assert.ok(map!.getLayer('background'), 'the next style is in place');
-      assert.ok(map!.getLayer('circles'), 'the layer is back');
-    } finally {
-      console.error = error;
-    }
-  });
-
-  test('@before can name a layer that comes later in the template', async function (assert) {
-    let map: Map | undefined;
-    const setMap = (m: Map) => {
-      map = m;
-    };
-    const warn = console.warn;
-    const warnings: unknown[] = [];
-    console.warn = (...args: unknown[]) => warnings.push(args[0]);
-
-    try {
-      await render(
-        <template>
-          <MapLibreGL
-            @initOptions={{hash style=STYLE}}
-            @mapLoaded={{setMap}}
-            style="height:100px;"
-            as |m|
-          >
-            <m.source
-              @sourceId="points"
-              @options={{hash type="geojson" data=GEOJSON}}
-              as |source|
-            >
-              <source.layer
-                @options={{hash id="below" type="circle"}}
-                @before="above"
-              />
-              <source.layer @options={{hash id="above" type="circle"}} />
-            </m.source>
-          </MapLibreGL>
-        </template>,
-      );
-      assert.deepEqual(map!.getLayersOrder(), ['below', 'above']);
-
-      map!.setStyle(OTHER_STYLE, { diff: false });
-      await settled();
-      assert.deepEqual(
-        map!.getLayersOrder(),
-        ['background', 'below', 'above'],
-        'the order holds after setStyle',
-      );
-      assert.strictEqual(warnings.length, 0, 'nothing is reported');
-    } finally {
-      console.warn = warn;
-    }
-  });
-
-  test('a layer whose @before is missing is added on top, and moves once that layer is added', async function (assert) {
+  test('a layer whose @before is not in the new style is added on top', async function (assert) {
     let map: Map | undefined;
     const setMap = (m: Map) => {
       map = m;
@@ -395,7 +228,6 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
           </MapLibreGL>
         </template>,
       );
-
       assert.deepEqual(map!.getLayersOrder(), ['circles', 'background']);
 
       map!.setStyle(STYLE, { diff: false });
@@ -406,178 +238,79 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
         warnings.some((w) => String(w).includes('"background"')),
         'the missing @before layer is reported',
       );
-
-      // Added under the layer, so only a move puts it back on top of it.
-      map!.addLayer(
-        {
-          id: 'background',
-          type: 'background',
-          paint: { 'background-color': '#000' },
-        },
-        'circles',
-      );
-      await waitUntil(() => map!.getLayersOrder()[0] === 'circles', {
-        timeout: 5000,
-      });
-      assert.deepEqual(
-        map!.getLayersOrder(),
-        ['circles', 'background'],
-        'the layer moves under @before once it is added',
-      );
     } finally {
       console.warn = warn;
     }
   });
 
-  test('a layer keeps its place while its @before layer is removed, and moves under it once it is back', async function (assert) {
-    class State {
-      @tracked showLabels = true;
-    }
-    const state = new State();
+  test('settled() waits for a diffed setStyle(url)', async function (assert) {
     let map: Map | undefined;
     const setMap = (m: Map) => {
       map = m;
     };
-    const warn = console.warn;
-    console.warn = () => {};
 
-    try {
-      await render(
-        <template>
-          <MapLibreGL
-            @initOptions={{hash style=STYLE}}
-            @mapLoaded={{setMap}}
-            style="height:100px;"
-            as |m|
+    await render(
+      <template>
+        <MapLibreGL
+          @initOptions={{hash style=STYLE}}
+          @mapLoaded={{setMap}}
+          style="height:100px;"
+          as |m|
+        >
+          <m.source
+            @sourceId="points"
+            @options={{hash type="geojson" data=GEOJSON}}
+            as |source|
           >
-            <m.source
-              @sourceId="points"
-              @options={{hash type="geojson" data=GEOJSON}}
-              as |source|
-            >
-              {{#if state.showLabels}}
-                <source.layer @options={{hash id="labels" type="circle"}} />
-              {{/if}}
-              <source.layer
-                @options={{hash id="fill" type="circle"}}
-                @before="labels"
-              />
-              <source.layer @options={{hash id="overlay" type="circle"}} />
-            </m.source>
-          </MapLibreGL>
-        </template>,
-      );
-      assert.deepEqual(map!.getLayersOrder(), ['fill', 'labels', 'overlay']);
+            <source.layer @options={{hash id="circles" type="circle"}} />
+          </m.source>
+        </MapLibreGL>
+      </template>,
+    );
 
-      state.showLabels = false;
-      await settled();
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-      await settled();
-      assert.deepEqual(
-        map!.getLayersOrder(),
-        ['fill', 'overlay'],
-        'the layer did not jump to the top',
-      );
+    const release = holdStyle(OTHER_STYLE);
+    map!.setStyle('held://style');
+    let isSettled = false;
+    const settling = settled().then(() => (isSettled = true));
 
-      state.showLabels = true;
-      await waitUntil(
-        () => map!.getLayersOrder().join() === 'overlay,fill,labels',
-        { timeout: 5000 },
-      );
-      assert.deepEqual(
-        map!.getLayersOrder(),
-        ['overlay', 'fill', 'labels'],
-        'the layer is under @before again',
-      );
-    } finally {
-      console.warn = warn;
-    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    assert.false(isSettled, 'settled() waits while the style is fetched');
+
+    release();
+    await settling;
+    assert.ok(map!.getLayer('background'), 'the new style is in place');
+    assert.ok(map!.getLayer('circles'), 'the layer is back');
   });
 
-  test('a layer before its source in the template is added in the same render', async function (assert) {
+  test('settled() does not wait after a setStyle() that changes nothing', async function (assert) {
     let map: Map | undefined;
     const setMap = (m: Map) => {
       map = m;
     };
-    const warn = console.warn;
-    const warnings: unknown[] = [];
-    console.warn = (...args: unknown[]) => warnings.push(args[0]);
 
-    try {
-      await render(
-        <template>
-          <MapLibreGL
-            @initOptions={{hash style=STYLE}}
-            @mapLoaded={{setMap}}
-            style="height:100px;"
-            as |m|
-          >
-            <m.layer
-              @sourceId="points"
-              @options={{hash id="dots" type="circle"}}
-            />
-            <m.source
-              @sourceId="points"
-              @options={{hash type="geojson" data=GEOJSON}}
-            />
-          </MapLibreGL>
-        </template>,
-      );
-      assert.deepEqual(map!.getLayersOrder(), ['dots']);
-      assert.strictEqual(warnings.length, 0, 'nothing is reported');
-    } finally {
-      console.warn = warn;
-    }
-  });
+    await render(
+      <template>
+        <MapLibreGL
+          @initOptions={{hash style=STYLE}}
+          @mapLoaded={{setMap}}
+          style="height:100px;"
+        />
+      </template>,
+    );
 
-  test('a layer whose source is missing waits for it, with a warning', async function (assert) {
-    let map: Map | undefined;
-    const setMap = (m: Map) => {
-      map = m;
-    };
-    const warn = console.warn;
-    const warnings: unknown[] = [];
-    console.warn = (...args: unknown[]) => warnings.push(args[0]);
-
-    try {
-      await render(
-        <template>
-          <MapLibreGL
-            @initOptions={{hash style=STYLE}}
-            @mapLoaded={{setMap}}
-            style="height:100px;"
-            as |m|
-          >
-            <m.layer
-              @sourceId="points"
-              @options={{hash id="dots" type="circle"}}
-            />
-          </MapLibreGL>
-        </template>,
-      );
-      assert.deepEqual(map!.getLayersOrder(), [], 'the layer waits');
-      assert.strictEqual(
-        warnings.filter((w) => String(w).includes('"points"')).length,
-        1,
-        'the missing source is reported once',
-      );
-
-      map!.addSource('points', { type: 'geojson', data: GEOJSON });
-      await waitUntil(() => map!.getLayer('dots'), { timeout: 5000 });
-      assert.ok(map!.getLayer('dots'), 'the layer is added with its source');
-    } finally {
-      console.warn = warn;
-    }
+    const started = Date.now();
+    map!.setStyle(STYLE);
+    await settled();
+    assert.true(Date.now() - started < 1000, 'settled() did not time out');
   });
 
   module('pooling', function () {
     class FakeMap {
       static instances: FakeMap[] = [];
-      listeners: Record<string, (() => void)[]> = {};
+      listeners: Record<string, () => void> = {};
       _container: HTMLElement;
       _diffStyleRequest: AbortController | null = null;
-      style = { _loaded: true, stylesheet: {} };
-      styleList: unknown[] = [];
+      style = { _loaded: true };
       removed = false;
 
       constructor(options: { container: HTMLElement }) {
@@ -586,30 +319,22 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
       }
 
       on(type: string, listener: () => void) {
-        (this.listeners[type] ??= []).push(listener);
+        this.listeners[type] = listener;
         return this;
-      }
-      once(type: string, listener: () => void) {
-        return this.on(type, listener);
       }
       off() {
         return this;
       }
       fire(type: string) {
-        for (const listener of this.listeners[type] ?? []) listener();
+        this.listeners[type]?.();
       }
       getStyle() {
         return {};
-      }
-      setStyle(style: unknown) {
-        this.styleList.push(style);
-        this.style = { _loaded: true, stylesheet: {} };
       }
       getContainer() {
         return this._container;
       }
       resize() {}
-      redraw() {}
       jumpTo() {}
       stop() {}
       triggerRepaint() {}
@@ -618,33 +343,28 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
       }
     }
 
-    class State {
+    const MapLib = FakeMap as unknown as new (...args: unknown[]) => Map;
+
+    class ShowState {
       @tracked show = true;
-      @tracked style = '/first.json';
     }
 
-    // Renders a pooled map, lets `act` change it, unmounts it and mounts it with `nextStyle`.
-    async function remount(
-      nextStyle: string,
-      act: (map: FakeMap) => void = () => {},
+    // Renders a pooled map, lets `act` change it, then unmounts it.
+    async function renderAndUnmount(
+      styleUrl: string,
+      act: (map: FakeMap) => void,
     ) {
       FakeMap.instances = [];
-      // Its own class, so that it has its own pool.
-      const MapLib = class extends FakeMap {} as unknown as new (
-        ...args: unknown[]
-      ) => Map;
-      const state = new State();
+      const state = new ShowState();
       const rendered = render(
         <template>
           {{#if state.show}}
             <MapLibreGL
-              @initOptions={{hash style=state.style}}
+              @initOptions={{hash style=styleUrl}}
               @reuseMaps={{true}}
               @mapLib={{MapLib}}
               style="height:100px;"
-            >
-              <span data-test-block>loaded</span>
-            </MapLibreGL>
+            />
           {{/if}}
         </template>,
       );
@@ -652,81 +372,32 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
       const map = FakeMap.instances[0]!;
       map.fire('load');
       await rendered;
+
       act(map);
+      await rerender();
 
       state.show = false;
       await settled();
-      state.style = nextStyle;
-      state.show = true;
-      await rerender();
       return map;
     }
 
-    test('a reused map with the same style keeps it', async function (assert) {
-      const map = await remount('/first.json');
-      await settled();
-      assert.strictEqual(FakeMap.instances.length, 1, 'no new map was built');
-      assert.deepEqual(map.styleList, [], 'setStyle() was not called');
-      assert.dom('[data-test-block]').exists();
+    test('a map that is not changed is pooled', async function (assert) {
+      const map = await renderAndUnmount('/kept.json', () => {});
+      assert.false(map.removed);
     });
 
-    test('a map with another style is not reused', async function (assert) {
-      const map = await remount('/second.json');
-      await waitUntil(() => FakeMap.instances[1], { timeout: 10000 });
-      assert.deepEqual(map.styleList, [], 'the pooled map was not touched');
-      assert.false(map.removed, 'the pooled map stays pooled');
+    test('a map whose style was changed is not pooled', async function (assert) {
+      const map = await renderAndUnmount('/changed.json', (m) =>
+        m.fire('style.load'),
+      );
+      assert.true(map.removed);
     });
 
-    test('a reused map still fetching a diffed style gets its initOptions.style back', async function (assert) {
-      const map = await remount('/first.json', (m) => {
+    test('a map still fetching a diffed style is not pooled', async function (assert) {
+      const map = await renderAndUnmount('/fetching.json', (m) => {
         m._diffStyleRequest = new AbortController();
       });
-      assert.deepEqual(map.styleList, ['/first.json']);
-    });
-
-    test('the pool keeps the newest four maps', async function (assert) {
-      FakeMap.instances = [];
-      const MapLib = class extends FakeMap {} as unknown as new (
-        ...args: unknown[]
-      ) => Map;
-      const state = new State();
-      const styleList = ['/1.json', '/2.json', '/3.json', '/4.json', '/5.json'];
-      const rendered = render(
-        <template>
-          {{#if state.show}}
-            {{#each styleList as |style|}}
-              <MapLibreGL
-                @initOptions={{hash style=style}}
-                @reuseMaps={{true}}
-                @mapLib={{MapLib}}
-                style="height:10px;"
-              />
-            {{/each}}
-          {{/if}}
-        </template>,
-      );
-      await waitUntil(() => FakeMap.instances.length === 5, {
-        timeout: 10000,
-      });
-      for (const map of FakeMap.instances) map.fire('load');
-      await rendered;
-
-      state.show = false;
-      await settled();
-      assert.deepEqual(
-        FakeMap.instances.map((map) => map.removed),
-        [true, false, false, false, false],
-      );
-    });
-
-    test('a reused map that had map.setStyle() gets its initOptions.style back', async function (assert) {
-      const map = await remount('/first.json', (m) =>
-        m.setStyle('/other.json'),
-      );
-      assert.deepEqual(map.styleList, ['/other.json', '/first.json']);
-      map.fire('style.load');
-      await settled();
-      assert.dom('[data-test-block]').exists();
+      assert.true(map.removed);
     });
   });
 });

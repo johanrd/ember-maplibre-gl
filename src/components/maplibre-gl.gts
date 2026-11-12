@@ -30,7 +30,6 @@ import { buildWaiter } from '@ember/test-waiters';
 import { beginWait } from '../-private/wait.ts';
 import {
   bumpStyleRevision,
-  markStyleFailed,
   waitForStyleChanges,
 } from '../-private/style-revision.ts';
 
@@ -44,14 +43,9 @@ const loadWaiter = buildWaiter('ember-maplibre-gl:map-load');
 interface SavedMap {
   map: MaplibreMap;
   container: HTMLElement;
-  /** The style at load. map.setStyle() replaces this object. */
-  stylesheet?: MaplibreMap['style']['stylesheet'];
 }
 
-// Keyed by `initOptions.style`: a URL, or a style object by reference. Each map holds a
-// WebGL context, so the oldest is removed beyond MAX_SAVED_MAPS.
-const savedMaps = new Map<NonNullable<MapOptions['style']>, SavedMap>();
-const MAX_SAVED_MAPS = 4;
+const savedMaps = new Map<string, SavedMap>();
 
 /**
  * MapLibre [MapOptions ↗](https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/MapOptions/) without `container`, which is managed internally.
@@ -79,8 +73,7 @@ export interface MapLibreGLSignature {
     /**
      * Cache the WebGL map instance on teardown and reuse it on remount.
      * Avoids expensive context creation on repeated route transitions.
-     * Maps are pooled by `initOptions.style` (a URL, or a style object by reference). A map
-     * changed with `map.setStyle()` gets that style again when it is reused. At most 4 are pooled.
+     * Only works when `initOptions.style` is a URL string.
      */
     reuseMaps?: boolean;
 
@@ -163,9 +156,10 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
 
       const endWait = beginWait(loadWaiter, 'the map load');
 
-      let stylesheet: SavedMap['stylesheet'];
+      // From the first load on: a first style that fails is the load waiter's.
+      let stopWaitingForStyles = () => {};
       const onLoad = () => {
-        stylesheet = this.map?.style?.stylesheet;
+        if (this.map) stopWaitingForStyles = waitForStyleChanges(this.map);
         this.mapLoaded = true;
         this.args.mapLoaded?.(this.map as MaplibreMap);
         endWait();
@@ -192,20 +186,15 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
           // Map is in a broken state (e.g. WebGL context lost)
         }
         if (!this.mapLoaded && !styleLoaded) endWait();
-        // Source and layer errors carry their id; the others come from the style.
-        if (this.map && !('sourceId' in event) && !('layer' in event)) {
-          markStyleFailed(this.map);
-        }
       };
 
-      // Each new style drops what the components added, so they upsert again.
-      let bumpQueued = false;
-      const onStyleChange = () => {
-        if (!this.mapLoaded || !this.map || bumpQueued) return;
-        bumpQueued = true;
+      // Every style after the first drops what the block added, so it upserts again.
+      let styleChanged = false;
+      const onStyleLoad = () => {
+        if (!this.mapLoaded) return;
+        styleChanged = true;
         // A diffed setStyle() fires this inside a render that may have read the revision.
         queueMicrotask(() => {
-          bumpQueued = false;
           if (isDestroying(this) || isDestroyed(this) || !this.map) return;
           bumpStyleRevision(this.map);
         });
@@ -222,13 +211,15 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
         this.map?.redraw();
       };
 
+      // Reuse is only enabled when style is a URL string — object styles can't be
+      // reliably compared, so we skip pooling for them.
       // Construction-only options (attributionControl, hash, interactive, etc.) are not
-      // reapplied on reuse — same limitation as react-map-gl.
-      const poolKey = options.style;
-      const pooled =
-        this.args.reuseMaps && poolKey ? savedMaps.get(poolKey) : undefined;
+      // reapplied on reuse — same limitation as react-map-gl. Callers sharing a style
+      // URL should use compatible initOptions.
+      const styleUrl =
+        typeof options.style === 'string' ? options.style : undefined;
       const reused =
-        pooled?.map instanceof this.mapLibrary ? pooled : undefined;
+        this.args.reuseMaps && styleUrl ? savedMaps.get(styleUrl) : undefined;
 
       // Type for MapLibre private internals we depend on for reuse.
       type MapInternals = {
@@ -240,8 +231,8 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
       // If a future MapLibre version removes them, fall through to fresh creation.
       const canReuse = reused && '_container' in reused.map;
 
-      if (reused && canReuse && poolKey) {
-        savedMaps.delete(poolKey);
+      if (reused && canReuse && styleUrl) {
+        savedMaps.delete(styleUrl);
         this.map = reused.map;
         const mapInternals = this.map as unknown as MapInternals;
         const oldContainer = reused.container;
@@ -268,20 +259,23 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
           mapInternals._resizeObserver.observe(element);
         }
 
-        // Step 4: apply new options. After a map.setStyle(), rebuild the pooled style, as
-        // react-map-gl does (diff: false); a diff would drop the block's new layers too.
-        const restyle =
-          this.map.style?.stylesheet !== reused.stylesheet ||
-          Boolean(this.map._diffStyleRequest);
-        if (restyle) this.map.setStyle(poolKey, { diff: false });
+        // Step 4: apply new options.
+        // Note: react-map-gl calls setProps({styleDiffing: false}) here, which may change
+        // the style via setStyle(). We don't need that because savedMaps is keyed by style
+        // URL — we only reuse maps with a matching style.
         this.map.resize();
         if (options.center !== undefined || options.zoom !== undefined) {
           this.map.jumpTo({ center: options.center, zoom: options.zoom });
         }
 
-        // Step 5: signal load. A kept style has loaded and fires no 'style.load' again.
-        if (restyle) this.map.once('style.load', onLoad);
-        else onLoad();
+        // Step 5: signal load directly instead of simulating a 'load' event
+        // via fire() — the component is the only intended listener, and this
+        // avoids depending on fire()'s string-event behavior across versions.
+        // The pool only accepts maps whose style has loaded, and 'style.load'
+        // does not fire again for a style MapLibre has already parsed, so
+        // waiting on it here would wait forever. Pending tiles keep rendering
+        // after the block appears, which is what a fresh map does too.
+        onLoad();
 
         // Force redraw
         this.map.triggerRepaint();
@@ -292,7 +286,7 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
           console.warn(
             'MapLibre reuse failed: expected _container/_update internals missing',
           );
-          if (poolKey) savedMaps.delete(poolKey);
+          if (styleUrl) savedMaps.delete(styleUrl);
           reused.map.remove();
         }
         try {
@@ -315,22 +309,27 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
       }
 
       this.map.on('error', onError);
-      this.map.on('style.load', onStyleChange);
-      const stopWaitingForStyles = waitForStyleChanges(this.map);
+      this.map.on('style.load', onStyleLoad);
       this.map.on('webglcontextlost', onContextLost);
       this.map.on('webglcontextrestored', onContextRestored);
 
       registerDestructor(this, () => {
         endWait();
         this.map?.off('load', onLoad);
-        this.map?.off('style.load', onLoad);
         this.map?.off('error', onError);
-        this.map?.off('style.load', onStyleChange);
+        this.map?.off('style.load', onStyleLoad);
         stopWaitingForStyles();
         this.map?.off('webglcontextlost', onContextLost);
         this.map?.off('webglcontextrestored', onContextRestored);
 
-        if (this.args.reuseMaps && this.map && poolKey) {
+        // The pool is keyed by the first style: skip a map that shows, or fetches, another.
+        if (
+          this.args.reuseMaps &&
+          this.map &&
+          styleUrl &&
+          !styleChanged &&
+          !this.map._diffStyleRequest
+        ) {
           // Don't pool broken maps. getStyle() returns null when the style hasn't loaded,
           // and throws when the map is dead (e.g. WebGL context lost). Either way, the map
           // is unusable — destroy it instead of caching. react-map-gl doesn't do this check;
@@ -347,12 +346,21 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
           }
 
           // Recycle: see https://github.com/visgl/react-map-gl/blob/c41e00c/modules/react-maplibre/src/maplibre/maplibre.ts#L342-L349
+          const existing = savedMaps.get(styleUrl);
+          if (existing) {
+            try {
+              existing.map.remove();
+            } catch {
+              /* ignore */
+            }
+          }
+
           // Pool hygiene: halt in-flight camera animations and stop observing
           // the about-to-be-detached container. Without this, an unfinished
           // fitBounds(…, {duration}) keeps rendering frames after pooling, and
           // a parent CSS layout transition keeps the ResizeObserver firing on
           // the orphan container (each tick reallocates the canvas backing store).
-          // The reuse path above reconnects the observer on remount.
+          // The reuse path at lines 222-225 reconnects the observer on remount.
           try {
             this.map.stop();
           } catch {
@@ -360,26 +368,10 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
           }
           (this.map as unknown as MapInternals)._resizeObserver?.disconnect();
 
-          try {
-            savedMaps.get(poolKey)?.map.remove();
-          } catch {
-            /* already dead */
-          }
-          savedMaps.delete(poolKey);
-          savedMaps.set(poolKey, {
+          savedMaps.set(styleUrl, {
             map: this.map,
             container: this.map.getContainer(),
-            stylesheet,
           });
-          for (const [key, saved] of savedMaps) {
-            if (savedMaps.size <= MAX_SAVED_MAPS) break;
-            savedMaps.delete(key);
-            try {
-              saved.map.remove();
-            } catch {
-              /* already dead */
-            }
-          }
         } else {
           this.map?.remove();
         }

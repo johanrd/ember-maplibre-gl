@@ -1,15 +1,13 @@
 import { tracked } from '@glimmer/tracking';
 import { macroCondition, isDevelopingApp } from '@embroider/macros';
 import { register, type Waiter } from '@ember/test-waiters';
-import type { Map as MaplibreMap, Style } from 'maplibre-gl';
+import type { Map as MaplibreMap } from 'maplibre-gl';
 import { WAIT_TIMEOUT_MS } from './wait.ts';
 
 class StyleState {
   @tracked revision = 0;
-  // A style that fired 'error' before it loaded: it never will, so the waiter stops on it.
-  failedStyle?: Style;
   busySince?: number;
-  timedOut = false;
+  warned = false;
 }
 
 const states = new WeakMap<MaplibreMap, StyleState>();
@@ -26,30 +24,21 @@ export function consumeStyleRevision(map: MaplibreMap) {
   return stateOf(map).revision;
 }
 
-/** False on a context-lost map, and while a style from `setStyle()` loads. Same check as react-map-gl. */
-export function isStyleLoaded(map: MaplibreMap) {
-  return Boolean(map.style?._loaded);
-}
-
-export function markStyleFailed(map: MaplibreMap) {
-  if (map.style && !map.style._loaded) stateOf(map).failedStyle = map.style;
-}
-
 export function bumpStyleRevision(map: MaplibreMap) {
   stateOf(map).revision++;
 }
 
-// A diffed setStyle(url) fires nothing until its fetch is done, so only the request shows it.
-function isBusy(map: MaplibreMap) {
-  if (map._diffStyleRequest) return true;
-  return (
-    Boolean(map.style) &&
-    !map.style._loaded &&
-    map.style !== stateOf(map).failedStyle
-  );
+/** False on a context-lost map, and while a style from `setStyle()` loads. As in react-map-gl. */
+export function isStyleLoaded(map: MaplibreMap) {
+  return Boolean(map.style?._loaded);
 }
 
-// Polled by settled(): it ends with the style, and also after a diff that changes nothing.
+// A diffed setStyle(url) fires nothing until its fetch is done, so only the request shows it.
+function isBusy(map: MaplibreMap) {
+  return Boolean(map._diffStyleRequest) || (map.style && !map.style._loaded);
+}
+
+// Polled by settled(), so a setStyle() that changes nothing, and fires nothing, ends it too.
 const styleWaiter: Waiter = {
   name: 'ember-maplibre-gl:set-style',
   waitUntil() {
@@ -59,16 +48,16 @@ const styleWaiter: Waiter = {
       const state = stateOf(map);
       if (!isBusy(map)) {
         state.busySince = undefined;
-        state.timedOut = false;
+        state.warned = false;
         continue;
       }
       state.busySince ??= now;
       if (now - state.busySince < WAIT_TIMEOUT_MS) {
         idle = false;
-      } else if (!state.timedOut) {
-        state.timedOut = true;
+      } else if (!state.warned) {
+        state.warned = true;
         console.warn(
-          `ember-maplibre-gl: a style did not load within ${WAIT_TIMEOUT_MS}ms, ` +
+          `ember-maplibre-gl: setStyle() did not finish within ${WAIT_TIMEOUT_MS}ms, ` +
             `so anything waiting on it carries on without it.`,
         );
       }
@@ -78,7 +67,7 @@ const styleWaiter: Waiter = {
   debugInfo() {
     return [...mountedMaps]
       .filter(isBusy)
-      .map(() => ({ label: 'a style that loads', stack: undefined }));
+      .map(() => ({ label: 'a style from setStyle()', stack: undefined }));
   },
 };
 

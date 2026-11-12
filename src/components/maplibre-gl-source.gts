@@ -110,6 +110,8 @@ export default class MapLibreGLSource extends Component<MapLibreGLSourceSignatur
 
   /** @internal */
   upsertSource = (options: MapLibreGLSource['args']['options']) => {
+    // Null on a lost WebGL context, unloaded while setStyle() loads: both throw below.
+    // The revision bump on 'style.load' runs this again.
     consumeStyleRevision(this.args.map);
     if (!isStyleLoaded(this.args.map)) return;
 
