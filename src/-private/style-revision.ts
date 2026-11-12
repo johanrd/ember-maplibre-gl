@@ -68,7 +68,7 @@ const styleWaiter: Waiter = {
       } else if (!state.timedOut) {
         state.timedOut = true;
         console.warn(
-          `ember-maplibre-gl: setStyle() did not finish within ${WAIT_TIMEOUT_MS}ms, ` +
+          `ember-maplibre-gl: a style did not load within ${WAIT_TIMEOUT_MS}ms, ` +
             `so anything waiting on it carries on without it.`,
         );
       }
@@ -78,7 +78,7 @@ const styleWaiter: Waiter = {
   debugInfo() {
     return [...mountedMaps]
       .filter(isBusy)
-      .map(() => ({ label: 'a style from setStyle()', stack: undefined }));
+      .map(() => ({ label: 'a style that loads', stack: undefined }));
   },
 };
 

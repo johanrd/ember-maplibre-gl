@@ -24,9 +24,9 @@ const options = {
 </template>
 ```
 
-## Different styles
+## Style objects
 
-One map per map library is pooled, as in react-map-gl. If the remounted map asks for another style, or the style was changed with `map.setStyle()`, the pooled map rebuilds its style in the same WebGL context, and the block renders once that style has loaded. Style objects are compared by reference, so keep one object per style.
+Maps are pooled by `initOptions.style`: a URL, or a style object by reference. Keep one object per style, so that a remounted map finds its pooled map. A map whose style was changed with `map.setStyle()` rebuilds its style from `initOptions.style` when it is reused, and the block renders once that style has loaded.
 
 ## When to use it
 

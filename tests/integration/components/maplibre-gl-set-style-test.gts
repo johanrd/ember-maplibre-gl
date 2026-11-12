@@ -529,17 +529,11 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
       assert.dom('[data-test-block]').exists();
     });
 
-    test('a reused map gets another style, and renders once it has loaded', async function (assert) {
+    test('a map with another style is not reused', async function (assert) {
       const map = await remount('/second.json');
-      assert.deepEqual(
-        map.styleList,
-        ['/second.json'],
-        'the style was rebuilt',
-      );
-      assert.dom('[data-test-block]').doesNotExist('waits for the style');
-      map.fire('style.load');
-      await settled();
-      assert.dom('[data-test-block]').exists();
+      await waitUntil(() => FakeMap.instances[1], { timeout: 10000 });
+      assert.deepEqual(map.styleList, [], 'the pooled map was not touched');
+      assert.false(map.removed, 'the pooled map stays pooled');
     });
 
     test('a reused map that had map.setStyle() gets its initOptions.style back', async function (assert) {

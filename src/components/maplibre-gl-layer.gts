@@ -32,11 +32,7 @@ export type LayerOptions = Omit<LayerSpecification, 'id'> & {
   source?: string;
 };
 
-/**
- * The paint or layout properties that differ between two renders. A property
- * the new object no longer has comes back as `undefined`, which resets it to
- * the style-spec default.
- */
+/** The paint or layout properties that differ. A removed one is `undefined`, which resets it. */
 function changedProperties<T extends object>(prev?: T, next?: T) {
   const keys = new Set([
     ...Object.keys(prev ?? {}),
@@ -176,6 +172,10 @@ export default class MapLibreGLLayer extends Component<MapLibreGLLayerSignature>
         type: options.type ?? 'line',
         source: this.args.sourceId || options.source,
       };
+      // As in react-map-gl: wait for the source. Adding it fires 'styledata', which retries.
+      const { source } = layerOptions;
+      if (typeof source === 'string' && !this.args.map.getSource(source))
+        return;
 
       const { before } = this.args;
       this.placedBefore =
