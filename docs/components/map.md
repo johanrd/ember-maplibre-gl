@@ -184,7 +184,7 @@ MapLibre drops the sources, layers and images that were added at runtime when th
 - With a diffed `setStyle()` (the default), this needs maplibre-gl 5.16 or later, the first version that fires `style.load` on a diff.
 - If the new style does not have the layer that `@before` names, the layer is added on top and a warning is logged.
 - An image `@name` must not be an image id in the style's sprite.
-- With `@reuseMaps`, a map whose style was changed is destroyed on teardown, not pooled: the pool is keyed by the style the map was built with.
+- With `@reuseMaps`, a map whose style was changed is destroyed on teardown, not pooled: the pool is keyed by the style the map was built with. A restored WebGL context loads the style again and counts as a change too. A `setStyle()` before the map's first `load` is not seen, so such a map is pooled under its first style.
 
 ## Testing
 
@@ -196,6 +196,7 @@ A wait ends when:
 
 - the map loads, the image is added, or the style from `setStyle()` has loaded (a `setStyle()` that changes nothing ends it at once)
 - the map cannot load: its constructor throws (no WebGL), or an `error` arrives before the style has loaded. The `error` block then renders.
+- a style from `setStyle()` fails: an `error` arrives before it has loaded. The map keeps showing what it can.
 - a newer image load replaces one still in flight
 - the component is destroyed
 - 10 seconds pass, which prints a console warning. This covers a request that never answers.

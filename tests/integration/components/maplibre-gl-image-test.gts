@@ -97,22 +97,13 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
           as |m|
         >
           {{#if state.show}}
-            <m.image @name="cleanup-test" @url="/fake-image.png" />
+            <m.image @name="cleanup-test" @url={{PNG_DATA_URL}} />
           {{/if}}
           <span data-test-loaded />
         </MapLibreGL>
       </template>,
     );
-
-    // Manually register the image so the destructor has something to clean up
-    // (loadImage fails in test env since URL is fake)
-    if (!map!.hasImage('cleanup-test')) {
-      map!.addImage('cleanup-test', {
-        width: 1,
-        height: 1,
-        data: new Uint8Array(4),
-      });
-    }
+    assert.true(map!.hasImage('cleanup-test'), 'the component added its image');
 
     const removeImageSpy = sinon.spy(map!, 'removeImage');
 
@@ -125,6 +116,42 @@ module('Integration | Component | maplibre-gl-image', function (hooks) {
       'cleanup-test',
       'removes correct image name',
     );
+    assert.false(map!.hasImage('cleanup-test'), 'the image is gone');
+  });
+
+  test('destroy leaves an image the component did not add', async function (assert) {
+    let map: Map | undefined;
+    const setMap = (m: Map) => {
+      map = m;
+    };
+    const state = new State();
+
+    await render(
+      <template>
+        <MapLibreGL
+          @initOptions={{hash style=STYLE}}
+          @mapLoaded={{setMap}}
+          style="height:100px;"
+          as |m|
+        >
+          {{#if state.show}}
+            <m.image @name="shared-name" @url="/missing-image.png" />
+          {{/if}}
+        </MapLibreGL>
+      </template>,
+    );
+
+    // Stands in for an image with the same name from the style's sprite.
+    map!.addImage('shared-name', {
+      width: 1,
+      height: 1,
+      data: new Uint8Array(4),
+    });
+
+    state.show = false;
+    await settled();
+
+    assert.true(map!.hasImage('shared-name'), 'the image stays');
   });
 
   test('it discards stale loads when url changes mid-flight', async function (assert) {

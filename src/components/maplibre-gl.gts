@@ -30,6 +30,8 @@ import { buildWaiter } from '@ember/test-waiters';
 import { beginWait } from '../-private/wait.ts';
 import {
   bumpStyleRevision,
+  isStyleLoaded,
+  markStyleFailed,
   waitForStyleChanges,
 } from '../-private/style-revision.ts';
 
@@ -186,6 +188,10 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
           // Map is in a broken state (e.g. WebGL context lost)
         }
         if (!this.mapLoaded && !styleLoaded) endWait();
+        // After load, an error before the new style has loaded is that style failing.
+        if (this.mapLoaded && this.map && !isStyleLoaded(this.map)) {
+          markStyleFailed(this.map);
+        }
       };
 
       // Every style after the first drops what the block added, so it upserts again.

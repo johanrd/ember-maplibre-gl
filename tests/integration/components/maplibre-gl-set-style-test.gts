@@ -304,6 +304,48 @@ module('Integration | Component | maplibre-gl | setStyle', function (hooks) {
     assert.true(Date.now() - started < 1000, 'settled() did not time out');
   });
 
+  test('after a setStyle() that fails, settled() does not hang and the next style works', async function (assert) {
+    let map: Map | undefined;
+    const setMap = (m: Map) => {
+      map = m;
+    };
+    const error = console.error;
+    console.error = () => {};
+
+    try {
+      await render(
+        <template>
+          <MapLibreGL
+            @initOptions={{hash style=STYLE}}
+            @mapLoaded={{setMap}}
+            style="height:100px;"
+            as |m|
+          >
+            <m.source
+              @sourceId="points"
+              @options={{hash type="geojson" data=GEOJSON}}
+              as |source|
+            >
+              <source.layer @options={{hash id="circles" type="circle"}} />
+            </m.source>
+          </MapLibreGL>
+        </template>,
+      );
+
+      const started = Date.now();
+      map!.setStyle('/missing-style.json', { diff: false });
+      await settled();
+      assert.true(Date.now() - started < 5000, 'settled() did not time out');
+
+      map!.setStyle(OTHER_STYLE, { diff: false });
+      await settled();
+      assert.ok(map!.getLayer('background'), 'the next style is in place');
+      assert.ok(map!.getLayer('circles'), 'the layer is back');
+    } finally {
+      console.error = error;
+    }
+  });
+
   module('pooling', function () {
     class FakeMap {
       static instances: FakeMap[] = [];

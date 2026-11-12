@@ -8,6 +8,8 @@ class StyleState {
   @tracked revision = 0;
   busySince?: number;
   warned = false;
+  /** A style whose fetch or validation failed. It never loads, so it is not waited for. */
+  failedStyle?: MaplibreMap['style'];
 }
 
 const states = new WeakMap<MaplibreMap, StyleState>();
@@ -33,9 +35,17 @@ export function isStyleLoaded(map: MaplibreMap) {
   return Boolean(map.style?._loaded);
 }
 
+/** Called on an `error` while a style from `setStyle()` is unloaded: that style stays unloaded. */
+export function markStyleFailed(map: MaplibreMap) {
+  stateOf(map).failedStyle = map.style;
+}
+
 // A diffed setStyle(url) fires nothing until its fetch is done, so only the request shows it.
+// A non-diffed setStyle() replaces `map.style`, which is how a failed one stops matching.
 function isBusy(map: MaplibreMap) {
-  return Boolean(map._diffStyleRequest) || (map.style && !map.style._loaded);
+  if (map._diffStyleRequest) return true;
+  const { style } = map;
+  return Boolean(style && !style._loaded && style !== stateOf(map).failedStyle);
 }
 
 // Polled by settled(), so a setStyle() that changes nothing, and fires nothing, ends it too.
