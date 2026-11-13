@@ -1,5 +1,16 @@
 # Changelog
 
+## Release (2026-11-13)
+
+* ember-maplibre-gl 0.9.0 (minor)
+
+#### :rocket: Enhancement
+* `ember-maplibre-gl`
+  * [#61](https://github.com/johanrd/ember-maplibre-gl/pull/61) Add sources, layers and images again after setStyle() (needs maplibre-gl 5.16+; a missing @before now adds the layer on top) ([@johanrd](https://github.com/johanrd))
+
+#### Committers: 1
+- Johan Røed ([@johanrd](https://github.com/johanrd))
+
 ## Release (2026-10-30)
 
 * ember-maplibre-gl 0.8.0 (minor)
