@@ -11,6 +11,10 @@ import { buildWaiter } from '@ember/test-waiters';
 import { beginWait } from '../-private/wait.ts';
 import type { Map as MaplibreMap } from 'maplibre-gl';
 import type Owner from '@ember/owner';
+import {
+  consumeStyleRevision,
+  isStyleLoaded,
+} from '../-private/style-revision.ts';
 
 /**
  * Options passed to MapLibre's [map.addImage ↗](https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#addimage).
@@ -118,8 +122,9 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
     registerDestructor(this, () => {
       this._endLoadWait?.();
       try {
-        if (this.args.name && this.args.map?.hasImage(this.args.name)) {
-          this.args.map.removeImage(this.args.name);
+        // Only the image this component added, by its @name.
+        if (this._lastName && this.args.map?.hasImage(this._lastName)) {
+          this.args.map.removeImage(this._lastName);
         }
       } catch {
         // Map may be in a broken state (e.g. WebGL context lost)
@@ -135,13 +140,20 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
     width?: MapLibreGLImageSignature['Args']['width'],
     height?: MapLibreGLImageSignature['Args']['height'],
   ) => {
-    // Skip if nothing has changed (avoids redundant loads on re-render)
+    const { map } = this.args;
+    consumeStyleRevision(map);
+    // A new style drops the image, so load it again then.
+    const dropped =
+      this._lastName !== undefined &&
+      isStyleLoaded(map) &&
+      !map.hasImage(this._lastName);
     if (
       url === this._lastLoadUrl &&
       name === this._lastLoadName &&
       width === this._lastLoadWidth &&
       height === this._lastLoadHeight &&
-      options === this._lastLoadOptions
+      options === this._lastLoadOptions &&
+      !dropped
     )
       return;
     this._lastLoadUrl = url;
@@ -154,9 +166,10 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
     this._endLoadWait?.();
 
     // If the component already has added an image to the map, remove it
-    if (this._lastName && this.args.map.hasImage(this._lastName)) {
-      this.args.map.removeImage(this._lastName);
+    if (this._lastName && isStyleLoaded(map) && map.hasImage(this._lastName)) {
+      map.removeImage(this._lastName);
     }
+    this._lastName = undefined;
 
     if (!url) {
       return;
@@ -209,6 +222,12 @@ export default class MapLibreGLImage extends Component<MapLibreGLImageSignature>
 
     if (this.args.url !== url || this.args.name !== name) {
       // url or name has changed since we started loading
+      return;
+    }
+
+    if (!isStyleLoaded(this.args.map)) {
+      // Loaded while a new style loads: load again after its 'style.load'.
+      this._lastLoadUrl = undefined;
       return;
     }
 

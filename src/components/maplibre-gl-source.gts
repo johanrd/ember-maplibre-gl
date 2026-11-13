@@ -18,6 +18,10 @@ import type {
   VectorSourceSpecification,
 } from 'maplibre-gl';
 import type Owner from '@ember/owner';
+import {
+  consumeStyleRevision,
+  isStyleLoaded,
+} from '../-private/style-revision.ts';
 
 /**
  * Source specification passed to `map.addSource()` — defines the data backing a layer.
@@ -106,13 +110,10 @@ export default class MapLibreGLSource extends Component<MapLibreGLSourceSignatur
 
   /** @internal */
   upsertSource = (options: MapLibreGLSource['args']['options']) => {
-    // MapLibre sets `map.style = null` on WebGL context loss (then fires
-    // 'webglcontextlost') and on remove(), even though it types `style` as non-null.
-    // getSource/addSource dereference it, so a render against a context-lost map throws
-    // "Cannot read properties of null (reading 'getSource')". The destructor above
-    // already guards for this; the render-time upsert must too. Self-healing: once the
-    // context is restored MapLibre rebuilds the style and a later render re-runs this.
-    if (!this.args.map.style) return;
+    // Null on a lost WebGL context, unloaded while setStyle() loads: both throw below.
+    // The revision bump on 'style.load' runs this again.
+    consumeStyleRevision(this.args.map);
+    if (!isStyleLoaded(this.args.map)) return;
 
     const source = this.args.map.getSource(this.sourceId);
 

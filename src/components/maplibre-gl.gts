@@ -21,9 +21,19 @@ import {
   type ErrorEvent as MapErrorEvent,
 } from 'maplibre-gl';
 
-import { registerDestructor } from '@ember/destroyable';
+import {
+  isDestroyed,
+  isDestroying,
+  registerDestructor,
+} from '@ember/destroyable';
 import { buildWaiter } from '@ember/test-waiters';
 import { beginWait } from '../-private/wait.ts';
+import {
+  bumpStyleRevision,
+  isStyleLoaded,
+  markStyleFailed,
+  waitForStyleChanges,
+} from '../-private/style-revision.ts';
 
 // Holds settled() open from map construction until the map has loaded or
 // failed, so `await render()` and `await visit()` see the yielded block.
@@ -51,6 +61,9 @@ export interface MapLibreGLSignature {
     /**
      * MapLibre map options (style, center, zoom, etc.). Passed once at construction; later changes are ignored.
      * The `container` property is managed internally and should be omitted.
+     *
+     * To change the style later, call `map.setStyle()` on the instance. The sources, layers and
+     * images declared in the block are added again when the new style has loaded.
      *
      * @see https://maplibre.org/maplibre-gl-js/docs/API/type-aliases/MapOptions/
      */
@@ -145,7 +158,10 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
 
       const endWait = beginWait(loadWaiter, 'the map load');
 
+      // From the first load on: a first style that fails is the load waiter's.
+      let stopWaitingForStyles = () => {};
       const onLoad = () => {
+        if (this.map) stopWaitingForStyles = waitForStyleChanges(this.map);
         this.mapLoaded = true;
         this.args.mapLoaded?.(this.map as MaplibreMap);
         endWait();
@@ -172,6 +188,22 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
           // Map is in a broken state (e.g. WebGL context lost)
         }
         if (!this.mapLoaded && !styleLoaded) endWait();
+        // After load, an error before the new style has loaded is that style failing.
+        if (this.mapLoaded && this.map && !isStyleLoaded(this.map)) {
+          markStyleFailed(this.map);
+        }
+      };
+
+      // Every style after the first drops what the block added, so it upserts again.
+      let styleChanged = false;
+      const onStyleLoad = () => {
+        if (!this.mapLoaded) return;
+        styleChanged = true;
+        // A diffed setStyle() fires this inside a render that may have read the revision.
+        queueMicrotask(() => {
+          if (isDestroying(this) || isDestroyed(this) || !this.map) return;
+          bumpStyleRevision(this.map);
+        });
       };
 
       const onContextLost = (event: MapContextEvent) => {
@@ -283,6 +315,7 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
       }
 
       this.map.on('error', onError);
+      this.map.on('style.load', onStyleLoad);
       this.map.on('webglcontextlost', onContextLost);
       this.map.on('webglcontextrestored', onContextRestored);
 
@@ -290,10 +323,19 @@ export default class MapLibreGL extends Component<MapLibreGLSignature> {
         endWait();
         this.map?.off('load', onLoad);
         this.map?.off('error', onError);
+        this.map?.off('style.load', onStyleLoad);
+        stopWaitingForStyles();
         this.map?.off('webglcontextlost', onContextLost);
         this.map?.off('webglcontextrestored', onContextRestored);
 
-        if (this.args.reuseMaps && this.map && styleUrl) {
+        // The pool is keyed by the first style: skip a map that shows, or fetches, another.
+        if (
+          this.args.reuseMaps &&
+          this.map &&
+          styleUrl &&
+          !styleChanged &&
+          !this.map._diffStyleRequest
+        ) {
           // Don't pool broken maps. getStyle() returns null when the style hasn't loaded,
           // and throws when the map is dead (e.g. WebGL context lost). Either way, the map
           // is unusable — destroy it instead of caching. react-map-gl doesn't do this check;

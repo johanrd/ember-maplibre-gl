@@ -162,16 +162,41 @@ The component supports an `error` named block. The yielded value is an `Error` o
 </MapLibreGL>
 ```
 
+## Changing the style
+
+`@initOptions` is read once, so a new `style` there does nothing. Call `setStyle` on the instance:
+
+```gts
+<MapLibreGL @initOptions={{this.mapOptions}} as |map|>
+  <map.source @options={{this.points}} as |source|>
+    <source.layer @options={{this.circles}} />
+  </map.source>
+  <button type="button" {{on "click" (fn this.useStyle map.instance this.darkStyle)}}>Dark</button>
+</MapLibreGL>
+```
+
+```ts
+useStyle = (map: Map, style: string) => map.setStyle(style);
+```
+
+MapLibre drops the sources, layers and images that were added at runtime when the style changes. `<map.source>`, `<source.layer>`, `<map.layer>` and `<map.image>` add theirs again once the new style has loaded, in template order. Markers, popups and controls are not part of the style and stay where they are.
+
+- With a diffed `setStyle()` (the default), this needs maplibre-gl 5.16 or later, the first version that fires `style.load` on a diff.
+- If the new style does not have the layer that `@before` names, the layer is added on top and a warning is logged.
+- An image `@name` must not be an image id in the style's sprite, and a source or layer id must not be one in the new style. Otherwise the style's own is kept, and removed when the component is destroyed.
+- With `@reuseMaps`, a map whose style was changed is destroyed on teardown, not pooled: the pool is keyed by the style the map was built with. A map that is still fetching a diffed `setStyle(url)` is seen only from maplibre-gl 5.22. A restored WebGL context loads the style again and counts as a change too. A `setStyle()` before the map's first `load` is not seen, so such a map is pooled under its first style.
+
 ## Testing
 
-`await render()` and `await visit()` wait for the map's `load` event, and for images that `<map.image>` loads. Assertions about those need no `waitUntil`.
+`await render()` and `await visit()` wait for the map's `load` event, and for images that `<map.image>` loads. `await settled()` after `map.setStyle()` waits until the new style has loaded and the block has added its sources, layers and images again. The new style's sprite can still be loading. Waiting for a diffed `setStyle(url)` while it is fetched needs maplibre-gl 5.22 or later. Assertions about those need no `waitUntil`.
 
-Sources, layers, markers and popups need no waiting either, but for a different reason: they act on the map while the block renders, so `await render()` already covers them. What is still yours to wait for is anything that happens after that — a popup opened by a marker click, `setStyle`, or tile loading.
+Sources, layers, markers and popups need no waiting either, but for a different reason: they act on the map while the block renders, so `await render()` already covers them. What is still yours to wait for is anything that happens after that — a popup opened by a marker click, or tile loading.
 
 A wait ends when:
 
-- the map loads, or the image is added
+- the map loads, the image is added, or the style from `setStyle()` has loaded (a `setStyle()` that changes nothing ends it at once)
 - the map cannot load: its constructor throws (no WebGL), or an `error` arrives before the style has loaded. The `error` block then renders.
+- a style from `setStyle()` fails: an `error` arrives before it has loaded. With `diff: false` the old style is already removed, so the map stays blank until the next `setStyle()`.
 - a newer image load replaces one still in flight
 - the component is destroyed
 - 10 seconds pass, which prints a console warning. This covers a request that never answers.
