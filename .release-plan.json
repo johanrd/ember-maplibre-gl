@@ -2,25 +2,17 @@
   "solution": {
     "ember-maplibre-gl": {
       "impact": "minor",
-      "oldVersion": "0.7.1",
-      "newVersion": "0.8.0",
+      "oldVersion": "0.8.0",
+      "newVersion": "0.9.0",
       "tagName": "latest",
       "constraints": [
         {
           "impact": "minor",
           "reason": "Appears in changelog section :rocket: Enhancement"
-        },
-        {
-          "impact": "patch",
-          "reason": "Appears in changelog section :bug: Bug Fix"
-        },
-        {
-          "impact": "patch",
-          "reason": "Appears in changelog section :house: Internal"
         }
       ],
       "pkgJSONPath": "./package.json"
     }
   },
-  "description": "## Release (2026-10-30)\n\n* ember-maplibre-gl 0.8.0 (minor)\n\n#### :rocket: Enhancement\n* `ember-maplibre-gl`\n  * [#58](https://github.com/johanrd/ember-maplibre-gl/pull/58) Wait for map and image loads in tests ([@johanrd](https://github.com/johanrd))\n\n#### :bug: Bug Fix\n* `ember-maplibre-gl`\n  * [#59](https://github.com/johanrd/ember-maplibre-gl/pull/59) Replace isPresent from @ember/utils with native checks ([@johanrd](https://github.com/johanrd))\n\n#### :house: Internal\n* `ember-maplibre-gl`\n  * [#57](https://github.com/johanrd/ember-maplibre-gl/pull/57) docs: better perf and precision in hero example ([@johanrd](https://github.com/johanrd))\n  * [#56](https://github.com/johanrd/ember-maplibre-gl/pull/56) fix(docs): configure the MapLibre v6 worker so the examples render ([@johanrd](https://github.com/johanrd))\n\n#### Committers: 1\n- Johan Røed ([@johanrd](https://github.com/johanrd))\n"
+  "description": "## Release (2026-11-13)\n\n* ember-maplibre-gl 0.9.0 (minor)\n\n#### :rocket: Enhancement\n* `ember-maplibre-gl`\n  * [#61](https://github.com/johanrd/ember-maplibre-gl/pull/61) Add sources, layers and images again after setStyle() (needs maplibre-gl 5.16+; a missing @before now adds the layer on top) ([@johanrd](https://github.com/johanrd))\n\n#### Committers: 1\n- Johan Røed ([@johanrd](https://github.com/johanrd))\n"
 }
