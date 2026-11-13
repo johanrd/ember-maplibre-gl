@@ -1,0 +1,154 @@
+import Component from '@glimmer/component';
+import { assert } from '@ember/debug';
+import { associateDestroyableChild, registerDestructor, isDestroying, isDestroyed } from '@ember/destroyable';
+import { buildWaiter } from '@ember/test-waiters';
+import { beginWait } from '../-private/wait.js';
+import { consumeStyleRevision, isStyleLoaded } from '../-private/style-revision.js';
+import { precompileTemplate } from '@ember/template-compilation';
+import { setComponentTemplate } from '@ember/component';
+
+/** Signature for {@link MapLibreGLImage}. */
+function noop() {}
+// Holds settled() open while an image loads, so it is on the map once
+// `await render()` returns.
+const imageWaiter = buildWaiter('ember-maplibre-gl:image-load');
+/** Error thrown when an SVG image fails to load. Contains the original load event. */
+class SvgLoadError extends Error {
+  event;
+  constructor(message, event) {
+    super(message);
+    this.event = event;
+  }
+}
+/**
+ * Loads an image from a URL and registers it on the map for use in symbol layers.
+ * Handles both raster (PNG/JPEG via `map.loadImage`) and SVG images (via `<img>`).
+ * The image is removed from the map when the component is destroyed.
+ *
+ * @access `<MapLibreGL>` as `map.image`
+ * @example
+ * ```gts
+ * <MapLibreGL @initOptions={{this.mapOptions}} as |map|>
+ *   <map.image @url="/icons/pin.png" @name="pin-icon" @onLoad={{this.onImageReady}} />
+ * </MapLibreGL>
+ * ```
+ */
+class MapLibreGLImage extends Component {
+  /** @internal */_lastName;
+  _lastLoadUrl;
+  _lastLoadName;
+  _lastLoadWidth;
+  _lastLoadHeight;
+  _lastLoadOptions;
+  _endLoadWait;
+  /** @internal */
+  get onError() {
+    return this.args.onError || noop;
+  }
+  /** @internal */
+  get onLoad() {
+    return this.args.onLoad || noop;
+  }
+  /** @internal */
+  get isSvg() {
+    const url = this.args.url;
+    if (!url || typeof url !== 'string') {
+      return false;
+    }
+    return /\.svg(?:[?#]|$)/i.test(url) || url.startsWith('data:image/svg+xml');
+  }
+  /** @internal */
+  constructor(owner, args) {
+    super(owner, args);
+    assert('`map` argument is required for `MapLibreGLImage` component', args.map);
+    assert('`name` argument is required for `MapLibreGLImage` component', args.name);
+    if (args.parent) associateDestroyableChild(args.parent, this);
+    registerDestructor(this, () => {
+      this._endLoadWait?.();
+      try {
+        // Only the image this component added, by its @name.
+        if (this._lastName && this.args.map?.hasImage(this._lastName)) {
+          this.args.map.removeImage(this._lastName);
+        }
+      } catch {
+        // Map may be in a broken state (e.g. WebGL context lost)
+      }
+    });
+  }
+  /** @internal */
+  loadImage = (url, name, options, width, height) => {
+    const {
+      map
+    } = this.args;
+    consumeStyleRevision(map);
+    // A new style drops the image, so load it again then.
+    const dropped = this._lastName !== undefined && isStyleLoaded(map) && !map.hasImage(this._lastName);
+    if (url === this._lastLoadUrl && name === this._lastLoadName && width === this._lastLoadWidth && height === this._lastLoadHeight && options === this._lastLoadOptions && !dropped) return;
+    this._lastLoadUrl = url;
+    this._lastLoadName = name;
+    this._lastLoadWidth = width;
+    this._lastLoadHeight = height;
+    this._lastLoadOptions = options;
+    // A newer load replaces any in-flight one, whose result _onImage discards.
+    this._endLoadWait?.();
+    // If the component already has added an image to the map, remove it
+    if (this._lastName && isStyleLoaded(map) && map.hasImage(this._lastName)) {
+      map.removeImage(this._lastName);
+    }
+    this._lastName = undefined;
+    if (!url) {
+      return;
+    }
+    const endWait = beginWait(imageWaiter, `the image "${name}"`);
+    this._endLoadWait = endWait;
+    if (this.isSvg) {
+      const image = new Image();
+      if (width) {
+        image.width = width;
+      }
+      if (height) {
+        image.height = height;
+      }
+      const loaded = new Promise((resolve, reject) => {
+        image.onload = () => resolve();
+        image.onerror = reject;
+        image.src = url;
+      });
+      void loaded.then(() => this._onImage(url, name, options, image), event => this._onSvgErr(url, event)).catch(error => this.onError(error)).finally(endWait);
+    } else {
+      this.args.map.loadImage(url).then(({
+        data
+      }) => this._onImage(url, name, options, data)).catch(error => this.onError(error)).finally(endWait);
+    }
+  };
+  /** @internal */
+  _onImage = (url, name, options, image) => {
+    if (isDestroying(this) || isDestroyed(this)) {
+      return;
+    }
+    if (this.args.url !== url || this.args.name !== name) {
+      // url or name has changed since we started loading
+      return;
+    }
+    if (!isStyleLoaded(this.args.map)) {
+      // Loaded while a new style loads: load again after its 'style.load'.
+      this._lastLoadUrl = undefined;
+      return;
+    }
+    this.args.map.addImage(name, image, options);
+    this._lastName = name;
+    this.onLoad();
+  };
+  /** @internal */
+  _onSvgErr = (_url, event) => {
+    this.onError(new SvgLoadError('Failed to load svg', event));
+  };
+  static {
+    setComponentTemplate(precompileTemplate("{{this.loadImage @url @name @options @width @height}}", {
+      strictMode: true
+    }), this);
+  }
+}
+
+export { SvgLoadError, MapLibreGLImage as default };
+//# sourceMappingURL=maplibre-gl-image.js.map
